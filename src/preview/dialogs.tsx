@@ -35,14 +35,14 @@ export function PreviewDialogs() {
       close()
       notify(
         dialog.savePostId
-          ? 'Signed in to the preview. Post saved.'
+          ? 'Signed in to the preview. Post bookmarked.'
           : 'Signed in to the preview.',
       )
     }
     return (
       <Dialog title="A little closer to the group." onClose={close}>
         <p className="dialog-copy">
-          Save good finds, ask questions and make the conversation yours.
+          Bookmark good finds, ask questions and make the conversation yours.
         </p>
         <div className="auth-options">
           <button type="button" className="auth-option" onClick={signIn}>
@@ -74,11 +74,14 @@ export function PreviewDialogs() {
                 type="button"
                 onClick={() => {
                   close()
-                  void navigate({ to: '/dashboard' })
+                  void navigate({
+                    to: '/',
+                    search: { sort: 'latest', q: '', authors: ['me'] },
+                  })
                 }}
               >
-                <Icon name="edit" />
-                My posts
+                <Icon name="user" />
+                Filter by me
               </button>
               <button
                 type="button"
@@ -127,7 +130,7 @@ export function PreviewDialogs() {
             }}
           >
             <Icon name="bookmark" />
-            {saved.includes(post.id) ? 'Remove from Saved' : 'Save for later'}
+            {saved.includes(post.id) ? 'Remove bookmark' : 'Bookmark'}
           </button>
           <button
             type="button"
@@ -218,7 +221,10 @@ export function PreviewDialogs() {
             dispatch({ type: 'remove', postId: post.id })
             close()
             notify('Post removed from the preview.')
-            void navigate({ to: '/dashboard' })
+            void navigate({
+              to: '/',
+              search: { sort: 'latest', q: '', authors: ['me'] },
+            })
           }}
         >
           Remove post

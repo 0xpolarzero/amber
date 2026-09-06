@@ -1,3 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { DashboardPage } from '../pages/dashboard-page'
-export const Route = createFileRoute('/dashboard')({ component: DashboardPage })
+import { createFileRoute, redirect } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/dashboard')({
+  beforeLoad: () => {
+    throw redirect({
+      to: '/',
+      search: { sort: 'latest', q: '', authors: ['me'] },
+    })
+  },
+})

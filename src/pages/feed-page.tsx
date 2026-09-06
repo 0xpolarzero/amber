@@ -1,25 +1,24 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { EmptyState } from '../components/empty-state'
+import { FeedFilters } from '../components/feed-filters'
 import { Icon } from '../components/icon'
 import { PostCard } from '../components/post-card'
 import { type FeedSearch, parseFeedSearch, selectPosts } from '../domain/feed'
 import { usePreview } from '../preview/provider'
 
-export function FeedPage({
-  search,
-  onlySaved = false,
-}: {
-  search: FeedSearch
-  onlySaved?: boolean
-}) {
+export function FeedPage({ search }: { search: FeedSearch }) {
   const { state, saved, user, openDialog } = usePreview()
   const navigate = useNavigate()
   const [searchOpen, setSearchOpen] = useState(Boolean(search.q))
   const input = useRef<HTMLInputElement>(null)
-  const to = onlySaved ? '/saved' : '/'
   const update = (next: FeedSearch) =>
-    void navigate({ to, search: next, replace: true, resetScroll: false })
+    void navigate({
+      to: '/',
+      search: parseFeedSearch(next),
+      replace: true,
+      resetScroll: false,
+    })
   useEffect(() => {
     const shortcut = (event: KeyboardEvent) => {
       const target = event.target
@@ -40,12 +39,15 @@ export function FeedPage({
     document.addEventListener('keydown', shortcut)
     return () => document.removeEventListener('keydown', shortcut)
   }, [])
-  const posts = selectPosts(state, search, saved, onlySaved)
+  const posts = selectPosts(state, search, saved, user)
+  const needsAccount =
+    !user && (search.bookmarked || search.authors?.includes('me'))
+  const narrowed = Boolean(search.q || search.authors?.length)
   return (
     <>
       <header className="feed-header">
         <div className="heading-line">
-          <h1>{onlySaved ? 'Saved' : 'From the group'}</h1>
+          <h1>From the group</h1>
           <div className="feed-controls">
             <label className="sort-control">
               <span className="visually-hidden">Sort posts</span>
@@ -87,10 +89,9 @@ export function FeedPage({
           </div>
         </div>
         <p className="feed-subtitle">
-          {onlySaved
-            ? 'Good finds, kept close.'
-            : 'Small projects, shared by the people making them.'}
+          Small projects, shared by the people making them.
         </p>
+        <FeedFilters search={search} update={update} />
         <div
           className="search-box"
           hidden={!searchOpen && !search.q}
@@ -128,13 +129,13 @@ export function FeedPage({
           </button>
         </div>
       </header>
-      {onlySaved && !user ? (
+      {needsAccount ? (
         <div className="empty">
           <div className="empty-icon">
-            <Icon name="bookmark" />
+            <Icon name={search.bookmarked ? 'bookmark' : 'user'} />
           </div>
-          <h2>Good finds, kept close.</h2>
-          <p>Sign in to save projects and return to them later.</p>
+          <h2>A feed that’s yours.</h2>
+          <p>Sign in to filter by your bookmarks or your own posts.</p>
           <button
             type="button"
             className="button"
@@ -147,7 +148,11 @@ export function FeedPage({
         <>
           <div id="feed-list">
             {posts.map((post) => (
-              <PostCard post={post} key={post.id} />
+              <PostCard
+                post={post}
+                key={post.id}
+                owner={post.author === user}
+              />
             ))}
           </div>
           <div className="end-of-feed">
@@ -157,12 +162,20 @@ export function FeedPage({
         </>
       ) : (
         <EmptyState
-          title={search.q ? 'Nothing here yet.' : 'Good finds, kept close.'}
-          icon={onlySaved ? 'bookmark' : 'search'}
+          title={
+            narrowed
+              ? 'No projects match.'
+              : search.bookmarked
+                ? 'No bookmarks yet.'
+                : 'No projects yet.'
+          }
+          icon={search.bookmarked ? 'bookmark' : 'search'}
         >
-          {search.q
-            ? 'Try a different word, project or person.'
-            : 'Save a project from the feed to come back to it later.'}
+          {narrowed
+            ? 'Try removing a filter or changing your search.'
+            : search.bookmarked
+              ? 'Bookmark a project from the feed to come back to it later.'
+              : 'Projects shared by the group will appear here.'}
         </EmptyState>
       )}
     </>

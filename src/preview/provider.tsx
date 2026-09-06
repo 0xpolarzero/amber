@@ -7,7 +7,7 @@ import {
   useReducer,
   useState,
 } from 'react'
-import type { Feed } from '../domain/post'
+import type { Feed, Post } from '../domain/post'
 import {
   createPreviewState,
   currentUser,
@@ -26,6 +26,9 @@ type PreviewContext = {
   state: PreviewState
   user: string | null
   saved: readonly string[]
+  messages: readonly Post[]
+  readQuestions: readonly string[]
+  unreadCount: number
   dispatch: Dispatch<PreviewAction>
   dialog: PreviewDialog
   openDialog: Dispatch<PreviewDialog>
@@ -44,10 +47,22 @@ export function PreviewProvider({
   children: ReactNode
 }) {
   const [state, dispatch] = useReducer(previewReducer, feed, createPreviewState)
-  const [dialog, openDialog] = useState<PreviewDialog>(null)
+  const [dialog, setDialog] = useState<PreviewDialog>(null)
   const [notice, setNotice] = useState({ text: '', sequence: 0 })
   const user = currentUser(state.role)
   const saved = user ? (state.savedByUser[user] ?? []) : []
+  const messages = user
+    ? state.posts.filter((post) => post.author === user && post.question)
+    : []
+  const readQuestions = user ? (state.readQuestionsByUser[user] ?? []) : []
+  const unreadCount = messages.filter(
+    (post) => !readQuestions.includes(post.id),
+  ).length
+  const openDialog = (next: PreviewDialog) => {
+    if (next?.kind === 'question')
+      dispatch({ type: 'readQuestion', postId: next.postId })
+    setDialog(next)
+  }
   useEffect(() => {
     if (!notice.text) return
     const timer = setTimeout(
@@ -64,7 +79,7 @@ export function PreviewProvider({
       return
     }
     dispatch({ type: 'save', postId })
-    notify(saved.includes(postId) ? 'Removed from Saved.' : 'Saved for later.')
+    notify(saved.includes(postId) ? 'Bookmark removed.' : 'Bookmarked.')
   }
   const share = async (postId: string) => {
     try {
@@ -83,6 +98,9 @@ export function PreviewProvider({
         state,
         user,
         saved,
+        messages,
+        readQuestions,
+        unreadCount,
         dispatch,
         dialog,
         openDialog,

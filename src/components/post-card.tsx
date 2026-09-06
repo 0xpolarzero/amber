@@ -94,7 +94,7 @@ export function PostActions({ post }: { post: Post }) {
       <button
         type="button"
         className={`save-button ${saved.includes(post.id) ? 'saved' : ''}`}
-        aria-label={`${saved.includes(post.id) ? 'Unsave' : 'Save'} ${post.title}`}
+        aria-label={`${saved.includes(post.id) ? 'Remove bookmark from' : 'Bookmark'} ${post.title}`}
         aria-pressed={saved.includes(post.id)}
         onClick={() => save(post.id)}
       >

@@ -44,9 +44,9 @@ amber/
 ├── .env.example                 # Required settings; no real credentials
 ├── src/
 │   ├── routes/
-│   │   ├── index.tsx            # Public project feed
+│   │   ├── index.tsx            # Feed with bookmark and author filters
 │   │   ├── posts.$postId.tsx     # Post and comments
-│   │   ├── dashboard.tsx        # My posts and unanswered questions
+│   │   ├── messages.tsx         # Private questions and unread count
 │   │   └── api.auth.$.ts        # Telegram/X authentication endpoints
 │   ├── components/              # Cards, editors, question forms
 │   ├── queries/                 # Shared TanStack Query definitions

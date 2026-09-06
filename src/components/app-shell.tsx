@@ -5,14 +5,12 @@ import { usePreview } from '../preview/provider'
 import { Avatar } from './avatar'
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { state, user, openDialog, dispatch, notice } = usePreview()
-  const waiting = state.posts.some(
-    (post) => post.author === user && post.question,
-  )
+  const { state, user, openDialog, dispatch, notice, unreadCount } =
+    usePreview()
   return (
     <>
       <a className="skip" href="#main">
-        Skip to feed
+        Skip to content
       </a>
       <header className="topbar">
         <div className="header-inner">
@@ -34,30 +32,18 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               Feed
             </Link>
-            <Link
-              to="/saved"
-              search={{ sort: 'latest', q: '' }}
-              activeOptions={{ includeSearch: false }}
-              activeProps={{ className: 'active' }}
-            >
-              Saved
+            <Link to="/messages" activeProps={{ className: 'active' }}>
+              Messages
+              {user && unreadCount > 0 && (
+                <span
+                  className="nav-badge"
+                  role="img"
+                  aria-label={`${unreadCount} unread`}
+                >
+                  {unreadCount}
+                </span>
+              )}
             </Link>
-            {user && (
-              <Link
-                to="/dashboard"
-                activeProps={{ className: 'active' }}
-                data-route="mine"
-              >
-                My posts
-                {waiting && (
-                  <span
-                    className="nav-dot"
-                    role="img"
-                    aria-label="Question waiting"
-                  />
-                )}
-              </Link>
-            )}
           </nav>
           <div className="account">
             {user ? (

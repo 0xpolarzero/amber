@@ -6,6 +6,22 @@ const initial = () => createPreviewState(fixtures)
 const author = () => previewReducer(initial(), { type: 'role', role: 'author' })
 
 describe('sample interactions', () => {
+  it('only lets the recipient read a private question, retaining read state across account switches', () => {
+    const visitor = initial()
+    const action = { type: 'readQuestion', postId: 'voice-notes' } as const
+    expect(previewReducer(visitor, action)).toBe(visitor)
+    const member = previewReducer(visitor, { type: 'role', role: 'member' })
+    expect(previewReducer(member, action)).toBe(member)
+    const read = previewReducer(author(), action)
+    expect(read.readQuestionsByUser.alex).toEqual(['voice-notes'])
+    expect(previewReducer(read, action)).toBe(read)
+    const switched = previewReducer(read, { type: 'role', role: 'member' })
+    expect(switched.readQuestionsByUser.you ?? []).toEqual([])
+    expect(
+      previewReducer(switched, { type: 'role', role: 'author' })
+        .readQuestionsByUser.alex,
+    ).toEqual(['voice-notes'])
+  })
   it('rejects visitor writes and edits to someone else’s post', () => {
     const state = initial()
     expect(previewReducer(state, { type: 'save', postId: 'voice-notes' })).toBe(

@@ -6,10 +6,12 @@ export type PreviewRole = 'visitor' | 'member' | 'author'
 export type PreviewState = Feed & {
   role: PreviewRole
   savedByUser: Record<string, readonly string[]>
+  readQuestionsByUser: Record<string, readonly string[]>
 }
 export type PreviewAction =
   | { type: 'role'; role: PreviewRole }
   | { type: 'save'; postId: string }
+  | { type: 'readQuestion'; postId: string }
   | { type: 'remove'; postId: string }
   | { type: 'comment'; postId: string; id: string; text: string }
   | { type: 'deleteComment'; postId: string; commentId: string }
@@ -28,6 +30,7 @@ export const createPreviewState = (feed: Feed): PreviewState => ({
   ...feed,
   role: 'visitor',
   savedByUser: {},
+  readQuestionsByUser: {},
 })
 
 // A disposable browser preview, not authentication or server authorization.
@@ -85,6 +88,17 @@ export function previewReducer(
     })
   }
   if (post.author !== user) return state
+  if (action.type === 'readQuestion') {
+    const read = state.readQuestionsByUser[user] ?? []
+    if (!post.question || read.includes(post.id)) return state
+    return {
+      ...state,
+      readQuestionsByUser: {
+        ...state.readQuestionsByUser,
+        [user]: [...read, post.id],
+      },
+    }
+  }
   if (action.type === 'remove')
     return { ...state, posts: state.posts.filter((p) => p.id !== post.id) }
   if (action.type === 'edit') {

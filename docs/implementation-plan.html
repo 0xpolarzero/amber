@@ -53,13 +53,13 @@
     </div>
     <section class="section" id="product">
       <div class="section-heading"><span class="section-number">01</span><h2>What you’ll see</h2></div>
-      <p class="intro">Five screens, one simple loop: discover → discuss → improve. <a href="feed-prototype.html">Open the current feed prototype ↗</a> to review the minimal social network design. The sketches below show the original screen outline.</p>
+      <p class="intro">Five screens, one simple loop: discover → discuss → improve. <a href="feed-prototype.html">Open the current feed prototype ↗</a> to review the minimal social network design. Feed and Messages are the main navigation. Bookmarks and authors, including Me, are removable feed filters. The sketches below show the screen outline.</p>
       <div class="preview">
         <div class="tabs" role="tablist" aria-label="Screen sketches">
           <button type="button" class="tab" id="tab-feed" role="tab" aria-selected="true" aria-controls="screen-feed" data-screen="feed">Feed</button>
           <button type="button" class="tab" id="tab-post" role="tab" aria-selected="false" tabindex="-1" aria-controls="screen-post" data-screen="post">Post</button>
           <button type="button" class="tab" id="tab-author" role="tab" aria-selected="false" tabindex="-1" aria-controls="screen-author" data-screen="author">Author</button>
-          <button type="button" class="tab" id="tab-dashboard" role="tab" aria-selected="false" tabindex="-1" aria-controls="screen-dashboard" data-screen="dashboard">My space</button>
+          <button type="button" class="tab" id="tab-messages" role="tab" aria-selected="false" tabindex="-1" aria-controls="screen-messages" data-screen="messages">Messages</button>
           <button type="button" class="tab" id="tab-admin" role="tab" aria-selected="false" tabindex="-1" aria-controls="screen-admin" data-screen="admin">Admin</button>
         </div>
         <div class="mock" id="screen-feed" role="tabpanel" aria-labelledby="tab-feed" tabindex="0">
@@ -77,13 +77,13 @@
         <div class="mock" id="screen-author" role="tabpanel" aria-labelledby="tab-author" tabindex="0" hidden>
           <div class="mock-head"><span class="mock-brand">CREATOR PROFILE</span><span class="mock-tag">SAMPLE CONTENT · PUBLIC</span></div><div class="profile-head"><span class="avatar large">A</span><div><h3>Alex</h3><p class="small">Telegram identity · X profile if linked</p></div></div><p class="mock-sub">Shared projects</p><div class="project"><span class="project-title">Meeting notes → ready-to-use tasks</span><p>A tool that turns meeting notes into a task list, with owners and deadlines ready to review.</p><div class="project-foot"><span>Shared 2 hours ago</span><span>Open project ↗</span></div></div>
         </div>
-        <div class="mock" id="screen-dashboard" role="tabpanel" aria-labelledby="tab-dashboard" tabindex="0" hidden>
-          <div class="mock-head"><span class="mock-brand">MY SPACE</span><span class="mock-tag">SAMPLE CONTENT · PRIVATE</span></div><h3>Your work, kept up to date.</h3><p class="mock-sub">Manage posts and add the details people need.</p><div class="mock-row"><strong>Meeting notes → tasks</strong><span class="pill green">1 question to answer</span></div><div class="mock-row"><strong>My document assistant</strong><span class="pill">Review suggested revision</span></div><p class="small" style="margin-top:18px">Edit or remove your posts. Accept or dismiss AI suggestions.</p>
+        <div class="mock" id="screen-messages" role="tabpanel" aria-labelledby="tab-messages" tabindex="0" hidden>
+          <div class="mock-head"><span class="mock-brand">MESSAGES</span><span class="mock-tag">SAMPLE CONTENT · PRIVATE</span></div><h3>A little context, just between us.</h3><p class="mock-sub">Private bot questions, with a count of unread messages.</p><div class="mock-row"><strong>Meeting notes → tasks</strong><span class="pill green">1 question to answer</span></div><div class="mock-row"><strong>My document assistant</strong><span class="pill">Review suggested revision</span></div><p class="small" style="margin-top:18px">Open a question to mark it read. Answer and review an update before it appears on your post.</p>
         </div>
         <div class="mock" id="screen-admin" role="tabpanel" aria-labelledby="tab-admin" tabindex="0" hidden>
           <div class="mock-head"><span class="mock-brand">ADMIN</span><span class="mock-tag">SAMPLE CONTENT · ADMIN ONLY</span></div><h3>Review what needs attention.</h3><div class="stat-grid"><div class="stat"><strong>3</strong>Submissions to review</div><div class="stat"><strong>1</strong>Reported comment</div><div class="stat"><strong>1 min</strong>Since last collection</div></div><div class="mock-row"><span>Unclear project ownership</span><span class="pill">Review evidence</span></div><div class="mock-row"><span>Model job interrupted</span><span class="pill">Inspect / replay</span></div>
         </div>
-        <p class="mock-caption" id="screen-caption">Feed / · Public reading, newest-first cards, search and links to each project and creator.</p>
+        <p class="mock-caption" id="screen-caption">Feed / · Public reading, sorting, search, Bookmarked and author filters including Me.</p>
       </div>
       <div class="defaults"><div class="default"><strong>Anyone can browse</strong>Login with Telegram or X to comment.</div><div class="default"><strong>Publish clear original work</strong>Uncertain submissions go to admin review.</div><div class="default"><strong>Authors stay in control</strong>Edit, remove and review suggested changes.</div><div class="default"><strong>Text and links first</strong>Media previews are a later addition.</div><div class="default"><strong>Questions stay on the site</strong>Up to three, visible only to the owner.</div><div class="default"><strong>One group to start</strong>Import a week, then collect every minute.</div></div>
       <p class="later">Defaults to discuss. Direct messages, follows and likes can come later.</p>
@@ -208,10 +208,10 @@
   // Keep an open task in place while its feedback is being edited; re-filter on close.
   document.querySelectorAll('.task').forEach(task => task.addEventListener('toggle', () => {if (!task.open) applyFilters();}));
   const captions = {
-    feed:'Feed / · Public reading, newest-first cards, search and links to each project and creator.',
+    feed:'Feed / · Public reading, sorting, search, Bookmarked and author filters including Me.',
     post:'Post /posts/:id · Summary, source links and comments. Owners can edit, remove and answer private questions.',
     author:'Author /people/:id · A stable creator page exists before signup. Telegram login proves who can edit it.',
-    dashboard:'My space /dashboard · Your posts, unanswered questions and revisions you can accept or dismiss.',
+    messages:'Messages /messages · Private bot questions, unread count and revisions you can accept or dismiss.',
     admin:'Admin /admin · Review uncertain submissions and reports; inspect collection, queues and failed jobs.'
   };
   const tabs = [...document.querySelectorAll('[data-screen]')];

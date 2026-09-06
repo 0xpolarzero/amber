@@ -14,10 +14,10 @@ A searchable showcase of one Telegram group's projects. Authors control their po
 
 | Screen | Contents and actions |
 | --- | --- |
-| Feed `/` | Search; newest-first cards with author and date. |
+| Feed `/` | Search and sort; removable Bookmarked and author filters, including Me. |
 | Post `/posts/:id` | Summary, project/source links, author, comments. Owners get Edit, Remove and private AI questions. |
 | Author `/people/:id` | Name, linked X profile and projects. Exists before they join. |
-| My space `/dashboard` | My posts, unanswered questions and suggested revisions. |
+| Messages `/messages` | Private bot questions and suggested revisions. Unread badge for the connected account. |
 | Admin `/admin` | Submissions to review, reported comments and worker health. |
 
 ```text
