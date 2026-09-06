@@ -1,0 +1,171 @@
+{
+  "people": {
+    "alex": {
+      "name": "Alex Chen",
+      "initials": "AC",
+      "background": "#eaece5",
+      "color": "#5a6351",
+      "bio": "Making small tools for the things I do every day."
+    },
+    "maya": {
+      "name": "Maya Laurent",
+      "initials": "ML",
+      "background": "#eee8e3",
+      "color": "#75614f",
+      "bio": "Designing with code. Curious about creative tools and the web."
+    },
+    "julien": {
+      "name": "Julien Moreau",
+      "initials": "JM",
+      "background": "#e8ecf0",
+      "color": "#586d7b",
+      "bio": "Mostly experiments. Sometimes something useful."
+    },
+    "nina": {
+      "name": "Nina Park",
+      "initials": "NP",
+      "background": "#ede8ef",
+      "color": "#796282",
+      "bio": "Building tools that make room for creative work."
+    },
+    "sam": {
+      "name": "Sam Rivera",
+      "initials": "SR",
+      "background": "#e7eee9",
+      "color": "#53735c",
+      "bio": "Notes, prototypes and things that work locally."
+    },
+    "you": {
+      "name": "You",
+      "initials": "YO",
+      "background": "#ecebe7",
+      "color": "#686357",
+      "bio": "A member of the group."
+    }
+  },
+  "posts": [
+    {
+      "id": "voice-notes",
+      "bookmarks": 8,
+      "author": "alex",
+      "time": "2h",
+      "title": "Voice notes, finally searchable.",
+      "summary": "A small app that transcribes voice notes and makes them searchable by meaning. The recordings and processing stay on your laptop.",
+      "project": "Noted",
+      "domain": "A local-first voice note library",
+      "mark": "n.",
+      "detail": "Alex built this to find ideas recorded on walks without listening through every note. Search works even when the exact wording is forgotten.\n\nBuilt over a weekend with Whisper and a small local embedding model.",
+      "question": "Can someone try it, or is it still a personal tool?",
+      "comments": [
+        {
+          "id": "1",
+          "author": "sam",
+          "text": "The search-by-meaning part is exactly what I’ve been missing. Does it handle a mix of languages?",
+          "time": "1h"
+        },
+        {
+          "id": "2",
+          "author": "alex",
+          "text": "Yes, I’ve been using it with English and Mandarin in the same note.",
+          "time": "48m"
+        },
+        {
+          "id": "3",
+          "author": "maya",
+          "text": "Would love to try this when you share it.",
+          "time": "25m"
+        }
+      ],
+      "publishedAt": "2026-09-06T12:00:00.000Z"
+    },
+    {
+      "id": "reading-margin",
+      "bookmarks": 14,
+      "author": "maya",
+      "time": "4h",
+      "title": "An assistant that stays in the margin.",
+      "summary": "Highlight a passage in an article and ask about it without leaving the page. The answer includes the lines it used, so you can check it as you read.",
+      "project": "Margin",
+      "domain": "A browser companion for close reading",
+      "mark": "m",
+      "detail": "Maya built Margin to help with dense articles without moving the conversation into another tab. Margin sits next to the text and keeps every answer tied to the passage you selected.\n\nIt’s a small browser extension, built around a very ordinary reading habit.",
+      "comments": [
+        {
+          "id": "4",
+          "author": "julien",
+          "text": "Keeping the source lines visible is a nice touch.",
+          "time": "3h"
+        },
+        {
+          "id": "5",
+          "author": "sam",
+          "text": "I can see myself using this for papers.",
+          "time": "2h"
+        }
+      ],
+      "publishedAt": "2026-09-06T10:00:00.000Z"
+    },
+    {
+      "id": "meeting-tasks",
+      "bookmarks": 5,
+      "author": "julien",
+      "time": "6h",
+      "title": "Meeting notes in. A task list out.",
+      "summary": "A workflow that pulls decisions, owners and due dates out of meeting notes. Every task is yours to review before it goes into your task manager.",
+      "project": "Notes to tasks",
+      "domain": "A review-first meeting workflow",
+      "mark": "↳",
+      "detail": "Julien focused on making the review step quick. Each task sits beside the sentence it came from, and the user can change the owner or date before exporting.\n\nIt’s being used for Julien’s own meetings first.",
+      "comments": [
+        {
+          "id": "6",
+          "author": "nina",
+          "text": "Which task manager are you exporting to?",
+          "time": "4h"
+        }
+      ],
+      "publishedAt": "2026-09-06T08:00:00.000Z"
+    },
+    {
+      "id": "palette-tool",
+      "bookmarks": 21,
+      "author": "nina",
+      "time": "Yesterday",
+      "title": "Colour palettes from a sentence.",
+      "summary": "Describe a mood and get a few palettes ready to use. Each comes with contrast checks and CSS variables you can copy into your project.",
+      "project": "Undertone",
+      "domain": "Small palettes, ready for the web",
+      "mark": "u",
+      "detail": "Nina’s tool uses the prompt as a starting point, then applies a simple constraint: every palette has a text colour, surface colour and accent with contrast checked.\n\nYou can tweak the colours and copy the variables directly into a stylesheet.",
+      "comments": [
+        {
+          "id": "7",
+          "author": "maya",
+          "text": "The CSS export makes this useful straight away.",
+          "time": "Yesterday"
+        },
+        {
+          "id": "8",
+          "author": "alex",
+          "text": "I’d use this for small prototypes.",
+          "time": "Yesterday"
+        }
+      ],
+      "publishedAt": "2026-09-06T06:00:00.000Z"
+    },
+    {
+      "id": "paper-map",
+      "bookmarks": 12,
+      "author": "sam",
+      "time": "Yesterday",
+      "title": "A map of the papers on your desk.",
+      "summary": "Drop in a folder of PDFs. This local app groups related papers, explains the connections and links every note back to a page in the original.",
+      "project": "Paper trail",
+      "domain": "Find the connections in your reading",
+      "mark": "p",
+      "detail": "Sam built this to find half-remembered papers. It presents small groups of related ideas with the page references that connect them.\n\nThe files and index stay local.",
+      "comments": [],
+      "publishedAt": "2026-09-06T04:00:00.000Z"
+    }
+  ]
+}

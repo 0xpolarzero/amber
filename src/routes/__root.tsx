@@ -1,0 +1,61 @@
+import type { QueryClient } from '@tanstack/react-query'
+import {
+  createRootRouteWithContext,
+  HeadContent,
+  Link,
+  Outlet,
+  Scripts,
+} from '@tanstack/react-router'
+import { feedQuery } from '../queries/feed'
+import stylesheet from '../styles.css?url'
+
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
+  {
+    head: () => ({
+      meta: [
+        { charSet: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'color-scheme', content: 'light' },
+        { title: 'Field · From the group' },
+        {
+          name: 'description',
+          content: 'Small projects, shared by the people making them.',
+        },
+      ],
+      links: [
+        { rel: 'stylesheet', href: stylesheet },
+        { rel: 'icon', href: '/favicon.svg' },
+      ],
+    }),
+    loader: ({ context }) => context.queryClient.ensureQueryData(feedQuery),
+    component: Root,
+    notFoundComponent: () => (
+      <main className="empty">
+        <h1>Page not found.</h1>
+        <Link to="/">Back to the feed</Link>
+      </main>
+    ),
+    errorComponent: ({ reset }) => (
+      <main className="empty">
+        <h1>The feed could not load.</h1>
+        <button type="button" className="text-button" onClick={reset}>
+          Try again
+        </button>
+      </main>
+    ),
+  },
+)
+
+function Root() {
+  return (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <Outlet />
+        <Scripts />
+      </body>
+    </html>
+  )
+}
