@@ -6,6 +6,7 @@ import {
   Outlet,
   Scripts,
 } from '@tanstack/react-router'
+import favicon from '../assets/favicon.svg?no-inline'
 import { AppShell } from '../components/app-shell'
 import { PreviewProvider } from '../preview/provider'
 import { feedQuery } from '../queries/feed'
@@ -26,7 +27,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       ],
       links: [
         { rel: 'stylesheet', href: stylesheet },
-        { rel: 'icon', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/svg+xml', href: favicon },
       ],
     }),
     loader: ({ context }) => context.queryClient.ensureQueryData(feedQuery),
