@@ -2,7 +2,9 @@
 
 [Open the HTML review page](./implementation-plan.html) for screen sketches, task filters and review notes.
 
-[Open the feed prototype](./feed-prototype.html) for the current visual direction ([design notes](./design-direction.md)).
+The reviewed UI now runs as the React app: `pnpm dev`, then open http://127.0.0.1:3000. The [original feed prototype](./feed-prototype.html) remains a reference ([design notes](./design-direction.md)).
+
+**Built foundation:** routed sample feed, sorting, search, saved posts, profiles, comments, author editing and answer review. Accounts and changes are local previews. The integration tasks below remain planned; no real messages are processed yet.
 
 Proposed for review. Each numbered task delivers one checkable result. Refer to its number when suggesting changes.
 

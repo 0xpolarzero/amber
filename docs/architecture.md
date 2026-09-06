@@ -1,12 +1,12 @@
 # Current architecture
 
-Updated 6 September 2026. This replaces the initial stack recommendation in research.md. It is a design, not an implemented application.
+Updated 6 September 2026. This replaces the initial stack recommendation in research.md. The web app now implements the reviewed UI with fictional fixtures and temporary local state; authentication, collection, model processing, PostgreSQL and the worker remain planned. See the [README](../README.md) for the current structure and commands.
 
 Review the proposed screens and numbered deliveries in [the HTML implementation plan](./implementation-plan.html) ([Markdown](./implementation-plan.md)).
 
 Selected by the user: GramJS for automatic Telegram history and incremental reads; React with Vite and TanStack Start; useful TanStack libraries; Effect v4 throughout the application; Gemini 3.8 Flash with the user's Google AI Pro subscription. The user confirms permission to use this group's content. Treat that confirmation as the working authorization; a public invite link by itself is not the authorization.
 
-Use one TypeScript repository, two Node processes, and one PostgreSQL database. The web process serves pages and handles user actions. The worker collects messages and generates posts. Both use the same Effect services and database schema.
+The target architecture uses one TypeScript repository, two Node processes, and one PostgreSQL database. The web process serves pages and handles user actions. The worker collects messages and generates posts. Both will use the same Effect services and database schema. The current app runs only the web process.
 
 ## Stack and responsibilities
 
@@ -31,7 +31,7 @@ Use TanStack Table when the administrator review screen needs tabular sorting/fi
 
 Effect owns application execution, while TanStack owns UI data fetching and forms. Convert Effect programs to promises only at Start handlers and third-party callbacks. Reuse Effect Schema through its Standard Schema conversion in Form. [Form validation](https://tanstack.com/form/latest/docs/framework/react/guides/validation), [Effect Schema conversion](https://github.com/Effect-TS/effect/blob/main/packages/effect/src/Schema.ts)
 
-Pin matching Effect v4 package versions. The inspected main-branch package currently identifies itself as 4.0.0-rc.112; this is not a claim that the same version has been verified in npm. The older migration introduction still says beta. SQL and several other modules remain under unstable paths. Keep that changing integration code in a few server modules. [Current package](https://github.com/Effect-TS/effect/blob/main/packages/effect/package.json), [migration and versioning](https://github.com/Effect-TS/effect/blob/main/MIGRATION.md)
+The app pins Effect to 4.0.0-rc.112. Pin matching versions when additional Effect packages are introduced. SQL and several other modules remain under unstable paths. Keep that changing integration code in a few server modules. [Current package](https://github.com/Effect-TS/effect/blob/main/packages/effect/package.json), [migration and versioning](https://github.com/Effect-TS/effect/blob/main/MIGRATION.md)
 
 Run the official Gemini CLI as a scoped subprocess inside Effect, authenticated with Google sign-in. This follows the user's explicit choice to use subscription quota. gemini.ts owns process startup, input, output parsing, cancellation and error mapping. There is no direct @google/genai connection or API-credit funding in the selected design. [CLI authentication](https://geminicli.com/docs/get-started/authentication/), [headless mode](https://geminicli.com/docs/cli/headless/)
 
@@ -72,7 +72,7 @@ tg-private-social-network/
     └── research.md              # Initial research and remaining auth caveats
 ```
 
-These are proposed files. Only the documentation exists. Split modules when their responsibilities grow; separate packages, a monorepo framework and duplicated service interfaces are unnecessary for the current scope.
+This tree describes the target, including files that do not exist yet. The current app also separates page components into src/pages and sample behavior into src/preview; tests are split into unit and e2e. Split modules when their responsibilities grow; separate packages, a monorepo framework and duplicated service interfaces are unnecessary for the current scope.
 
 ## Message flow
 
@@ -145,4 +145,4 @@ Google documents a maximum of 1,500 model requests per day for Pro, with per-min
 
 Selected model remains Gemini 3.8 Flash. Its stable public API identifier is `gemini-3.8-flash`, but public API availability does not prove access through this account's CLI subscription backend. CLI documentation supports selecting available models with `--model`; the inspected model documentation/constants did not establish 3.8-specific CLI availability. Verify a signed-in request and the reported actual model during setup. Do not silently substitute another model or use paid API access if unavailable. Treat low thinking effort as a desired setting only if exposed by the chosen CLI version. [Model specification](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash), [CLI model selection](https://geminicli.com/docs/cli/model/)
 
-Only documentation was changed. No external accounts were accessed, no billing was activated, and no model requests were made during this research. The remaining setup proof is a successful subscription-authenticated CLI request to the requested model.
+The current app does not access Google accounts or call a model. The remaining setup proof is a successful subscription-authenticated CLI request to the requested model.

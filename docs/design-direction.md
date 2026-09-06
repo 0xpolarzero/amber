@@ -1,6 +1,6 @@
 # Feed design direction
 
-[Open the interactive prototype](./feed-prototype.html). Open the file directly in Zen; it needs no server. “Field” is a working name, and all content is fictional sample data.
+The reviewed design now lives in the React app. Run `pnpm dev` and open [the app](http://127.0.0.1:3000). The original [standalone prototype](./feed-prototype.html) remains a visual reference and opens directly in Zen. “Field” is a working name, and all content is fictional sample data.
 
 The feed is the home screen: one narrow column, white background, dark text, subtle dividers and generous spacing. Each post shows its creator, a short title and explanation, one project link, comments and a save action.
 
@@ -15,6 +15,6 @@ The feed is the home screen: one narrow column, white background, dark text, sub
 
 Use neutral descriptions for automatic summaries. First-person language belongs to original quotations or author edits. Source attribution stays available on the detail page.
 
-The user selected a single sort dropdown in place of feed tabs. Bookmark sorting uses sample aggregate counts plus the current preview's saved state. The prototype is a local visual experiment: account switching, replies and edits use temporary sample state and reset on reload. Project/source links do not contact external services. Real login, storage, collection and AI processing remain in the implementation plan.
+The user selected a single sort dropdown in place of feed tabs. Bookmark sorting uses sample aggregate counts plus the current preview's saved state. The app preserves this design and the prototype interactions: account switching, replies and edits use temporary sample state and reset on reload. Project/source links do not contact external services. Real login, storage, collection and AI processing remain in the implementation plan.
 
 Use the bottom selector to switch between Visitor, Member and Author. Review feed density, text size and post hierarchy first.

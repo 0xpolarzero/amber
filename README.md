@@ -1,0 +1,53 @@
+# Field
+
+A minimal social feed for projects shared in a Telegram group. “Field” is a working name.
+
+The app preserves the reviewed feed design: one narrow column, quiet typography, simple project links, and a dropdown for newest, most commented or most bookmarked posts. It is now a React application built with TanStack Start and Vite.
+
+## Run
+
+Use Node.js 24.11 or newer and pnpm 11.1.3.
+
+```sh
+pnpm install
+pnpm dev
+```
+
+Open [the app](http://127.0.0.1:3000). No credentials or database are needed for this stage.
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm check` | TypeScript, Biome and unit tests |
+| `pnpm build` | Build the browser bundle and Node server |
+| `pnpm start` | Serve the production build |
+| `pnpm test:e2e` | Build and test desktop/mobile browser journeys |
+
+For the first browser test run, install Chromium with `pnpm exec playwright install chromium`.
+
+## What works now
+
+Browse, sort, search, save, open posts and profiles, add comments, edit sample posts, and review answers to private questions. The bottom selector switches between Visitor, Member and Author so we can review each experience.
+
+Posts and people are fictional fixtures. Account switching and changes use local preview state that resets on reload. Telegram/X sign-in, project links and source links are previews. Real authentication, Telegram collection, Gemini processing, PostgreSQL and the persistent queue are not implemented.
+
+## Structure
+
+```text
+src/
+  routes/       URLs, loaders and the page shell
+  pages/        Feed, post, profile and author screens
+  components/   Shared UI, forms and icons
+  queries/      TanStack Query definitions
+  domain/       Effect schemas and pure post rules
+  server/       Start server functions and sample data reads
+  preview/      Temporary account state and sample interactions
+  styles.css    Design tokens, components and responsive layout
+tests/
+  unit/         Domain behavior
+  e2e/          Browser journeys
+docs/           Reviewed design, implementation plan and architecture
+```
+
+TanStack Router connects the screens, Query manages loaded data, Form manages inputs, and Effect supplies validation and application logic. Nitro builds the Node server. The future collector and queue will be added as separate pieces once their behavior is reviewed.
+
+See the [implementation plan](docs/implementation-plan.md), [design direction](docs/design-direction.md), [planned architecture](docs/architecture.md) and [implementation notes](docs/implementation-notes.md). The original [HTML prototype](docs/feed-prototype.html) remains as a design reference.
