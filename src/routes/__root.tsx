@@ -1,4 +1,4 @@
-import type { QueryClient } from '@tanstack/react-query'
+import { type QueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import {
   createRootRouteWithContext,
   HeadContent,
@@ -6,6 +6,8 @@ import {
   Outlet,
   Scripts,
 } from '@tanstack/react-router'
+import { AppShell } from '../components/app-shell'
+import { PreviewProvider } from '../preview/provider'
 import { feedQuery } from '../queries/feed'
 import stylesheet from '../styles.css?url'
 
@@ -28,34 +30,48 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       ],
     }),
     loader: ({ context }) => context.queryClient.ensureQueryData(feedQuery),
+    shellComponent: RootDocument,
     component: Root,
     notFoundComponent: () => (
-      <main className="empty">
+      <div className="empty">
         <h1>Page not found.</h1>
-        <Link to="/">Back to the feed</Link>
-      </main>
+        <Link to="/" search={{ sort: 'latest', q: '' }}>
+          Back to the feed
+        </Link>
+      </div>
     ),
     errorComponent: ({ reset }) => (
-      <main className="empty">
+      <div className="empty">
         <h1>The feed could not load.</h1>
         <button type="button" className="text-button" onClick={reset}>
           Try again
         </button>
-      </main>
+      </div>
     ),
   },
 )
 
-function Root() {
+function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        <Outlet />
+        {children}
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function Root() {
+  const { data } = useSuspenseQuery(feedQuery)
+  return (
+    <PreviewProvider feed={data}>
+      <AppShell>
+        <Outlet />
+      </AppShell>
+    </PreviewProvider>
   )
 }

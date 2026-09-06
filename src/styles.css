@@ -9,6 +9,7 @@
 }
 
 [hidden] {
+  /* biome-ignore lint/complexity/noImportantStyles: Hidden content must stay hidden regardless of component display rules. */
   display: none !important;
 }
 
@@ -1584,6 +1585,19 @@ dialog::backdrop {
   *,
   *::before,
   *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: Respect reduced motion over component transitions. */
     transition: none !important;
   }
+}
+
+.field-error {
+  color: #9b2929;
+  font-size: 12px;
+  margin-top: 6px;
+}
+.post-summary,
+.comment p,
+.answer-context {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
