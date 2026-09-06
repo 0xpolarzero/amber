@@ -13,4 +13,6 @@ Dependency versions are exact pins. Nitro uses 3.0.260610-beta rather than a rel
 
 The current server reads fixtures; preview mutations stay local. Tests at this stage cover domain behavior and browser journeys, not persistence or authenticated ownership. The original HTML files remain review artifacts; src is the maintained app.
 
+CI actions use Node 24 and verified commit pins: [checkout 7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-node 7.0.0](https://github.com/actions/setup-node/releases/tag/v7.0.0) and [pnpm setup 6.0.10](https://github.com/pnpm/action-setup/releases/tag/v6.0.10). The first run passed with older actions but reported their deprecated Node 20 runtimes; these versions remove that dependency. pnpm setup 6.1.0 was skipped because it was less than seven days old.
+
 Google AI Pro access remains a separate setup check: use official Gemini CLI Google sign-in and subscription quota, with no API-credit fallback. Gemini 3.8 Flash access through that signed-in CLI has not been demonstrated. [CLI authentication](https://geminicli.com/docs/get-started/authentication/), [CLI model selection](https://geminicli.com/docs/cli/model/)
