@@ -1,0 +1,17 @@
+node_modules/
+.output/
+dist/
+.tanstack/
+.vite/
+coverage/
+playwright-report/
+test-results/
+.playwright-mcp/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.gemini/
+*.session
+*.session-journal
