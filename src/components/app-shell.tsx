@@ -20,9 +20,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             to="/"
             search={{ sort: 'latest', q: '' }}
             className="brand"
-            aria-label="Field home"
+            aria-label="Amber home"
           >
-            field
+            amber
             <span className="brand-dot" aria-hidden="true" />
           </Link>
           <nav className="global-nav" aria-label="Main navigation">

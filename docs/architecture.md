@@ -38,7 +38,7 @@ Run the official Gemini CLI as a scoped subprocess inside Effect, authenticated 
 ## Proposed file tree
 
 ```text
-tg-private-social-network/
+amber/
 ├── package.json                 # dev, build, web, worker, migrate, test
 ├── vite.config.ts               # Start + React build configuration
 ├── .env.example                 # Required settings; no real credentials

@@ -10,7 +10,7 @@ export const Route = createFileRoute('/people/$personId')({
     return { name: person.name }
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: `${loaderData?.name ?? 'Profile'} · Field` }],
+    meta: [{ title: `${loaderData?.name ?? 'Profile'} · Amber` }],
   }),
   component: Page,
 })

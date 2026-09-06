@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Telegram showcase · Implementation plan</title>
+  <title>Amber · Implementation plan</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%232b594b'/%3E%3Cpath d='M10 12h20v12H19l-7 5v-5h-2z' fill='%23fff'/%3E%3C/svg%3E">
   <style>
     :root{--paper:#f7f8f5;--white:#fff;--ink:#202e2b;--muted:#62706a;--line:#dce2dc;--green:#2b594b;--wash:#eaf0e9;--amber:#8a570c;--blue:#365f8c;--radius:14px}
@@ -24,7 +24,7 @@
 <a class="skip" href="#main">Skip to plan</a>
 <header class="topbar"><div class="topinner">
   <span class="mark" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 5h14v10h-8l-5 4v-4H5V5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 9h6M9 12h4" stroke="currentColor" stroke-width="1.4"/></svg></span>
-  <a class="brand" href="#main">Telegram showcase</a><span class="draft">Plan · draft 01</span>
+  <a class="brand" href="#main">Amber</a><span class="draft">Plan · draft 01</span>
   <div class="top-actions"><span class="small" id="top-count">0 / 29 reviewed</span><button type="button" class="btn primary" data-export>Download notes <span aria-hidden="true">↓</span></button></div>
 </div></header>
 <div class="layout">
@@ -130,6 +130,7 @@
     { title:'Build the website around people', start:15, end:24, description:'Browse, claim your work, edit it, answer questions and join the conversation.' },
     { title:'Operate, recover and try it with the group', start:25, end:29, description:'Review uncertainty, inspect failures and prove recovery before expanding.' }
   ];
+  // Keep the original key so the rename preserves existing review notes.
   const storageKey = 'telegram-showcase-plan-review-v1';
   const statusNames = {unreviewed:'To review',keep:'Keep',discuss:'Discuss',change:'Change'};
   let review = {tasks:{}, sections:{}};
@@ -237,7 +238,7 @@
   window.addEventListener('hashchange',openHash);
   document.querySelectorAll('a[href^="#task-"]').forEach(link => link.addEventListener('click', () => {if (location.hash === link.getAttribute('href')) openHash();}));
   function exportNotes() {
-    const lines = ['# Telegram showcase: plan review', '', 'Plan: draft 01', ''];
+    const lines = ['# Amber: plan review', '', 'Plan: draft 01', ''];
     for (const key of ['product','stack']) if (review.sections[key]?.trim()) lines.push(`## ${key === 'product' ? 'Product and screens' : 'Stack'}`, '',review.sections[key].trim(),'');
     for (const task of tasks) {
       const value = review.tasks[task.id];
@@ -246,7 +247,7 @@
     }
     if (lines.length === 4) lines.push('No feedback recorded yet.');
     const blob = new Blob([lines.join('\n')], {type:'text/markdown;charset=utf-8'});
-    const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'telegram-showcase-review.md'; document.body.append(anchor); anchor.click(); anchor.remove();
+    const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'amber-review.md'; document.body.append(anchor); anchor.click(); anchor.remove();
     setTimeout(() => URL.revokeObjectURL(url), 30000);
     document.getElementById('export-message').textContent = 'Notes exported. Share the downloaded Markdown file here to discuss them.';
   }

@@ -1,6 +1,6 @@
 # Feed design direction
 
-The reviewed design now lives in the React app. Run `pnpm dev` and open [the app](http://127.0.0.1:3000). The original [standalone prototype](./feed-prototype.html) remains a visual reference and opens directly in Zen. “Field” is a working name, and all content is fictional sample data.
+The reviewed design now lives in the React app. Run `pnpm dev` and open [the app](http://127.0.0.1:3000). The original [standalone prototype](./feed-prototype.html) remains a visual reference and opens directly in Zen. The product is named Amber. All content is fictional sample data.
 
 The feed is the home screen: one narrow column, white background, dark text, subtle dividers and generous spacing. Each post shows its creator, a short title and explanation, one project link, comments and a save action.
 

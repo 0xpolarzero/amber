@@ -18,7 +18,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { charSet: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'color-scheme', content: 'light' },
-        { title: 'Field · From the group' },
+        { title: 'Amber · From the group' },
         {
           name: 'description',
           content: 'Small projects, shared by the people making them.',

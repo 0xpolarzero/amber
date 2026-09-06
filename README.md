@@ -1,6 +1,8 @@
-# Field
+# Amber
 
-A minimal social feed for projects shared in a Telegram group. “Field” is a working name.
+A minimal social feed for projects shared in a Telegram group.
+
+Amber preserves worthwhile work from a fleeting conversation and keeps it connected to the person who made it.
 
 The app preserves the reviewed feed design: one narrow column, quiet typography, simple project links, and a dropdown for newest, most commented or most bookmarked posts. It is now a React application built with TanStack Start and Vite.
 
