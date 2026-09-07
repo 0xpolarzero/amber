@@ -4,7 +4,7 @@
 
 The reviewed UI now runs as the React app: `pnpm dev`, then open http://127.0.0.1:3000. The [original feed prototype](./feed-prototype.html) remains a reference ([design notes](./design-direction.md)).
 
-**Built foundation:** routed sample feed, sorting, search, saved posts, profiles, comments, author editing and answer review. Accounts and changes are local previews. The integration tasks below remain planned; no real messages are processed yet.
+**Built foundation:** routed sample feed, sorting, search, group/author/bookmark filters, profiles, comments, author editing and answer review. Accounts and changes are local previews. The integration tasks below remain planned; no real messages are processed yet.
 
 Proposed for review. Each numbered task delivers one checkable result. Refer to its number when suggesting changes.
 
@@ -14,7 +14,7 @@ A searchable showcase of one Telegram group's projects. Authors control their po
 
 | Screen | Contents and actions |
 | --- | --- |
-| Feed `/` | Search and sort; removable Bookmarked and author filters, including Me. |
+| Feed `/` | One row: Group, Author, Bookmarks, then sort and search. Active filters below, including Me. Group and author choices narrow each other. |
 | Post `/posts/:id` | Summary, project/source links, author, comments. Owners get Edit, Remove and private AI questions. |
 | Author `/people/:id` | Name, linked X profile and projects. Exists before they join. |
 | Messages `/messages` | Private bot questions and suggested revisions. Unread badge for the connected account. |

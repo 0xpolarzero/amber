@@ -9,6 +9,9 @@ export const Person = Schema.Struct({
 })
 export type Person = typeof Person.Type
 
+export const Group = Schema.Struct({ name: Schema.String })
+export type Group = typeof Group.Type
+
 export const Comment = Schema.Struct({
   id: Schema.String,
   author: Schema.String,
@@ -21,6 +24,7 @@ export const Post = Schema.Struct({
   id: Schema.String,
   author: Schema.String,
   publishedAt: Schema.String,
+  group: Schema.String,
   time: Schema.String,
   title: Schema.String,
   summary: Schema.String,
@@ -35,6 +39,7 @@ export const Post = Schema.Struct({
 export type Post = typeof Post.Type
 
 export const Feed = Schema.Struct({
+  groups: Schema.Record(Schema.String, Group),
   people: Schema.Record(Schema.String, Person),
   posts: Schema.Array(Post),
 })

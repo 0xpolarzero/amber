@@ -42,56 +42,57 @@ export function FeedPage({ search }: { search: FeedSearch }) {
   const posts = selectPosts(state, search, saved, user)
   const needsAccount =
     !user && (search.bookmarked || search.authors?.includes('me'))
-  const narrowed = Boolean(search.q || search.authors?.length)
+  const narrowed = Boolean(
+    search.q || search.authors?.length || search.groups?.length,
+  )
   return (
     <>
-      <header className="feed-header">
-        <div className="heading-line">
-          <h1>Feed</h1>
-          <div className="feed-controls">
-            <label className="sort-control">
-              <span className="visually-hidden">Sort posts</span>
-              <select
-                value={search.sort}
-                style={{
-                  width:
-                    search.sort === 'latest'
-                      ? 80
-                      : search.sort === 'comments'
-                        ? 142
-                        : 150,
+      <header className="feed-header feed-discovery">
+        <h1 className="visually-hidden">Projects</h1>
+        <FeedFilters
+          search={search}
+          update={update}
+          controls={
+            <>
+              <label className="sort-control" data-sort={search.sort}>
+                <span className="visually-hidden">Sort posts</span>
+                <select
+                  value={search.sort}
+                  onChange={(event) =>
+                    update(
+                      parseFeedSearch({ ...search, sort: event.target.value }),
+                    )
+                  }
+                >
+                  <option value="latest">Newest</option>
+                  <option value="comments">Most commented</option>
+                  <option value="bookmarks">Most bookmarked</option>
+                </select>
+                <span className="compact-sort-label" aria-hidden="true">
+                  {search.sort === 'latest'
+                    ? 'Newest'
+                    : search.sort === 'comments'
+                      ? 'Comments'
+                      : 'Bookmarks'}
+                </span>
+                <Icon name="chevronDown" />
+              </label>
+              <button
+                type="button"
+                className={`icon-button ${searchOpen ? 'active' : ''}`}
+                aria-label="Search posts"
+                aria-expanded={searchOpen || Boolean(search.q)}
+                aria-controls="feed-search"
+                onClick={() => {
+                  setSearchOpen(true)
+                  requestAnimationFrame(() => input.current?.focus())
                 }}
-                onChange={(event) =>
-                  update(
-                    parseFeedSearch({ ...search, sort: event.target.value }),
-                  )
-                }
               >
-                <option value="latest">Newest</option>
-                <option value="comments">Most commented</option>
-                <option value="bookmarks">Most bookmarked</option>
-              </select>
-              <Icon name="chevronDown" />
-            </label>
-            <button
-              type="button"
-              className={`icon-button ${searchOpen ? 'active' : ''}`}
-              aria-label="Search posts"
-              aria-expanded={searchOpen || Boolean(search.q)}
-              aria-controls="feed-search"
-              onClick={() => {
-                setSearchOpen(true)
-                requestAnimationFrame(() => input.current?.focus())
-              }}
-            >
-              <Icon name="search" />
-            </button>
-          </div>
-        </div>
-        <p className="feed-subtitle">
-          Small projects, shared by the people making them.
-        </p>
-        <FeedFilters search={search} update={update} />
+                <Icon name="search" />
+              </button>
+            </>
+          }
+        />
         <div
           className="search-box"
           hidden={!searchOpen && !search.q}

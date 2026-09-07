@@ -8,25 +8,59 @@ export type FeedSearch = {
   q: string
   bookmarked?: true
   authors?: string[]
+  groups?: string[]
 }
 
-export function parseFeedSearch(search: Record<string, unknown>): FeedSearch {
-  const rawAuthors = Array.isArray(search.authors)
-    ? search.authors
-    : [search.authors]
-  const authors = [
+function parseIds(value: unknown) {
+  const values = Array.isArray(value) ? value : [value]
+  return [
     ...new Set(
-      rawAuthors.filter(
-        (author): author is string =>
-          typeof author === 'string' && /^[\w-]{1,64}$/.test(author),
+      values.filter(
+        (id): id is string =>
+          typeof id === 'string' && /^[\w-]{1,64}$/.test(id),
       ),
     ),
   ].slice(0, 50)
+}
+
+export function parseFeedSearch(search: Record<string, unknown>): FeedSearch {
+  const authors = parseIds(search.authors)
+  const groups = parseIds(search.groups)
   return {
     sort: Schema.is(FeedSort)(search.sort) ? search.sort : 'latest',
     q: typeof search.q === 'string' ? search.q.slice(0, 200) : '',
     ...(search.bookmarked === true ? { bookmarked: true as const } : {}),
     ...(authors.length ? { authors } : {}),
+    ...(groups.length ? { groups } : {}),
+  }
+}
+
+export function selectFilterOptions(
+  data: Feed,
+  search: FeedSearch,
+  user: string | null,
+) {
+  const authors = search.authors?.map((id) => (id === 'me' ? user : id))
+  const groupIds = new Set<string>()
+  const authorIds = new Set<string>()
+  for (const post of data.posts) {
+    if (!authors?.length || authors.includes(post.author))
+      groupIds.add(post.group)
+    if (!search.groups?.length || search.groups.includes(post.group))
+      authorIds.add(post.author)
+  }
+  return {
+    groups: [...groupIds]
+      .filter((id) => data.groups[id])
+      .sort((a, b) => data.groups[a].name.localeCompare(data.groups[b].name)),
+    authors: [
+      ...(!search.groups?.length || (user && authorIds.has(user))
+        ? ['me']
+        : []),
+      ...[...authorIds]
+        .filter((id) => id !== user && data.people[id])
+        .sort((a, b) => data.people[a].name.localeCompare(data.people[b].name)),
+    ],
   }
 }
 
@@ -43,6 +77,7 @@ export function selectPosts(
       (post) =>
         (!search.bookmarked || saved.includes(post.id)) &&
         (!authors?.length || authors.includes(post.author)) &&
+        (!search.groups?.length || search.groups.includes(post.group)) &&
         [
           post.title,
           post.summary,

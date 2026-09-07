@@ -5,7 +5,9 @@ test.beforeEach(async ({ page }) => {
     throw error
   })
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'Feed' })).toBeVisible()
+  await expect(
+    page.getByRole('combobox', { name: 'Filter by group' }),
+  ).toBeVisible()
 })
 
 test('serves real HTML, valid routes and the review plan', async ({

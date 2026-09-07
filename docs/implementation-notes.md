@@ -18,7 +18,9 @@ CI actions use Node 24 and verified commit pins: [checkout 7.0.1](https://github
 
 Google AI Pro access remains a separate setup check: use official Gemini CLI Google sign-in and subscription quota, with no API-credit fallback. Gemini 3.8 Flash access through that signed-in CLI has not been demonstrated. [CLI authentication](https://geminicli.com/docs/get-started/authentication/), [CLI model selection](https://geminicli.com/docs/cli/model/)
 
-Feed filters compose in the URL: `authors` matches any selected author, `me` resolves against the current account, and `bookmarked` intersects with that account’s bookmarks. The author picker follows the WAI combobox pattern: arrow keys move the active option, Enter adds its filter chip, Escape dismisses the popup, and focus stays in the input. [WAI combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/)
+Feed filters compose in the URL: `groups` and `authors` each match any selected value, `me` resolves against the current account, and `bookmarked` intersects with that account’s bookmarks. Group options come from posts by the selected authors; author options come from posts in the selected groups. Each picker ignores its own selections when deriving alternatives, and bookmarks/search do not restrict picker options. Incompatible URL selections remain visible and removable. Two fictional groups demonstrate this interaction; Telegram collection remains unimplemented.
+
+The group and author pickers share the WAI combobox behavior: arrow keys move the active option, Enter adds its filter chip, Escape dismisses the popup, and focus stays in the input. Active chips sit below the single control row. [WAI combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/)
 
 Messages currently reuses each sample post’s private question. Opening a question marks it read for its recipient; accepting an answer removes the pending question. Read state is temporary preview state, like bookmarks and edits. Persistent conversations and server authorization remain future work. Old `/saved` and `/dashboard` links redirect to the corresponding feed filters.
 

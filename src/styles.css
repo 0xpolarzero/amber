@@ -339,13 +339,6 @@ main {
   border-bottom: 1px solid var(--line);
 }
 
-.heading-line {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 14px;
-}
-
 .feed-header h1 {
   font-size: 21px;
   letter-spacing: -0.6px;
@@ -382,6 +375,7 @@ main {
 }
 
 .feed-controls {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -403,6 +397,7 @@ main {
   font-size: 12px;
   padding: 8px 25px 8px 10px;
   min-height: 36px;
+  width: 80px;
   cursor: pointer;
 }
 
@@ -450,20 +445,34 @@ main {
 }
 
 /* Composable feed filters */
-.feed-filters {
+.feed-header.feed-discovery {
+  padding: 22px 0 18px;
+}
+
+.feed-toolbar,
+.active-filters {
   border: 0;
   padding: 0;
-  margin: 20px 0 0;
+  margin: 0;
   min-width: 0;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 8px;
 }
 
+.feed-toolbar {
+  position: relative;
+}
+
+.active-filters {
+  flex-wrap: wrap;
+  margin-top: 12px;
+  gap: 6px;
+}
+
 .filter-chip,
-.author-filter {
-  min-height: 34px;
+.filter-input,
+.bookmark-filter {
   border: 1px solid var(--line);
   border-radius: 7px;
   font-size: 12px;
@@ -471,55 +480,81 @@ main {
 }
 
 .filter-chip {
+  min-height: 30px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 6px 10px;
+  padding: 5px 9px;
   max-width: 100%;
   text-align: left;
+  background: var(--soft);
 }
 
 .filter-chip svg,
-.author-filter > svg {
+.filter-input > svg {
   width: 14px;
   height: 14px;
 }
 
 .filter-chip:hover,
-.filter-chip.selected {
+.bookmark-filter:hover,
+.bookmark-filter.active {
   background: var(--soft);
   color: var(--ink);
   border-color: #e2e2de;
 }
 
-.filter-chip:where(.selected) svg:last-child {
+.filter-chip svg:last-child {
   width: 12px;
   height: 12px;
   color: var(--quiet);
 }
 
-.author-filter {
-  width: 125px;
+.bookmark-filter {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.bookmark-filter svg {
+  width: 15px;
+  height: 15px;
+}
+
+.bookmark-filter.active svg {
+  fill: currentColor;
+}
+
+.filter-combobox {
+  position: relative;
+  width: 112px;
+  flex-shrink: 0;
+}
+
+.filter-input {
   position: relative;
 }
 
-.author-filter > svg {
+.filter-input > svg {
   position: absolute;
-  left: 10px;
+  left: 9px;
   top: 9px;
   pointer-events: none;
 }
 
-.author-filter > svg:last-of-type {
+.filter-input > svg:last-of-type {
   left: auto;
-  right: 8px;
+  right: 7px;
   width: 12px;
 }
 
-.author-filter input {
+.filter-input input {
   width: 100%;
   height: 32px;
-  padding: 0 25px 0 31px;
+  padding: 0 23px 0 29px;
   border: 0;
   border-radius: 7px;
   background: transparent;
@@ -527,14 +562,14 @@ main {
   font-size: 12px;
 }
 
-.author-filter input::placeholder {
+.filter-input input::placeholder {
   color: var(--secondary);
 }
 
-.author-popup {
+.filter-popup {
   position: absolute;
   top: calc(100% + 7px);
-  right: 0;
+  left: 0;
   width: 228px;
   max-width: calc(100vw - 40px);
   max-height: 292px;
@@ -547,7 +582,7 @@ main {
   box-shadow: 0 8px 24px #0000000d;
 }
 
-.author-popup [role="option"] {
+.filter-popup [role="option"] {
   width: 100%;
   min-height: 42px;
   padding: 7px;
@@ -559,24 +594,43 @@ main {
   font-size: 12px;
 }
 
-.author-popup [role="option"]:hover,
-.author-popup [aria-selected="true"] {
+.filter-popup [role="option"]:hover,
+.filter-popup [aria-selected="true"] {
   background: var(--soft);
 }
 
-.author-popup small {
+.filter-popup small {
   margin-left: auto;
   color: var(--quiet);
   font-size: 10px;
 }
 
-.author-popup .avatar svg {
-  width: 14px;
-  height: 14px;
+.filter-option-icon {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  flex-shrink: 0;
 }
 
-.author-no-results {
+.filter-option-icon > svg {
+  width: 15px;
+  height: 15px;
+}
+
+.filter-no-results {
   padding: 14px 8px;
+}
+
+.sort-control[data-sort="comments"] select {
+  width: 142px;
+}
+
+.sort-control[data-sort="bookmarks"] select {
+  width: 150px;
+}
+
+.compact-sort-label {
+  display: none;
 }
 
 /* Private questions */
@@ -1612,16 +1666,13 @@ dialog::backdrop {
   }
 
   .feed-controls {
+    margin-left: auto;
     gap: 0;
   }
 
   .sort-control select {
     font-size: 11px;
     padding-left: 6px;
-  }
-
-  .heading-line {
-    gap: 8px;
   }
 
   .post {
@@ -1859,4 +1910,80 @@ dialog::backdrop {
 .answer-context {
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+@media (max-width: 500px) {
+  .feed-header.feed-discovery {
+    padding: 18px 0 16px;
+  }
+
+  .feed-toolbar {
+    gap: 5px;
+  }
+
+  .filter-combobox {
+    position: static;
+    width: 82px;
+  }
+
+  .filter-input input {
+    font-size: 11px;
+    padding-left: 9px;
+    padding-right: 21px;
+  }
+
+  .filter-input > svg:first-child {
+    display: none;
+  }
+
+  .filter-combobox[data-kind="author"] .filter-popup {
+    left: clamp(0px, 87px, calc(100% - 228px));
+  }
+
+  .bookmark-filter {
+    width: 32px;
+  }
+
+  .feed-toolbar .sort-control select {
+    width: 86px;
+    color: transparent;
+  }
+
+  .feed-toolbar .sort-control option {
+    color: var(--ink);
+  }
+
+  .compact-sort-label {
+    display: block;
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: var(--secondary);
+    pointer-events: none;
+  }
+
+  .feed-toolbar .icon-button {
+    width: 32px;
+  }
+}
+
+@media (max-width: 360px) {
+  .feed-toolbar {
+    gap: 3px;
+  }
+
+  .filter-combobox {
+    width: 66px;
+  }
+
+  .feed-toolbar .sort-control select {
+    width: 80px;
+  }
+
+  .feed-toolbar .icon-button,
+  .bookmark-filter {
+    width: 28px;
+  }
 }

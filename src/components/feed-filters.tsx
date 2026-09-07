@@ -1,177 +1,142 @@
-import { useId, useRef, useState } from 'react'
-import type { FeedSearch } from '../domain/feed'
+import { type ReactNode, useRef } from 'react'
+import { type FeedSearch, selectFilterOptions } from '../domain/feed'
 import { usePreview } from '../preview/provider'
 import { Avatar } from './avatar'
-import { Icon } from './icon'
+import { FilterCombobox } from './filter-combobox'
+import { Icon, type IconName } from './icon'
 
 export function FeedFilters({
   search,
   update,
+  controls,
 }: {
   search: FeedSearch
   update: (search: FeedSearch) => void
+  controls: ReactNode
 }) {
   const { state, user } = usePreview()
-  const [query, setQuery] = useState('')
-  const [open, setOpen] = useState(false)
-  const [active, setActive] = useState(-1)
-  const input = useRef<HTMLInputElement>(null)
-  const listId = useId()
+  const groupInput = useRef<HTMLInputElement>(null)
+  const authorInput = useRef<HTMLInputElement>(null)
+  const bookmark = useRef<HTMLButtonElement>(null)
+  const groups = search.groups ?? []
   const authors = search.authors ?? []
-  const choices = [
-    { id: 'me', name: 'Me', personId: user },
-    ...Object.entries(state.people)
-      .filter(
-        ([id]) => id !== user && state.posts.some((post) => post.author === id),
-      )
-      .map(([id, person]) => ({ id, name: person.name, personId: id }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
-  ].filter(
-    (choice) =>
-      !authors.includes(choice.id) &&
-      !(choice.id === 'me' && user && authors.includes(user)) &&
-      `${choice.name} ${choice.personId ? state.people[choice.personId]?.name : ''}`
-        .toLocaleLowerCase()
-        .includes(query.trim().toLocaleLowerCase()),
-  )
-  const selected = choices[active]
-  const choose = (id: string) => {
-    update({ ...search, authors: [...authors, id] })
-    setQuery('')
-    setActive(-1)
-    setOpen(false)
-    input.current?.focus()
-  }
+  const options = selectFilterOptions(state, search, user)
+  const chips = [
+    ...groups.map((id) => ({
+      id: `group-${id}`,
+      name: state.groups[id]?.name ?? id,
+      icon: 'group' as IconName,
+      label: `Remove group filter ${state.groups[id]?.name ?? id}`,
+      remove: () => {
+        update({ ...search, groups: groups.filter((group) => group !== id) })
+        groupInput.current?.focus()
+      },
+    })),
+    ...authors.map((id) => ({
+      id: `author-${id}`,
+      name: id === 'me' ? 'Me' : (state.people[id]?.name ?? id),
+      icon: 'user' as IconName,
+      label: `Remove author filter ${id === 'me' ? 'Me' : (state.people[id]?.name ?? id)}`,
+      remove: () => {
+        update({
+          ...search,
+          authors: authors.filter((author) => author !== id),
+        })
+        authorInput.current?.focus()
+      },
+    })),
+    ...(search.bookmarked
+      ? [
+          {
+            id: 'bookmarked',
+            name: 'Bookmarked',
+            icon: 'bookmark' as IconName,
+            label: 'Remove Bookmarked filter',
+            remove: () => {
+              update({ ...search, bookmarked: undefined })
+              bookmark.current?.focus()
+            },
+          },
+        ]
+      : []),
+  ]
   return (
-    <fieldset className="feed-filters">
-      <legend className="visually-hidden">Feed filters</legend>
-      <button
-        type="button"
-        className={`filter-chip ${search.bookmarked ? 'selected' : ''}`}
-        aria-label={
-          search.bookmarked ? 'Remove Bookmarked filter' : 'Bookmarks'
-        }
-        aria-pressed={Boolean(search.bookmarked)}
-        onClick={() =>
-          update({
-            ...search,
-            bookmarked: search.bookmarked ? undefined : true,
-          })
-        }
-      >
-        <Icon name="bookmark" />
-        {search.bookmarked ? 'Bookmarked' : 'Bookmarks'}
-        {search.bookmarked && <Icon name="close" />}
-      </button>
-      <div className="author-filter">
-        <Icon name="user" />
-        <input
-          ref={input}
-          role="combobox"
-          aria-label="Filter by author"
-          aria-expanded={open}
-          aria-controls={listId}
-          aria-autocomplete="list"
-          aria-activedescendant={
-            open && selected ? `${listId}-${selected.id}` : undefined
-          }
-          autoComplete="off"
-          placeholder="Author"
-          value={query}
-          onFocus={() => setOpen(true)}
-          onClick={() => setOpen(true)}
-          onBlur={() => {
-            setOpen(false)
-            setActive(-1)
-          }}
-          onChange={(event) => {
-            setQuery(event.target.value)
-            setActive(-1)
-            setOpen(true)
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-              event.preventDefault()
-              setOpen(true)
-              const next =
-                event.key === 'ArrowDown'
-                  ? Math.min(open ? active + 1 : 0, choices.length - 1)
-                  : active <= 0
-                    ? choices.length - 1
-                    : active - 1
-              setActive(next)
-              const choice = choices[next]
-              if (choice)
-                document
-                  .getElementById(`${listId}-${choice.id}`)
-                  ?.scrollIntoView({ block: 'nearest' })
-            } else if (event.key === 'Enter' && open && selected) {
-              event.preventDefault()
-              choose(selected.id)
-            } else if (event.key === 'Escape') {
-              setOpen(false)
-              setActive(-1)
-              setQuery('')
-            }
-          }}
+    <>
+      <fieldset className="feed-toolbar">
+        <legend className="visually-hidden">Feed filters</legend>
+        <FilterCombobox
+          label="Group"
+          icon="group"
+          inputRef={groupInput}
+          options={options.groups
+            .filter((id) => !groups.includes(id))
+            .map((id) => ({ id, name: state.groups[id].name }))}
+          onSelect={(id) => update({ ...search, groups: [...groups, id] })}
         />
-        <Icon name="chevronDown" />
-        <div className="author-popup" hidden={!open}>
-          <div id={listId} role="listbox" aria-label="Authors">
-            {choices.map((choice, index) => (
-              <button
-                type="button"
-                role="option"
-                key={choice.id}
-                id={`${listId}-${choice.id}`}
-                aria-selected={active === index}
-                tabIndex={-1}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => choose(choice.id)}
-              >
-                {choice.personId ? (
-                  <Avatar personId={choice.personId} size="tiny" />
-                ) : (
-                  <span className="avatar tiny">
-                    <Icon name="user" />
-                  </span>
-                )}
-                <span>{choice.name}</span>
-                {choice.id === 'me' && (
-                  <small>{user ? state.people[user].name : 'Sign in'}</small>
-                )}
-              </button>
-            ))}
-          </div>
-          {!choices.length && (
-            <p className="author-no-results" role="status">
-              No matching authors.
-            </p>
-          )}
-        </div>
-      </div>
-      {authors.map((id) => {
-        const name = id === 'me' ? 'Me' : (state.people[id]?.name ?? id)
-        return (
-          <button
-            key={id}
-            type="button"
-            className="filter-chip selected"
-            aria-label={`Remove author filter ${name}`}
-            onClick={() => {
-              update({
-                ...search,
-                authors: authors.filter((author) => author !== id),
-              })
-              input.current?.focus()
-            }}
-          >
-            <Icon name="user" />
-            {name}
-            <Icon name="close" />
-          </button>
-        )
-      })}
-    </fieldset>
+        <FilterCombobox
+          label="Author"
+          icon="user"
+          inputRef={authorInput}
+          options={options.authors
+            .filter(
+              (id) =>
+                !authors.includes(id) &&
+                !(id === 'me' && user && authors.includes(user)),
+            )
+            .map((id) => {
+              const personId = id === 'me' ? user : id
+              return {
+                id,
+                name: id === 'me' ? 'Me' : state.people[id].name,
+                hint:
+                  id === 'me'
+                    ? user
+                      ? state.people[user].name
+                      : 'Sign in'
+                    : undefined,
+                leading: personId ? (
+                  <Avatar personId={personId} size="tiny" />
+                ) : undefined,
+              }
+            })}
+          onSelect={(id) => update({ ...search, authors: [...authors, id] })}
+        />
+        <button
+          type="button"
+          ref={bookmark}
+          className={`bookmark-filter ${search.bookmarked ? 'active' : ''}`}
+          aria-label="Bookmarks"
+          title="Bookmarks"
+          aria-pressed={Boolean(search.bookmarked)}
+          onClick={() =>
+            update({
+              ...search,
+              bookmarked: search.bookmarked ? undefined : true,
+            })
+          }
+        >
+          <Icon name="bookmark" />
+        </button>
+        <div className="feed-controls">{controls}</div>
+      </fieldset>
+      {chips.length > 0 && (
+        <fieldset className="active-filters">
+          <legend className="visually-hidden">Active filters</legend>
+          {chips.map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              className="filter-chip"
+              aria-label={chip.label}
+              onClick={chip.remove}
+            >
+              <Icon name={chip.icon} />
+              {chip.name}
+              <Icon name="close" />
+            </button>
+          ))}
+        </fieldset>
+      )}
+    </>
   )
 }

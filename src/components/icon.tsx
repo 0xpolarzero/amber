@@ -11,6 +11,7 @@ const glyphs = {
     <path d="M20 11.5a8 8 0 0 1-8 8 9.7 9.7 0 0 1-3.5-.7L4 20l1.2-4.5A8 8 0 1 1 20 11.5Z" />
   ),
   bookmark: <path d="M6.5 4.5h11v16L12 17l-5.5 3.5z" />,
+  group: <path d="M4 8h16M4 16h16M10 3 8 21M16 3l-2 18" />,
   arrow: <path d="M6 18 18 6M7 6h11v11" />,
   chevron: <path d="m10 6 6 6-6 6" />,
   chevronDown: <path d="m6 9 6 6 6-6" />,

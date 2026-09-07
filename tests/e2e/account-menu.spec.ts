@@ -34,7 +34,12 @@ test('account dropdown contains working profile and sign-out actions', async ({
   await trigger.click()
   await expect(menu).toBeHidden()
   await trigger.click()
-  await page.getByRole('heading', { name: 'Feed' }).click()
+  await page
+    .getByRole('heading', {
+      name: 'Voice notes, finally searchable.',
+      exact: true,
+    })
+    .click()
   await expect(menu).toBeHidden()
   await trigger.click()
   await menu.getByRole('menuitem', { name: 'Your profile' }).click()
@@ -82,7 +87,9 @@ test('account dropdown supports keyboard navigation without trapping focus', asy
   await expect(menu.getByRole('menuitem', { name: 'Sign out' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(menu).toBeHidden()
-  await expect(page.getByRole('combobox', { name: 'Sort posts' })).toBeFocused()
+  await expect(
+    page.getByRole('combobox', { name: 'Filter by group' }),
+  ).toBeFocused()
   await trigger.focus()
   await trigger.press('Space')
   await page.keyboard.press('Shift+Tab')

@@ -1,4 +1,12 @@
 {
+  "groups": {
+    "builders": {
+      "name": "AI Builders"
+    },
+    "creative": {
+      "name": "Creative AI"
+    }
+  },
   "people": {
     "alex": {
       "name": "Alex Chen",
@@ -76,7 +84,8 @@
           "time": "25m"
         }
       ],
-      "publishedAt": "2026-09-06T12:00:00.000Z"
+      "publishedAt": "2026-09-06T12:00:00.000Z",
+      "group": "builders"
     },
     {
       "id": "reading-margin",
@@ -103,7 +112,8 @@
           "time": "2h"
         }
       ],
-      "publishedAt": "2026-09-06T10:00:00.000Z"
+      "publishedAt": "2026-09-06T10:00:00.000Z",
+      "group": "creative"
     },
     {
       "id": "meeting-tasks",
@@ -124,7 +134,8 @@
           "time": "4h"
         }
       ],
-      "publishedAt": "2026-09-06T08:00:00.000Z"
+      "publishedAt": "2026-09-06T08:00:00.000Z",
+      "group": "builders"
     },
     {
       "id": "palette-tool",
@@ -151,7 +162,8 @@
           "time": "Yesterday"
         }
       ],
-      "publishedAt": "2026-09-06T06:00:00.000Z"
+      "publishedAt": "2026-09-06T06:00:00.000Z",
+      "group": "creative"
     },
     {
       "id": "paper-map",
@@ -165,7 +177,8 @@
       "mark": "p",
       "detail": "Sam built this to find half-remembered papers. It presents small groups of related ideas with the page references that connect them.\n\nThe files and index stay local.",
       "comments": [],
-      "publishedAt": "2026-09-06T04:00:00.000Z"
+      "publishedAt": "2026-09-06T04:00:00.000Z",
+      "group": "builders"
     }
   ]
 }
