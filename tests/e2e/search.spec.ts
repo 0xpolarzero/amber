@@ -44,7 +44,7 @@ test('keeps search and filters stationary while composing and clearing a query',
   await page.getByRole('button', { name: 'Clear search' }).click()
   await expect(search).toBeFocused()
   await expect(search).toHaveValue('')
-  await expect(page.locator('#feed-list > article')).toHaveCount(5)
+  await expect(page.locator('#feed-list > article')).toHaveCount(6)
   await search.press('Escape')
   await page.keyboard.press('/')
   await expect(search).toBeFocused()

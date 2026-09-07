@@ -33,7 +33,7 @@ describe('group and author filters', () => {
         },
         [],
       ).map((post) => post.id),
-    ).toEqual(['voice-notes'])
+    ).toEqual(['voice-notes', 'tab-tidy'])
     expect(
       selectPosts(
         data,

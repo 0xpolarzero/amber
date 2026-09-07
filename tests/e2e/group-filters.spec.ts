@@ -41,7 +41,7 @@ test('group filters narrow authors and survive a post visit and reload', async (
   ).toHaveAttribute('aria-selected', 'true')
   await input.press('Escape')
   const posts = page.locator('#feed-list > article')
-  await expect(posts).toHaveCount(3)
+  await expect(posts).toHaveCount(4)
   const author = await openFilter(page, 'author')
   await expect(page.getByRole('listbox').getByRole('option')).toHaveText([
     /Alex Chen/,
@@ -50,7 +50,7 @@ test('group filters narrow authors and survive a post visit and reload', async (
   ])
   await page.getByRole('option', { name: 'Alex Chen' }).click()
   await author.press('Escape')
-  await expect(posts).toHaveCount(1)
+  await expect(posts).toHaveCount(2)
   await posts
     .first()
     .getByRole('link', {
@@ -66,15 +66,15 @@ test('group filters narrow authors and survive a post visit and reload', async (
     page.getByRole('button', { name: 'Remove author filter Alex Chen' }),
   ).toBeVisible()
   await page.reload()
-  await expect(posts).toHaveCount(1)
+  await expect(posts).toHaveCount(2)
   await page
     .getByRole('button', { name: 'Remove author filter Alex Chen' })
     .click()
-  await expect(posts).toHaveCount(3)
+  await expect(posts).toHaveCount(4)
   await page
     .getByRole('button', { name: 'Remove group filter AI Builders' })
     .click()
-  await expect(posts).toHaveCount(5)
+  await expect(posts).toHaveCount(6)
   await openFilter(page, 'author')
   await expect(page.getByRole('option', { name: 'Maya Laurent' })).toBeVisible()
 })
@@ -199,7 +199,7 @@ test('supports several selections in one dropdown and clears the active filters 
   await expect(
     page.getByRole('listbox').getByRole('option', { selected: true }),
   ).toHaveCount(2)
-  await expect(page.locator('#feed-list > article')).toHaveCount(5)
+  await expect(page.locator('#feed-list > article')).toHaveCount(6)
   await group.press('Escape')
   const author = await openFilter(page, 'author')
   await author.fill('Maya')
@@ -213,7 +213,7 @@ test('supports several selections in one dropdown and clears the active filters 
     page.getByRole('listbox').getByRole('option', { selected: true }),
   ).toHaveCount(2)
   await author.press('Escape')
-  await expect(page.locator('#feed-list > article')).toHaveCount(2)
+  await expect(page.locator('#feed-list > article')).toHaveCount(3)
   await page.getByRole('button', { name: 'Bookmarks', exact: true }).click()
   await page.getByRole('button', { name: 'Clear filters' }).click()
   await expect(page.getByRole('group', { name: 'Active filters' })).toHaveCount(
@@ -225,5 +225,5 @@ test('supports several selections in one dropdown and clears the active filters 
   await expect(
     page.getByRole('button', { name: 'Filter by group' }),
   ).toBeFocused()
-  await expect(page.locator('#feed-list > article')).toHaveCount(5)
+  await expect(page.locator('#feed-list > article')).toHaveCount(6)
 })

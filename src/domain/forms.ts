@@ -4,6 +4,10 @@ const requiredText = (max: number) =>
   Schema.String.check(Schema.isPattern(/\S/), Schema.isMaxLength(max))
 export const CommentText = requiredText(2000)
 export const AnswerText = requiredText(1000)
+export const MemoryText = requiredText(500)
+export const MemoryForm = Schema.toStandardSchemaV1(
+  Schema.Struct({ text: MemoryText }),
+)
 export const EditPost = Schema.Struct({
   title: requiredText(140),
   summary: requiredText(500),

@@ -95,6 +95,6 @@ test('account dropdown supports keyboard navigation without trapping focus', asy
   await expect(
     page
       .getByRole('navigation', { name: 'Main navigation' })
-      .getByRole('link', { name: /Messages/ }),
+      .getByRole('link', { name: /Agent/ }),
   ).toBeFocused()
 })

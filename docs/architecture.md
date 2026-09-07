@@ -46,16 +46,17 @@ amber/
 │   ├── routes/
 │   │   ├── index.tsx            # Feed with bookmark and author filters
 │   │   ├── posts.$postId.tsx     # Post and comments
-│   │   ├── messages.tsx         # Private questions and unread count
+│   │   ├── agent.tsx            # One private conversation and memory
 │   │   └── api.auth.$.ts        # Telegram/X authentication endpoints
-│   ├── components/              # Cards, editors, question forms
+│   ├── components/              # Cards, editors, Agent chat and memory controls
 │   ├── queries/                 # Shared TanStack Query definitions
-│   ├── domain/                  # Effect schemas: Post, Author, Question
+│   ├── domain/                  # Effect schemas: Post, Author, AgentMessage, Preference
 │   ├── server/
 │   │   ├── functions.ts         # Start server functions: validate and call services
 │   │   ├── auth.ts              # Sessions, providers, explicit account linking
 │   │   ├── runtime.ts           # Wire Effect services and resource lifetimes
-│   │   ├── posts.ts             # Read/edit/publish/answer/comment rules
+│   │   ├── posts.ts             # Read/edit/publish/comment rules
+│   │   ├── agent.ts             # Conversation, memory and owned-post updates
 │   │   ├── telegram.ts          # GramJS connection and normalized message reads
 │   │   ├── gemini.ts            # Gemini CLI subprocess, JSON parsing, quota errors
 │   │   ├── database.ts          # Effect SQL and transactions
@@ -134,6 +135,16 @@ Send a message to Amber
 The GramJS reader uses the project owner's session. Website users log in separately with Telegram OIDC or X OAuth. Match a Telegram author by the verified numeric Telegram user ID, and link X explicitly to the same internal account. X-only login permits comments, not ownership of somebody's Telegram posts. Keep all reader credentials server-side.
 
 A BotFather bot is still needed to represent the website's Telegram login; it need not collect group messages. Follow-up questions can stay on the website. Direct-message notifications can be added later through the Bot API if desired. Telegram's verified profile includes an id distinct from the OIDC sub and omits email/UserInfo, so retain the Auth.js custom-provider verification spike described in research.md. [Telegram login](https://core.telegram.org/bots/telegram-login)
+
+## Agent conversation and memory
+
+Each user has one private Agent conversation. A message may reference one or more posts; changing post context does not start a new conversation. The agent can discuss public posts, but changes require verified ownership. Deleting a post does not delete the user’s conversation or preferences.
+
+Use the same PostgreSQL database. Store a conversation keyed uniquely by `user_id`, its messages with optional post references, and a small `user_preferences` table containing the preference text, version and source message. Record explicit lasting preferences separately from project-specific facts. Start by loading all active preferences for that user before each post creation or revision job; no vector database is needed for this small preference set.
+
+The agent records preferences from conversation and acknowledges them in chat. Users can inspect, edit and forget them through Memory. Jobs retrieve the latest values at execution time and record which preference versions informed each update. Conditional post and preference version checks stop stale jobs from reapplying an old preference after the user changes or forgets it; regenerate against current state instead. Preferences guide wording and workflow, while source evidence supplies project facts.
+
+The current UI demonstrates this with scripted data and local memory. Persistent storage and live extraction/retrieval are separate implementation tasks; there is no running model behind the preview.
 
 ## Google subscription access
 

@@ -179,6 +179,21 @@
       "comments": [],
       "publishedAt": "2026-09-06T04:00:00.000Z",
       "group": "builders"
+    },
+    {
+      "id": "tab-tidy",
+      "author": "alex",
+      "publishedAt": "2026-09-04T10:00:00.000Z",
+      "group": "builders",
+      "time": "3d",
+      "title": "A place for all those open tabs.",
+      "summary": "A browser extension that turns open tabs into a small searchable library. It groups related pages so they are easier to find later.",
+      "detail": "Alex built this to keep research links without leaving dozens of tabs open. Saved pages stay organised by topic.",
+      "project": "Tab tidy",
+      "domain": "A searchable home for browser tabs",
+      "mark": "t.",
+      "bookmarks": 2,
+      "comments": []
     }
   ]
 }

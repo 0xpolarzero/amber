@@ -8,7 +8,7 @@ export function ReplyComposer({
   postId,
   draft,
 }: {
-  postId: string
+  postId?: string
   draft: string
 }) {
   const { dispatch } = usePreview()
@@ -60,7 +60,6 @@ export function ReplyComposer({
                 resizeReply(event.target)
                 dispatch({
                   type: 'draftMessage',
-                  postId,
                   text: event.target.value,
                 })
               }}

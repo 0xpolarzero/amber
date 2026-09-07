@@ -4,7 +4,7 @@
 
 The reviewed UI now runs as the React app: `pnpm dev`, then open http://127.0.0.1:3000. The [original feed prototype](./feed-prototype.html) remains a reference ([design notes](./design-direction.md)).
 
-**Built foundation:** routed sample feed, sorting, search, group/author/bookmark filters, profiles, comments, author editing, chat and an automatic-update diff example. Accounts and changes are local previews. The integration tasks below remain planned; no real messages are processed yet.
+**Built foundation:** routed sample feed, sorting, search, group/author/bookmark filters, profiles, comments, author editing, one Agent conversation, editable memory and an example applying the same preference across two posts. Accounts and changes are local previews. The integration tasks below remain planned; no real messages are processed yet.
 
 Proposed for review. Each numbered task delivers one checkable result. Refer to its number when suggesting changes.
 
@@ -17,7 +17,7 @@ A searchable showcase of one Telegram group's projects. Authors control their po
 | Feed `/` | Stationary Group, Author, Bookmarks, sort and search controls. Search has its own row on mobile. Removable filters and Clear filters below, including Me. Group and author choices narrow each other. |
 | Post `/posts/:id` | Summary, project/source links, author, comments. Owners get Edit, Remove and private AI questions. |
 | Author `/people/:id` | Name, linked X profile and projects. Exists before they join. |
-| Messages `/messages` | Private bot conversations with an unread badge. Open `/messages/:postId` for context, history, messages, drafts and diffs of applied AI changes. |
+| Agent `/agent` | One private conversation across all posts. Post context, unread badge, a shared draft, automatic-update diffs and a Memory button to inspect/edit/forget preferences. |
 | Admin `/admin` | Submissions to review, reported comments and worker health. |
 
 ```text
@@ -76,7 +76,7 @@ Build in order. Tasks 01–04 settle the main uncertainties; task 08 delivers th
 | 17 | Author pages | List each person's published projects, including before they join. |
 | 18 | Login and ownership | Verified Telegram ID claims the author; other accounts cannot edit their posts. |
 | 19 | Edit/remove posts | Save owner changes; prevent stale AI overwrites and reimport of removed posts. |
-| 20 | Questions and answers | Show up to three private questions; save answers and enqueue revision together. |
+| 20 | One Agent conversation | One conversation per user; attach optional post context, save messages and enqueue processing together. |
 | 21 | Automatic revisions and diffs | Apply AI changes, show the exact diff in chat, and preserve newer author edits. |
 | 22 | X login | X-only visitors sign in/out without claiming Telegram posts. |
 | 23 | Account linking | Prove both identities; explain conflicts; never merge by username. |
@@ -86,6 +86,8 @@ Build in order. Tasks 01–04 settle the main uncertainties; task 08 delivers th
 | 27 | Hosting | Run both processes with persistent protected sessions, HTTPS and scheduled backups. |
 | 28 | Recovery proof | Restart interrupted jobs and restore a backup; verify replay and record recovery time/data-loss window. |
 | 29 | Group pilot | Members find projects, correct a summary and answer a question; record and fix failures. |
+| 30 | Store user preferences | Persist preferences with user ownership and source/version; inspect, edit and forget them across sessions. |
+| 31 | Remember across posts | Record explicit preferences from chat; retrieve current preferences for later posts, show their use, and prevent stale jobs from reusing forgotten preferences. |
 
 ## How we will build together
 
@@ -96,3 +98,5 @@ Failed model/auth proofs block dependent work. Discuss the exact failure and an 
 Details and primary sources: [architecture.md](./architecture.md) and [initial research](./research.md).
 
 Start the review with the screen table, proposed defaults and tasks 01–04.
+
+Tasks 30–31 extend the Agent work in task 20 and precede the group pilot. Existing task IDs are preserved so review notes remain attached.

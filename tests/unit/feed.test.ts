@@ -14,7 +14,7 @@ describe('feed discovery', () => {
         },
         [],
       ).map((post) => post.id),
-    ).toEqual(['voice-notes', 'reading-margin'])
+    ).toEqual(['voice-notes', 'reading-margin', 'tab-tidy'])
     expect(
       selectPosts(
         fixtures,
@@ -32,7 +32,7 @@ describe('feed discovery', () => {
     const search = parseFeedSearch({ authors: ['me'] })
     expect(
       selectPosts(fixtures, search, [], 'alex').map((post) => post.id),
-    ).toEqual(['voice-notes'])
+    ).toEqual(['voice-notes', 'tab-tidy'])
     expect(selectPosts(fixtures, search, [], 'you')).toEqual([])
     expect(selectPosts(fixtures, search, [], null)).toEqual([])
   })
@@ -77,6 +77,7 @@ describe('feed discovery', () => {
       'palette-tool',
       'meeting-tasks',
       'paper-map',
+      'tab-tidy',
     ])
   })
   it('matches author and project names case-insensitively, including bookmarks', () => {

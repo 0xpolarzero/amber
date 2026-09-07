@@ -1,8 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { ConversationPage } from '../pages/conversation-page'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/messages/$postId')({ component: Page })
-
-function Page() {
-  return <ConversationPage postId={Route.useParams().postId} />
-}
+export const Route = createFileRoute('/messages/$postId')({
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/agent', search: { post: params.postId } })
+  },
+})

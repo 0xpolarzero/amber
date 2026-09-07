@@ -27,7 +27,7 @@ test('sorts and searches the feed, retaining filters when returning from a post'
   page,
 }) => {
   const posts = page.locator('#feed-list > article')
-  await expect(posts).toHaveCount(5)
+  await expect(posts).toHaveCount(6)
   await page
     .getByRole('combobox', { name: 'Sort posts' })
     .selectOption('bookmarks')
@@ -139,7 +139,10 @@ test('lets the author edit a post and open its private conversation', async ({
   await page.getByRole('button', { name: 'Filter by author' }).click()
   await page.getByRole('option', { name: /Me Alex Chen/ }).click()
   await page.getByRole('combobox', { name: 'Search authors' }).press('Escape')
-  await page.getByRole('button', { name: 'Edit post', exact: true }).click()
+  await page
+    .getByRole('button', { name: 'Edit post', exact: true })
+    .first()
+    .click()
   await page
     .getByRole('textbox', { name: 'Title', exact: true })
     .fill('Search your voice notes.')
@@ -147,7 +150,7 @@ test('lets the author edit a post and open its private conversation', async ({
   await expect(
     page.getByRole('link', { name: 'Search your voice notes.', exact: true }),
   ).toBeVisible()
-  await page.getByRole('link', { name: 'Message Amber' }).click()
+  await page.getByRole('link', { name: 'Message Amber' }).first().click()
   await page
     .getByRole('textbox', { name: 'Message Amber' })
     .fill('The first demo is available to the group.')
@@ -157,9 +160,7 @@ test('lets the author edit a post and open its private conversation', async ({
       .getByRole('log')
       .getByText('The first demo is available to the group.', { exact: true }),
   ).toBeVisible()
-  await page
-    .getByRole('link', { name: /Noted Search your voice notes/ })
-    .click()
+  await page.getByRole('link', { name: 'Noted', exact: true }).first().click()
   await expect(
     page.getByRole('heading', { name: 'Search your voice notes.' }),
   ).toBeVisible()
@@ -207,7 +208,7 @@ test('combines removable author chips with bookmarks and preserves filters on re
   await author.fill('Alex')
   await page.getByRole('option', { name: 'Alex Chen' }).click()
   const posts = page.locator('#feed-list > article')
-  await expect(posts).toHaveCount(2)
+  await expect(posts).toHaveCount(3)
   await page.getByRole('button', { name: 'Bookmarks', exact: true }).click()
   await expect(posts).toHaveCount(1)
   await expect(posts.first()).toHaveAccessibleName(
@@ -216,7 +217,7 @@ test('combines removable author chips with bookmarks and preserves filters on re
   await expect(page).toHaveURL(/bookmarked=true/)
   await expect(
     page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link'),
-  ).toHaveText(['Feed', 'Messages'])
+  ).toHaveText(['Feed', 'Agent'])
   await posts
     .first()
     .getByRole('link', {
@@ -232,7 +233,7 @@ test('combines removable author chips with bookmarks and preserves filters on re
     page.getByRole('button', { name: 'Remove author filter Alex Chen' }),
   ).toBeVisible()
   await page.getByRole('button', { name: 'Remove Bookmarked filter' }).click()
-  await expect(posts).toHaveCount(2)
+  await expect(posts).toHaveCount(3)
   await page
     .getByRole('button', { name: 'Remove author filter Alex Chen' })
     .click()
@@ -262,9 +263,9 @@ test('resolves Me for the current account and handles signed-out filters', async
   await page
     .getByRole('combobox', { name: 'Preview account' })
     .selectOption('author')
-  await expect(page.locator('#feed-list > article')).toHaveCount(1)
+  await expect(page.locator('#feed-list > article')).toHaveCount(2)
   await expect(
-    page.getByRole('button', { name: 'Edit post', exact: true }),
+    page.getByRole('button', { name: 'Edit post', exact: true }).first(),
   ).toBeVisible()
   await page
     .getByRole('combobox', { name: 'Preview account' })
@@ -273,7 +274,7 @@ test('resolves Me for the current account and handles signed-out filters', async
     page.getByRole('heading', { name: 'No projects match.' }),
   ).toBeVisible()
   await page.getByRole('button', { name: 'Remove author filter Me' }).click()
-  await expect(page.locator('#feed-list > article')).toHaveCount(5)
+  await expect(page.locator('#feed-list > article')).toHaveCount(6)
   await author.press('Escape')
   await page.getByRole('button', { name: 'Bookmarks', exact: true }).click()
   await expect(
@@ -281,48 +282,34 @@ test('resolves Me for the current account and handles signed-out filters', async
   ).toBeVisible()
 })
 
-test('shows private questions and an unread count only for their recipient', async ({
+test('opens one private Agent conversation and clears its unread badge', async ({
   page,
 }) => {
   const nav = page.getByRole('navigation', { name: 'Main navigation' })
-  await nav.getByRole('link', { name: 'Messages', exact: true }).click()
+  await nav.getByRole('link', { name: 'Agent', exact: true }).click()
   await expect(
-    page.getByRole('heading', { name: 'Your messages stay with you.' }),
+    page.getByRole('heading', { name: 'Your agent, just for you.' }),
   ).toBeVisible()
   await page
     .getByRole('combobox', { name: 'Preview account' })
     .selectOption('member')
   await expect(
-    page.getByRole('heading', { name: 'All quiet here.' }),
+    page.getByRole('heading', { name: 'What would you like to work on?' }),
   ).toBeVisible()
   await expect(
-    page.getByText('Can someone try it, or is it still a personal tool?'),
+    page.getByText('Can someone try Noted, or is it still a personal tool?'),
   ).toHaveCount(0)
+  await nav.getByRole('link', { name: 'Feed', exact: true }).click()
   await page
     .getByRole('combobox', { name: 'Preview account' })
     .selectOption('author')
-  await expect(
-    nav.getByRole('link', { name: 'Messages 1 unread' }),
-  ).toBeVisible()
-  await page.getByRole('link', { name: /Amber About Noted/ }).click()
+  await expect(nav.getByRole('link', { name: 'Agent 1 unread' })).toBeVisible()
+  await nav.getByRole('link', { name: 'Agent 1 unread' }).click()
   await expect(
     page.getByRole('log', { name: 'Conversation history' }),
   ).toBeVisible()
   await expect(
-    nav.getByRole('link', { name: 'Messages', exact: true }),
-  ).toBeVisible()
-  await page.getByRole('link', { name: 'Back to messages' }).click()
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('member')
-  await expect(
-    page.getByRole('heading', { name: 'All quiet here.' }),
-  ).toBeVisible()
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('author')
-  await expect(
-    nav.getByRole('link', { name: 'Messages', exact: true }),
+    nav.getByRole('link', { name: 'Agent', exact: true }),
   ).toBeVisible()
 })
 

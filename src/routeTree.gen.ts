@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgentRouteImport } from './routes/agent'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as PlanRouteImport } from './routes/plan'
@@ -22,6 +23,11 @@ import { Route as PostsPostIdRouteImport } from './routes/posts.$postId'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentRoute = AgentRouteImport.update({
+  id: '/agent',
+  path: '/agent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -67,6 +73,7 @@ const PostsPostIdRoute = PostsPostIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agent': typeof AgentRoute
   '/dashboard': typeof DashboardRoute
   '/messages': typeof MessagesRouteWithChildren
   '/plan': typeof PlanRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agent': typeof AgentRoute
   '/dashboard': typeof DashboardRoute
   '/plan': typeof PlanRoute
   '/saved': typeof SavedRoute
@@ -89,6 +97,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agent': typeof AgentRoute
   '/dashboard': typeof DashboardRoute
   '/messages': typeof MessagesRouteWithChildren
   '/plan': typeof PlanRoute
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agent'
     | '/dashboard'
     | '/messages'
     | '/plan'
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agent'
     | '/dashboard'
     | '/plan'
     | '/saved'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/agent'
     | '/dashboard'
     | '/messages'
     | '/plan'
@@ -135,6 +147,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgentRoute: typeof AgentRoute
   DashboardRoute: typeof DashboardRoute
   MessagesRoute: typeof MessagesRouteWithChildren
   PlanRoute: typeof PlanRoute
@@ -150,6 +163,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agent': {
+      id: '/agent'
+      path: '/agent'
+      fullPath: '/agent'
+      preLoaderRoute: typeof AgentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -227,6 +247,7 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgentRoute: AgentRoute,
   DashboardRoute: DashboardRoute,
   MessagesRoute: MessagesRouteWithChildren,
   PlanRoute: PlanRoute,

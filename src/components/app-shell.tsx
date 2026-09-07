@@ -33,8 +33,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               Feed
             </Link>
-            <Link to="/messages" activeProps={{ className: 'active' }}>
-              Messages
+            <Link to="/agent" search={{}} activeProps={{ className: 'active' }}>
+              Agent
               {user && unreadCount > 0 && (
                 <span
                   className="nav-badge"
@@ -78,6 +78,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <label>
           <span className="visually-hidden">Preview account</span>
           <select
+            autoComplete="off"
             value={state.role}
             onChange={(event) => {
               const role = event.target.value

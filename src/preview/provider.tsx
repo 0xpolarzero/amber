@@ -7,8 +7,9 @@ import {
   useReducer,
   useState,
 } from 'react'
-import type { Feed, Post } from '../domain/post'
+import type { Feed } from '../domain/post'
 import {
+  type AgentConversation,
   createPreviewState,
   currentUser,
   type PreviewAction,
@@ -25,8 +26,7 @@ type PreviewContext = {
   state: PreviewState
   user: string | null
   saved: readonly string[]
-  messages: readonly Post[]
-  readConversations: readonly string[]
+  agent: AgentConversation | null
   unreadCount: number
   dispatch: Dispatch<PreviewAction>
   dialog: PreviewDialog
@@ -50,17 +50,12 @@ export function PreviewProvider({
   const [notice, setNotice] = useState({ text: '', sequence: 0 })
   const user = currentUser(state.role)
   const saved = user ? (state.savedByUser[user] ?? []) : []
-  const messages = user
-    ? state.posts.filter(
-        (post) => post.author === user && state.conversations[post.id],
-      )
-    : []
-  const readConversations = user
-    ? (state.readConversationsByUser[user] ?? [])
-    : []
-  const unreadCount = messages.filter(
-    (post) => !readConversations.includes(post.id),
-  ).length
+  const agent = user ? state.agentByUser[user] : null
+  const unreadCount = agent
+    ? agent.messages
+        .slice(agent.readThrough)
+        .filter((message) => message.sender === 'amber').length
+    : 0
   const openDialog = setDialog
   useEffect(() => {
     if (!notice.text) return
@@ -97,8 +92,7 @@ export function PreviewProvider({
         state,
         user,
         saved,
-        messages,
-        readConversations,
+        agent,
         unreadCount,
         dispatch,
         dialog,
