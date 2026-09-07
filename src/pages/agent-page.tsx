@@ -1,11 +1,13 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AgentMemoryDialog } from '../components/agent-memory'
+import { AgentProgress } from '../components/agent-progress'
 import { Icon } from '../components/icon'
 import { ReplyComposer } from '../components/reply-composer'
 import { usePreview } from '../preview/provider'
 import {
   type AgentConversation,
+  isAgentBusy,
   isUnaddressed,
   type PostUpdate,
 } from '../preview/state'
@@ -164,6 +166,7 @@ function AgentChat({
         ))}
       </div>
       <div className="conversation-footer">
+        {agent.run && <AgentProgress run={agent.run} />}
         {postId && (
           <div className="agent-post-context">
             <span>About {context?.project ?? 'an unavailable post'}</span>
@@ -184,7 +187,11 @@ function AgentChat({
             </button>
           </div>
         )}
-        <ReplyComposer postId={context?.id} draft={agent.draft} />
+        <ReplyComposer
+          postId={context?.id}
+          draft={agent.draft}
+          blocked={isAgentBusy(agent.run)}
+        />
       </div>
       {memoryOpen && <AgentMemoryDialog onClose={() => setMemoryOpen(false)} />}
     </section>

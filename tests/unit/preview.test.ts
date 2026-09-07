@@ -268,3 +268,60 @@ describe('unaddressed agent messages', () => {
     expect(previewReducer(answered, action)).toBe(answered)
   })
 })
+
+describe('Agent workflow progress preview', () => {
+  it('keeps sending locked through both final tasks while preserving the next draft', () => {
+    let state = previewReducer(author(), {
+      type: 'sendMessage',
+      id: 'turn',
+      text: 'An update.',
+      previewRun: true,
+    })
+    state = previewReducer(state, {
+      type: 'draftMessage',
+      text: 'My next message.',
+    })
+    const send = {
+      type: 'sendMessage' as const,
+      id: 'next',
+      text: 'My next message.',
+      previewRun: true,
+    }
+    for (let step = 0; step < 6; step++) {
+      expect(previewReducer(state, send)).toBe(state)
+      state = previewReducer(state, {
+        type: 'advanceRun',
+        userId: 'alex',
+        messageId: 'turn',
+        step,
+      })
+      expect(state.agentByUser.alex.draft).toBe('My next message.')
+    }
+    const next = previewReducer(state, send)
+    expect(next.agentByUser.alex.messages.at(-1)?.id).toBe('next')
+    expect(next.agentByUser.alex.draft).toBe('')
+  })
+
+  it('continues the correct account’s run after switching accounts and ignores stale ticks', () => {
+    const started = previewReducer(author(), {
+      type: 'sendMessage',
+      id: 'turn',
+      text: 'An update.',
+      previewRun: true,
+    })
+    const member = previewReducer(started, { type: 'role', role: 'member' })
+    const tick = {
+      type: 'advanceRun' as const,
+      userId: 'alex',
+      messageId: 'turn',
+      step: 0,
+    }
+    const advanced = previewReducer(member, tick)
+    expect(advanced.agentByUser.alex.run?.step).toBe(1)
+    expect(advanced.agentByUser.you).toBe(member.agentByUser.you)
+    expect(previewReducer(advanced, tick)).toBe(advanced)
+    expect(
+      previewReducer(advanced, { ...tick, messageId: 'old', step: 1 }),
+    ).toBe(advanced)
+  })
+})

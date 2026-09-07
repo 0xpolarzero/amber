@@ -27,11 +27,16 @@ export const isUnaddressed = (message: AgentMessage) =>
   Boolean(message.needsReply) &&
   !message.addressedBy
 
+// Timed illustration of the proposed workflow, not live agent execution.
+export type AgentRun = { messageId: string; step: number }
+export const isAgentBusy = (run?: AgentRun) => Boolean(run && run.step < 6)
+
 export type AgentConversation = {
   draft: string
   messages: readonly AgentMessage[]
   memories: readonly AgentMemory[]
   readThrough: number
+  run?: AgentRun
 }
 export type PreviewState = Feed & {
   role: PreviewRole
@@ -60,7 +65,14 @@ export type PreviewAction =
       summary: string
       detail: string
     }
-  | { type: 'sendMessage'; postId?: string; id: string; text: string }
+  | {
+      type: 'sendMessage'
+      postId?: string
+      id: string
+      text: string
+      previewRun?: boolean
+    }
+  | { type: 'advanceRun'; userId: string; messageId: string; step: number }
   | {
       type: 'agentMessage'
       postId?: string
@@ -118,10 +130,32 @@ export function previewReducer(
   action: PreviewAction,
 ): PreviewState {
   if (action.type === 'role') return { ...state, role: action.role }
+  if (action.type === 'advanceRun') {
+    const conversation = state.agentByUser[action.userId]
+    const run = conversation?.run
+    if (
+      !run ||
+      !isAgentBusy(run) ||
+      run.messageId !== action.messageId ||
+      run.step !== action.step
+    )
+      return state
+    return {
+      ...state,
+      agentByUser: {
+        ...state.agentByUser,
+        [action.userId]: {
+          ...conversation,
+          run: { ...run, step: run.step + 1 },
+        },
+      },
+    }
+  }
   const user = currentUser(state.role)
   if (!user) return state
   const agent = state.agentByUser[user]
   if (!agent) return state
+  if (action.type === 'sendMessage' && isAgentBusy(agent.run)) return state
   const withAgent = (next: AgentConversation): PreviewState => ({
     ...state,
     agentByUser: { ...state.agentByUser, [user]: next },
@@ -257,6 +291,9 @@ export function previewReducer(
       ...agent,
       draft: action.type === 'sendMessage' ? '' : agent.draft,
       messages: [...agent.messages, message],
+      ...(action.type === 'sendMessage' && action.previewRun
+        ? { run: { messageId: action.id, step: 0 } }
+        : {}),
     })
     if (action.type !== 'applyPostUpdate') return next
     return {

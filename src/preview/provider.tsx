@@ -10,8 +10,10 @@ import {
 import type { Feed } from '../domain/post'
 import {
   type AgentConversation,
+  type AgentRun,
   createPreviewState,
   currentUser,
+  isAgentBusy,
   type PreviewAction,
   type PreviewState,
   previewReducer,
@@ -103,9 +105,43 @@ export function PreviewProvider({
         share,
       }}
     >
+      {Object.entries(state.agentByUser).map(([userId, conversation]) => (
+        <PreviewRunClock
+          key={userId}
+          userId={userId}
+          run={conversation.run}
+          dispatch={dispatch}
+        />
+      ))}
       {children}
     </Context>
   )
+}
+
+function PreviewRunClock({
+  userId,
+  run,
+  dispatch,
+}: {
+  userId: string
+  run?: AgentRun
+  dispatch: Dispatch<PreviewAction>
+}) {
+  useEffect(() => {
+    if (!run || !isAgentBusy(run)) return
+    const timer = setTimeout(
+      () =>
+        dispatch({
+          type: 'advanceRun',
+          userId,
+          messageId: run.messageId,
+          step: run.step,
+        }),
+      run.step === 4 ? 1600 : 700,
+    )
+    return () => clearTimeout(timer)
+  }, [userId, run, dispatch])
+  return null
 }
 
 export function usePreview() {

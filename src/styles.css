@@ -2446,3 +2446,91 @@ dialog::backdrop {
     padding: 0;
   }
 }
+
+.agent-progress {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  padding: 11px 13px;
+  font-size: 12px;
+}
+.agent-progress > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 500;
+}
+.agent-progress > summary::-webkit-details-marker {
+  display: none;
+}
+.agent-progress > summary > svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.agent-progress[open] > summary > svg {
+  transform: rotate(90deg);
+}
+.agent-progress-current {
+  margin-left: auto;
+  color: var(--quiet);
+  font-size: 11px;
+  font-weight: 400;
+}
+.agent-progress ol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px 16px;
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 12px;
+}
+.agent-progress li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--quiet);
+}
+.agent-progress li[data-status="running"] {
+  color: #916619;
+}
+.agent-progress li[data-status="queued"] {
+  color: #92928d;
+}
+.task-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+}
+.task-state svg {
+  width: 13px;
+  height: 13px;
+}
+.task-state > span {
+  width: 6px;
+  height: 6px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+[data-status="running"] .task-state > span {
+  background: currentColor;
+}
+.agent-progress > p {
+  font-size: 11px;
+  color: var(--quiet);
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .agent-progress > summary {
+    flex-wrap: wrap;
+    column-gap: 6px;
+    row-gap: 3px;
+  }
+  .agent-progress-current {
+    font-size: 10px;
+  }
+}

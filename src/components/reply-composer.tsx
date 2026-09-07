@@ -7,9 +7,11 @@ import { Icon } from './icon'
 export function ReplyComposer({
   postId,
   draft,
+  blocked = false,
 }: {
   postId?: string
   draft: string
+  blocked?: boolean
 }) {
   const { dispatch } = usePreview()
   const id = useId()
@@ -18,11 +20,13 @@ export function ReplyComposer({
     defaultValues: { text: draft },
     validators: { onChange: AnswerForm },
     onSubmit: ({ value, formApi }) => {
+      if (blocked) return
       dispatch({
         type: 'sendMessage',
         postId,
         id: crypto.randomUUID(),
         text: value.text,
+        previewRun: true,
       })
       formApi.reset({ text: '' })
       requestAnimationFrame(() => {
@@ -71,7 +75,8 @@ export function ReplyComposer({
                   !event.nativeEvent.isComposing
                 ) {
                   event.preventDefault()
-                  if (field.state.value.trim()) void form.handleSubmit()
+                  if (!blocked && field.state.value.trim())
+                    void form.handleSubmit()
                 }
               }}
               aria-invalid={field.state.meta.errors.length > 0}
@@ -97,8 +102,8 @@ export function ReplyComposer({
             type="submit"
             className="message-send"
             aria-label="Send message"
-            title="Send message"
-            disabled={!canSubmit || submitting || !text.trim()}
+            title={blocked ? 'Wait for this turn to finish' : 'Send message'}
+            disabled={blocked || !canSubmit || submitting || !text.trim()}
           >
             <Icon name="send" />
           </button>

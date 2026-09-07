@@ -246,3 +246,45 @@ test('unaddressed messages survive reading the chat and sending an unrelated rep
     .click()
   await expect(jump).toBeVisible()
 })
+
+test('shows parallel task progress and keeps the next draft locked until completion', async ({
+  page,
+}) => {
+  await page.goto('/agent')
+  await page
+    .getByRole('combobox', { name: 'Preview account' })
+    .selectOption('author')
+  await page.clock.install()
+  const reply = page.getByRole('textbox', { name: 'Message Amber' })
+  const send = page.getByRole('button', { name: 'Send message' })
+  await reply.fill('A detail for my post.')
+  await send.click()
+  await expect(
+    page.getByText('Workflow preview', { exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByText(/Example timing; no model is running/),
+  ).toBeVisible()
+  await reply.fill('Keep this draft.')
+  await reply.press('Enter')
+  await expect(reply).toHaveValue('Keep this draft.')
+  await expect(send).toBeDisabled()
+  for (let step = 0; step < 4; step++) await page.clock.runFor(700)
+  const tasks = page.getByRole('list', { name: 'Task progress' })
+  await expect(tasks.locator('[data-status="running"]')).toHaveText([
+    'Update memory: Running',
+    'Resolve messages: Running',
+  ])
+  await expect(send).toBeInViewport()
+  await page.clock.runFor(1600)
+  await expect(tasks.locator('[data-status="running"]')).toHaveText([
+    'Resolve messages: Running',
+  ])
+  await expect(send).toBeDisabled()
+  await page.clock.runFor(700)
+  await expect(
+    page.getByText('Example complete', { exact: true }),
+  ).toBeVisible()
+  await expect(send).toBeEnabled()
+  await expect(reply).toHaveValue('Keep this draft.')
+})
