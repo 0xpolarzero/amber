@@ -22,7 +22,7 @@ const glyphs = {
       <circle cx="19" cy="12" r=".9" fill="currentColor" />
     </>
   ),
-  close: <path d="m6 6 12 12M6 18 12-12" />,
+  close: <path d="M6 6L18 18M6 18L18 6" />,
   share: <path d="M12 15V3m-4 4 4-4 4 4M5 11v9h14v-9" />,
   check: <path d="m5 12 4 4L19 6" />,
   telegram: <path d="m3 11 18-7-4 17-6-5-4 3v-6zM7 13 17 7l-6 9" />,
