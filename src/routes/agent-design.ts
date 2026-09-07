@@ -6,7 +6,11 @@ export const Route = createFileRoute('/agent-design')({
     handlers: {
       GET: () =>
         new Response(
-          design.replaceAll('href="workflow.ts"', 'href="/agent-workflow"'),
+          design.replaceAll(
+            /href="([\w./-]+\.ts)"/g,
+            (_, file: string) =>
+              `href="/agent-workflow?file=${encodeURIComponent(file)}" target="_blank" rel="noopener"`,
+          ),
           {
             headers: { 'Content-Type': 'text/html; charset=utf-8' },
           },

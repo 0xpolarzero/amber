@@ -3,28 +3,21 @@ import * as FlowEngine from '@smthrs/engine/FlowEngine'
 import * as Graph from '@smthrs/flow/Graph'
 import { Crypto, Deferred, Effect, Layer, Schema } from 'effect'
 import { describe, expect, it } from 'vitest'
-import {
-  Addressed,
-  AgentTurn,
-  Answer,
-  Context,
-  ExtractMemories,
-  Failure,
-  layers,
-  Memories,
-  Queries,
-  PlanQueries,
-  prompts,
-  ResolveMessages,
-  validateChanges,
-  WriteAnswer,
-  type Ports,
-} from './workflow'
+import { AgentTurn, RetryMaintenance, type RetryInput } from './chat.workflow'
+import { TelegramBatch } from './telegram.workflow'
+import { layers } from './runtime'
+import { validateChanges, validateDraft, validateSelection } from './guards'
+import type { Ports } from './tools'
+import * as S from './schemas'
 
 const turn = { userId: 'alex', messageId: 'm4' }
-const context: typeof Context.Type = {
+const context: typeof S.Context.Type = {
   userId: 'alex',
-  message: { id: 'm4', sequence: 8, text: 'It works offline. Keep my posts short.' },
+  message: {
+    id: 'm4',
+    sequence: 8,
+    text: 'Yes, offline. Keep my posts short. Skip the demo question.',
+  },
   matches: [],
   memories: [{ id: 'style', text: 'Use plain language.' }],
   memoryVersion: 1,
@@ -38,16 +31,46 @@ const context: typeof Context.Type = {
       detail: 'Local notes.',
     },
   ],
-  unaddressed: [{ id: 'q1', sequence: 7, text: 'Does Noted work offline?' }],
-  recent: Array.from({ length: 3 }, (_, i) => ({
-    user: { id: `u${i}`, sequence: i * 2, text: 'Earlier user message.' },
-    assistant: { id: `a${i}`, sequence: i * 2 + 1, text: 'Earlier answer.' },
-  })),
+  unaddressed: [{ id: 'q1', sequence: 7, text: 'Is there a demo?' }],
+  recent: [
+    {
+      user: { id: 'u1', sequence: 1, text: 'About Noted.' },
+      assistant: { id: 'a1', sequence: 2, text: 'Does it work offline?' },
+    },
+  ],
 }
-const answer: typeof Answer.Type = {
-  text: 'Added that it works offline.',
+const answer: typeof S.Answer.Type = {
+  text: 'Added offline support.',
   needsReply: false,
   changes: [{ postId: 'noted', expectedVersion: 2, patch: { summary: 'Offline voice notes.' } }],
+}
+const batch: typeof S.BatchContext.Type = {
+  batchId: 'b1',
+  groupId: 'g1',
+  newMessageIds: ['100', '101'],
+  messages: [
+    {
+      id: '100',
+      authorId: 'alex',
+      text: 'I built Noted, an offline voice-notes app.',
+      replyToId: null,
+      albumId: null,
+    },
+    {
+      id: '101',
+      authorId: 'bea',
+      text: 'I made Paint, a drawing app.',
+      replyToId: null,
+      albumId: null,
+    },
+  ],
+}
+const selection: typeof S.Selection.Type = {
+  candidates: [
+    { authorId: 'alex', project: 'Noted', messageIds: ['100'] },
+    { authorId: 'bea', project: 'Paint', messageIds: ['101'] },
+  ],
+  ignored: [],
 }
 const crypto = Layer.succeed(
   Crypto.Crypto,
@@ -60,48 +83,113 @@ const crypto = Layer.succeed(
   }),
 )
 
-function harness(options: { failMemory?: boolean; invalidAnswer?: boolean } = {}) {
+function harness(
+  options: {
+    failMemory?: boolean
+    invalidAnswer?: boolean
+    failProject?: boolean
+    empty?: boolean
+    deniedTool?: boolean
+  } = {},
+) {
   return Effect.gen(function* () {
-    const bothStarted = yield* Deferred.make<void>()
+    const tailsStarted = yield* Deferred.make<void>()
+    const projectsStarted = yield* Deferred.make<void>()
+    let tailCount = 0,
+      projectCount = 0,
+      memoryDone = false,
+      resolutionDone = false
+    let retry: typeof RetryInput.Type | undefined
     const events: string[] = []
     const inputs: Record<string, unknown> = {}
-    let started = 0
     const ports: Ports = {
-      loadMessage: () =>
+      loadOpening: () => Effect.succeed({ message: context.message, recent: context.recent }),
+      readContext: () => Effect.succeed(context),
+      readMemories: () => Effect.succeed({ memories: context.memories, version: 1 }),
+      progress: ({ task, status }) =>
         Effect.sync(() => {
-          events.push('load')
-          return context.message
+          events.push(`${task}:${status}`)
         }),
-      readContext: () =>
+      readTool: () =>
         Effect.sync(() => {
-          events.push('context')
-          return context
+          events.push('tool')
+          return []
         }),
       model: (request) =>
         Effect.gen(function* () {
-          const stage = Object.entries(prompts).find(([, prompt]) =>
-            request.instruction.startsWith(prompt),
-          )?.[0]
-          if (!stage)
-            return yield* Effect.fail(new Failure({ operation: 'model', message: 'Unknown task' }))
-          events.push(stage)
-          inputs[stage] = request.input
-          if (stage === 'queries')
+          const task = request.task
+          inputs[task] = request.input
+          if (task === 'query-planner') {
+            if (options.deniedTool)
+              yield* request.callTool('readPage', { url: 'https://example.com' })
+            expect(request.tools).toEqual([])
             return { queries: [{ collection: 'posts', text: 'Noted offline' }] }
-          if (stage === 'answer') return options.invalidAnswer ? { text: 'missing fields' } : answer
-          expect(events).toContain('published')
-          if (options.failMemory && stage === 'memory')
-            return yield* Effect.fail(
-              new Failure({ operation: 'memory', message: 'Quota exhausted' }),
-            )
-          if (!options.failMemory) {
-            started++
-            if (started === 2) yield* Deferred.succeed(bothStarted, undefined)
-            yield* Deferred.await(bothStarted)
           }
-          return stage === 'memory'
-            ? { memories: [{ text: 'Keep descriptions short.', evidence: 'Keep my posts short.' }] }
-            : { messageIds: ['q1'] }
+          if (task === 'reply') {
+            expect(request.tools.map((tool) => tool.name)).toEqual(['searchWeb', 'readPage'])
+            return options.invalidAnswer ? { text: 'Missing fields' } : answer
+          }
+          if (task === 'memory' || task === 'resolution') {
+            expect(events).toContain('published')
+            expect(request.tools).toEqual([])
+            if (options.failMemory && task === 'memory')
+              return yield* Effect.fail(new S.Failure({ operation: 'memory', message: 'Quota' }))
+            if (!options.failMemory && !retry) {
+              if (++tailCount === 2) yield* Deferred.succeed(tailsStarted, undefined)
+              yield* Deferred.await(tailsStarted)
+            }
+            return task === 'memory'
+              ? {
+                  changes: [
+                    {
+                      kind: 'replace',
+                      id: 'style',
+                      text: 'Keep posts short.',
+                      evidence: 'Keep my posts short.',
+                    },
+                  ],
+                }
+              : {
+                  resolutions: [
+                    { messageId: 'q1', outcome: 'ignored', reason: 'User explicitly said skip.' },
+                  ],
+                }
+          }
+          if (task === 'selection')
+            return options.empty
+              ? {
+                  candidates: [],
+                  ignored: batch.newMessageIds.map((messageId) => ({
+                    messageId,
+                    reason: 'Chatter',
+                  })),
+                }
+              : selection
+          const input = request.input as typeof S.ProjectContext.Type
+          expect(request.tools.map((tool) => tool.name)).toEqual([
+            'searchWeb',
+            'readPage',
+            'searchMessages',
+            'readMessages',
+            'searchPosts',
+          ])
+          yield* request.callTool('searchPosts', { query: input.work.candidate.project })
+          if (++projectCount === 2) yield* Deferred.succeed(projectsStarted, undefined)
+          yield* Deferred.await(projectsStarted)
+          if (options.failProject && input.work.candidate.authorId === 'alex')
+            return yield* Effect.fail(
+              new S.Failure({ operation: 'post', message: 'Provider down' }),
+            )
+          return {
+            kind: 'post',
+            existingPostId: null,
+            expectedVersion: null,
+            title: input.work.candidate.project,
+            summary: 'A useful app.',
+            detail: 'Built by the author.',
+            sources: [{ kind: 'telegram', messageId: input.work.candidate.messageIds[0] }],
+            question: null,
+          }
         }),
       publish: () =>
         Effect.sync(() => {
@@ -110,131 +198,235 @@ function harness(options: { failMemory?: boolean; invalidAnswer?: boolean } = {}
         }),
       saveMemories: () =>
         Effect.sync(() => {
+          memoryDone = true
           events.push('memory-saved')
           return { completed: true }
         }),
-      markAnswered: () =>
+      saveResolutions: ({ proposal }) =>
         Effect.sync(() => {
-          events.push('marked-answered')
+          expect(proposal.resolutions[0].outcome).toBe('ignored')
+          resolutionDone = true
+          events.push('resolution-saved')
           return { completed: true }
         }),
-      deferMaintenance: ({ branch }) =>
+      queueMaintenanceRetry: ({ input }) =>
         Effect.sync(() => {
-          events.push(`retry:${branch}`)
+          retry = input
+          events.push('retry-memory')
           return { completed: false }
         }),
+      finishTurn: () =>
+        Effect.sync(() => {
+          const completed = memoryDone && resolutionDone
+          events.push(completed ? 'unlocked' : 'locked')
+          return { completed }
+        }),
+      loadBatch: () => Effect.succeed(batch),
+      queueProjects: ({ selection }) =>
+        Effect.sync(() => ({
+          batch: { batchId: batch.batchId, groupId: batch.groupId },
+          items: selection.candidates.map((candidate, index) => ({
+            batchId: batch.batchId,
+            groupId: batch.groupId,
+            candidateId: `p${index}`,
+            revision: 0,
+            candidate,
+          })),
+        })),
+      loadProject: (work) =>
+        Effect.succeed({
+          work,
+          messages: batch.messages,
+          clarifications: [],
+          posts: [],
+          memories: [],
+          unaddressed: [],
+        }),
+      publishProject: ({ context }) =>
+        Effect.sync(() => {
+          events.push(`published:${context.work.candidateId}`)
+          return {
+            candidateId: context.work.candidateId,
+            outcome: 'created',
+            postId: context.work.candidateId,
+          }
+        }),
+      queueProjectRetry: ({ work }) =>
+        Effect.sync(() => {
+          events.push(`retry:${work.candidateId}`)
+          return { candidateId: work.candidateId, outcome: 'retry', postId: null }
+        }),
+      finishBatch: ({ results }) =>
+        Effect.succeed({ completed: Object.values(results).every((r) => r.outcome !== 'retry') }),
     }
     const host = layers(ports).pipe(
       Layer.provideMerge(FlowEngine.layerMemory),
       Layer.provideMerge(crypto),
     )
-    return { events, inputs, host }
+    return { host, events, inputs, retry: () => retry }
   })
 }
 
-describe('real Smithers reference', () => {
-  it('plans four model tasks with publication before independent maintenance branches', () => {
-    const graph = Graph.build(AgentTurn, turn)
-    expect(graph.diagnostics).toEqual([])
-    const steps = graph.nodes.filter((node) => node.kind === 'ActionCall')
-    expect(steps.map((node) => node.ast._tag === 'ActionCall' && node.ast.action)).toEqual([
-      'amber/load-message',
-      'amber/plan-queries',
-      'amber/read-context',
-      'amber/write-answer',
-      'amber/publish',
-      'amber/extract-memories',
-      'amber/save-memories',
-      'amber/defer-maintenance',
-      'amber/resolve-messages',
-      'amber/mark-answered',
-      'amber/defer-maintenance',
-    ])
-    expect(PlanQueries.successSchema).toBe(Queries)
-    expect(WriteAnswer.successSchema).toBe(Answer)
-    expect(ExtractMemories.successSchema).toBe(Memories)
-    expect(ResolveMessages.successSchema).toBe(Addressed)
-    expect(Schema.is(PlanQueries.successSchema)({ queries: [] })).toBe(true)
-    expect(Schema.is(WriteAnswer.successSchema)(answer)).toBe(true)
-    expect(Schema.is(ExtractMemories.successSchema)({ memories: [] })).toBe(true)
-    expect(Schema.is(ResolveMessages.successSchema)({ messageIds: [] })).toBe(true)
-    expect(Schema.is(Answer)({ text: 'unstructured' })).toBe(false)
+describe('real Smithers workflows', () => {
+  it('plans both workflows without executing models', () => {
+    expect(Graph.build(AgentTurn, turn).diagnostics).toEqual([])
+    expect(Graph.build(TelegramBatch, { batchId: 'b1', groupId: 'g1' }).diagnostics).toEqual([])
   })
-
-  it('sends exact context, publishes first, runs both tails concurrently and reuses a completed execution', async () => {
+  it('gives the planner recent context, publishes before parallel tails, then unlocks', async () => {
     await Effect.runPromise(
       Effect.gen(function* () {
-        const { events, inputs, host } = yield* harness()
+        const { host, events, inputs } = yield* harness()
         yield* Effect.gen(function* () {
-          const first = yield* AgentTurn.execute(turn, { executionId: 'turn-m4' })
-          const second = yield* AgentTurn.execute(turn, { executionId: 'turn-m4' })
-          expect(first).toEqual({ memory: { completed: true }, addressed: { completed: true } })
-          expect(second).toEqual(first)
+          const first = yield* AgentTurn.execute(turn, { executionId: 'chat' })
+          const again = yield* AgentTurn.execute(turn, { executionId: 'chat' })
+          expect(first).toEqual({ completed: true })
+          expect(again).toEqual(first)
           expect(events.filter((event) => event === 'published')).toHaveLength(1)
-          expect(events.filter((event) => event === 'queries')).toHaveLength(1)
-          expect(events.slice(0, 5)).toEqual(['load', 'queries', 'context', 'answer', 'published'])
-          expect(inputs.queries).toEqual({ message: context.message })
-          expect(inputs.answer).toEqual(context)
-          expect(Object.keys(inputs.memory as object).sort()).toEqual(['answer', 'message'])
-          expect(Object.keys(inputs.addressed as object).sort()).toEqual([
-            'answer',
-            'message',
-            'unaddressed',
-          ])
+          expect(inputs['query-planner']).toEqual({
+            message: context.message,
+            recent: context.recent,
+          })
+          expect(inputs.reply).toEqual(context)
+          expect(inputs.memory).toMatchObject({ memories: context.memories })
+          expect(events.indexOf('unlocked')).toBeGreaterThan(events.indexOf('memory-saved'))
+          expect(events.indexOf('unlocked')).toBeGreaterThan(events.indexOf('resolution-saved'))
         }).pipe(Effect.provide(host))
-      }).pipe(Effect.timeout('3 seconds')),
+      }).pipe(Effect.timeout('4 seconds')),
     )
   })
-
-  it('keeps the published answer and resolution when memory extraction fails', async () => {
+  it('holds the lock after failure and retries only memory without republishing', async () => {
+    const options = { failMemory: true }
     await Effect.runPromise(
       Effect.gen(function* () {
-        const { events, host } = yield* harness({ failMemory: true })
-        const result = yield* AgentTurn.execute(turn, { executionId: 'memory-failure' }).pipe(
-          Effect.provide(host),
-        )
-        expect(result).toEqual({ memory: { completed: false }, addressed: { completed: true } })
-        expect(events).toContain('published')
-        expect(events).toContain('marked-answered')
-        expect(events).toContain('retry:memory')
-        expect(events).not.toContain('memory-saved')
+        const { host, events, retry } = yield* harness(options)
+        yield* Effect.gen(function* () {
+          expect(yield* AgentTurn.execute(turn, { executionId: 'failed-chat' })).toEqual({
+            completed: false,
+          })
+          expect(events).toContain('resolution-saved')
+          expect(events).not.toContain('unlocked')
+          options.failMemory = false
+          expect(yield* RetryMaintenance.execute(retry()!, { executionId: 'retry-1' })).toEqual({
+            completed: true,
+          })
+          expect(events.filter((event) => event === 'published')).toHaveLength(1)
+          expect(events.filter((event) => event === 'resolution-saved')).toHaveLength(1)
+        }).pipe(Effect.provide(host))
+      }).pipe(Effect.timeout('4 seconds')),
+    )
+  })
+  for (const option of ['invalidAnswer', 'deniedTool'] as const)
+    it(`rejects ${option} before writes`, async () => {
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          const { host, events } = yield* harness({ [option]: true })
+          const result = yield* AgentTurn.execute(turn, { executionId: option }).pipe(
+            Effect.result,
+            Effect.provide(host),
+          )
+          expect(result._tag).toBe('Failure')
+          expect(events).not.toContain('published')
+          expect(events).not.toContain('memory-saved')
+          expect(events).not.toContain('tool')
+        }),
+      )
+    })
+  for (const failProject of [false, true])
+    it(`hands off real candidates to parallel child runs (failure=${failProject})`, async () => {
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          const { host, events } = yield* harness({ failProject })
+          yield* Effect.gen(function* () {
+            const result = yield* TelegramBatch.execute(
+              { batchId: 'b1', groupId: 'g1' },
+              { executionId: `batch-${failProject}` },
+            )
+            expect(result).toEqual({ completed: !failProject })
+            expect(events).toContain('published:p1')
+            expect(events).toContain(failProject ? 'retry:p0' : 'published:p0')
+          }).pipe(Effect.provide(host))
+        }).pipe(Effect.timeout('4 seconds')),
+      )
+    })
+  it('completes an irrelevant batch without spawning post agents', async () => {
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const { host, events } = yield* harness({ empty: true })
+        expect(
+          yield* TelegramBatch.execute(
+            { batchId: 'b1', groupId: 'g1' },
+            { executionId: 'empty' },
+          ).pipe(Effect.provide(host)),
+        ).toEqual({ completed: true })
+        expect(events).not.toContain('post:running')
       }),
     )
   })
-
-  it('never publishes a malformed answer or starts its background tasks', async () => {
-    await Effect.runPromise(
-      Effect.gen(function* () {
-        const { events, host } = yield* harness({ invalidAnswer: true })
-        const result = yield* AgentTurn.execute(turn, { executionId: 'invalid-answer' }).pipe(
-          Effect.result,
-          Effect.provide(host),
-        )
-        expect(result._tag).toBe('Failure')
-        expect(events).toEqual(['load', 'queries', 'context', 'answer'])
-      }),
-    )
-  })
-
-  it('rejects unknown, foreign, stale and duplicate post changes', () => {
+  it('rejects wrong ownership, unknown evidence, stale edits and lost batch messages', () => {
     expect(() => validateChanges('alex', context, answer)).not.toThrow()
-    for (const change of [
-      { ...answer.changes[0], postId: 'unknown' },
-      { ...answer.changes[0], expectedVersion: 0 },
-      { ...answer.changes[0], patch: {} },
-    ])
-      expect(() => validateChanges('alex', context, { ...answer, changes: [change] })).toThrow()
-    expect(() => validateChanges('someone-else', context, answer)).toThrow()
+    expect(() => validateChanges('other', context, answer)).toThrow()
+    expect(() =>
+      validateChanges('alex', context, {
+        ...answer,
+        changes: [{ ...answer.changes[0], expectedVersion: 0 }],
+      }),
+    ).toThrow()
     expect(() =>
       validateChanges('alex', context, {
         ...answer,
         changes: [...answer.changes, ...answer.changes],
       }),
     ).toThrow()
-    expect(Schema.is(Context)({ ...context, recent: [...context.recent, context.recent[0]] })).toBe(
-      false,
-    )
-    expect(Schema.is(Memories)({ memories: [{ text: 'No evidence' }] })).toBe(false)
-    expect(Schema.is(Addressed)({ messageIds: [5] })).toBe(false)
+    expect(() => validateSelection(batch, selection)).not.toThrow()
+    expect(() =>
+      validateSelection(batch, { ...selection, candidates: [selection.candidates[0]] }),
+    ).toThrow()
+    expect(() =>
+      validateSelection(batch, {
+        ...selection,
+        candidates: [{ ...selection.candidates[0], authorId: 'bea' }],
+      }),
+    ).toThrow()
+    const project: typeof S.ProjectContext.Type = {
+      work: {
+        batchId: 'b1',
+        groupId: 'g1',
+        candidateId: 'p0',
+        revision: 0,
+        candidate: selection.candidates[0],
+      },
+      messages: batch.messages,
+      clarifications: [],
+      posts: context.posts,
+      memories: [],
+      unaddressed: [],
+    }
+    const draft: typeof S.Draft.Type = {
+      proposal: {
+        kind: 'post',
+        existingPostId: null,
+        expectedVersion: null,
+        title: 'Noted',
+        summary: 'Notes',
+        detail: 'Offline.',
+        sources: [{ kind: 'telegram', messageId: '100' }],
+        question: null,
+      },
+      evidence: { messages: [], posts: [], pages: [] },
+    }
+    expect(() => validateDraft(project, draft)).not.toThrow()
+    const proposal = draft.proposal
+    if (proposal.kind !== 'post') throw new Error('Fixture')
+    expect(() =>
+      validateDraft(project, {
+        ...draft,
+        proposal: {
+          ...proposal,
+          sources: [{ kind: 'web', url: 'https://invented.invalid' }],
+        },
+      }),
+    ).toThrow()
+    expect(Schema.is(S.Answer)({ text: 'unstructured' })).toBe(false)
+    expect(Schema.is(S.MemoryChanges)({ changes: [{ kind: 'restore', id: 'style' }] })).toBe(false)
   })
 })

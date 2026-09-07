@@ -94,11 +94,8 @@ flowchart LR
 The two writes from the collector are one transaction, not independent sends.
 
 1. On first startup, capture a seven-day cutoff and a fixed upper message ID. Import in bounded pages, recording a resumable backfill position. Complete the range before promoting the incremental cursor.
-2. Schedule an incremental sync every minute as an initial setting. Read beyond the last completed cursor, exhausting the snapshot range before advancing it. One collector owns this chat at a time. Persist source messages and jobs before recording progress. GramJS supports date/ID pagination and flood-wait pacing. [GramJS iteration](https://gram.js.org/beta/interfaces/client.message.IterMessagesParams.html)
-3. Debounce related messages briefly, grouping by author, thread/replies, album and project link. Queue a bounded classification/summary job. Ingestion continues even when model jobs are paused or slow.
-4. Request an ignore decision or JSON post proposal: title, short explanation, evidence/source IDs, links and missing-information questions. Parse the CLI JSON envelope, then parse and validate its response string with Effect Schema; CLI JSON output alone does not enforce the post schema. Application code verifies source references and author ownership.
-5. Save the post and questions. Automatically publish entries that satisfy the agreed selection and attribution rules; send uncertain matches to review. This follows the requested automatic-entry flow. The author can edit or remove their entry after login.
-6. Private messages persist immediately and enqueue processing. The worker applies supported post changes automatically and records the exact before/after diff as a bot message. No acceptance step. Conditional version checks prevent stale updates from overwriting newer author edits; stale work is regenerated against the current post. There is no running agent waiting for somebody to answer.
+2. Schedule an incremental sync every minute as an initial setting. Read beyond the saved cursor up to a fixed upper ID. One collector owns this chat at a time. Commit each page’s source messages, resume cursor and batch job atomically; continue until the snapshot range is exhausted. GramJS supports date/ID pagination and flood-wait pacing. [GramJS iteration](https://gram.js.org/beta/interfaces/client.message.IterMessagesParams.html)
+3. The batch selector groups relevant evidence by project and author. Independent project agents research and create or update entries. Follow-up questions enter the author’s Agent conversation. The dedicated [Agent workflow document](./agent/agent.html) owns selection, publication, clarification, context and retry behavior.
 
 Message-ID polling finds additions. Track edits and deletions through MTProto updates/recovery or explicit reconciliation of known messages; do not describe a highest-ID cursor as complete synchronization. [Telegram update synchronization](https://core.telegram.org/api/updates)
 
@@ -138,7 +135,7 @@ A BotFather bot is still needed to represent the website's Telegram login; it ne
 
 ## Agent behavior
 
-The dedicated [Agent design document](./agent/agent.html) records confirmed decisions, the fixed retrieval/answer/background workflow and open questions. The [single-file Smithers reference](./agent/workflow.ts) is a review artifact; application database and model adapters remain future work.
+The dedicated [Agent design document](./agent/agent.html) records confirmed decisions, both chat and Telegram workflows, every prompt/tool/output, and open questions. The [Smithers reference entry point](./agent/workflow.ts) is a review artifact; application database and model adapters remain future work.
 
 ## Google subscription access
 
@@ -146,7 +143,7 @@ Confirmed plan: Google AI Pro. Confirmed access preference: Google sign-in and s
 
 Sign in once through Gemini CLI using the account holding the Pro subscription. The CLI caches credentials, and its headless mode reuses existing authentication. On the worker host, provide persistent protected storage for that CLI session and let the CLI manage authentication; do not extract its tokens for an undocumented client. [Authentication and headless reuse](https://geminicli.com/docs/get-started/authentication/)
 
-For each model job, start a bounded headless CLI process requesting `gemini-3.8-flash`, pass the prompt as data, and request JSON output. The envelope contains a response string and statistics; parse the response separately and validate it with Effect Schema. Use an isolated working directory and a no-tools profile with extensions/MCP disabled for this summarization task. Limit process concurrency, output size and duration. [Headless mode](https://geminicli.com/docs/cli/headless/)
+For each model job, start a bounded headless CLI process requesting `gemini-3.8-flash`, pass the prompt as data, and request JSON output. The envelope contains a response string and statistics; parse the response separately and validate it with Effect Schema. Use an isolated working directory with inherited sessions, memory and default tools disabled. Expose only the read tools explicitly allowed for each task in [the Agent reference](./agent/tools.ts); verify the CLI tool transport during integration. Limit process concurrency, output size and duration. [Headless mode](https://geminicli.com/docs/cli/headless/)
 
 Google documents a maximum of 1,500 model requests per day for Pro, with per-minute limits and availability constraints. A job can consume multiple model requests. On quota exhaustion, pause model jobs until the appropriate retry/reset time while Telegram ingestion continues. Authentication failure requires reauthentication, not a paid fallback. Do not configure API-key/Vertex authentication or enable paid overages for this worker. [Subscription quotas](https://geminicli.com/docs/resources/quota-and-pricing/)
 
