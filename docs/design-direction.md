@@ -11,7 +11,7 @@ The feed is the home screen: one narrow column, white background, dark text, sub
 | Filter | One row: searchable Group and Author comboboxes, Bookmarks, then sort and search at the end. Active filters appear as removable chips below. Group choices reflect selected authors, and author choices reflect selected groups. Multiple choices within either filter match any selection; groups, authors, bookmarks and text search combine. Filters live in the URL. Me resolves to the connected account. |
 | Messages | Private bot questions for the connected account. The numbered badge counts unread questions and clears as they are opened. Questions remain available until an answer is accepted. Visitors see a sign-in prompt; accounts without questions see an empty inbox. |
 | Browse | One compact dropdown: Newest, Most commented, Most bookmarked. Newest is the default; equal counts keep newest first. |
-| Search | A compact field stays visible at the end of the toolbar. Focus or `/` expands it across the row while other controls fade. Clicking away or Escape collapses it and preserves the query; Clear search removes the query. Chips and posts stay in place. Respect reduced-motion settings. |
+| Search | A compact field stays visible at the end of the toolbar. Focus or `/` switches instantly to full width. Clicking away or Escape restores the controls and preserves the query; Clear search removes the query. Chips and posts stay in place. |
 | Open a post | Stay in the same column. Read context and comments; Back restores the previous view and position. |
 | Bookmark | Keep a useful project. If login is needed, finish the original bookmark after signing in. |
 | Visit a creator | Open a simple profile with their projects. |
