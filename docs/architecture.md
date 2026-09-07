@@ -136,15 +136,9 @@ The GramJS reader uses the project owner's session. Website users log in separat
 
 A BotFather bot is still needed to represent the website's Telegram login; it need not collect group messages. Follow-up questions can stay on the website. Direct-message notifications can be added later through the Bot API if desired. Telegram's verified profile includes an id distinct from the OIDC sub and omits email/UserInfo, so retain the Auth.js custom-provider verification spike described in research.md. [Telegram login](https://core.telegram.org/bots/telegram-login)
 
-## Agent conversation and memory
+## Agent behavior
 
-Each user has one private Agent conversation. A message may reference one or more posts; changing post context does not start a new conversation. The agent can discuss public posts, but changes require verified ownership. Deleting a post does not delete the user’s conversation or preferences.
-
-Use the same PostgreSQL database. Store a conversation keyed uniquely by `user_id`, its messages with optional post references, and a small `user_preferences` table containing the preference text, version and source message. Record explicit lasting preferences separately from project-specific facts. Start by loading all active preferences for that user before each post creation or revision job; no vector database is needed for this small preference set.
-
-The agent records preferences from conversation and acknowledges them in chat. Users can inspect, edit and forget them through Memory. Jobs retrieve the latest values at execution time and record which preference versions informed each update. Conditional post and preference version checks stop stale jobs from reapplying an old preference after the user changes or forgets it; regenerate against current state instead. Preferences guide wording and workflow, while source evidence supplies project facts.
-
-The current UI demonstrates this with scripted data and local memory. Persistent storage and live extraction/retrieval are separate implementation tasks; there is no running model behind the preview.
+The dedicated [Agent design document](./agent/agent.html) records confirmed decisions, the fixed retrieval/answer/background workflow and open questions. The [single-file Smithers reference](./agent/workflow.ts) is a review artifact; application database and model adapters remain future work.
 
 ## Google subscription access
 

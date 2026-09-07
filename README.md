@@ -53,3 +53,5 @@ docs/           Reviewed design, implementation plan and architecture
 TanStack Router connects the screens, Query manages loaded data, Form manages inputs, and Effect supplies validation and application logic. Nitro builds the Node server. The future collector and queue will be added as separate pieces once their behavior is reviewed.
 
 See the [implementation plan](docs/implementation-plan.md), [design direction](docs/design-direction.md), [planned architecture](docs/architecture.md) and [implementation notes](docs/implementation-notes.md). The original [HTML prototype](docs/feed-prototype.html) remains as a design reference.
+
+The [Agent design](docs/agent/agent.html) is the decision record for agent behavior. Its [single-file workflow](docs/agent/workflow.ts) is a tested reference, not a connected backend. `pnpm test:agent-reference` requires `SMITHERS_SOURCE` pointing to the pinned Smithers checkout named in that file.
