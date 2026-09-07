@@ -25,6 +25,7 @@ const glyphs = {
   ),
   close: <path d="M6 6L18 18M6 18L18 6" />,
   share: <path d="M12 15V3m-4 4 4-4 4 4M5 11v9h14v-9" />,
+  send: <path d="M12 19V5m-6 6 6-6 6 6" />,
   check: <path d="m5 12 4 4L19 6" />,
   telegram: <path d="m3 11 18-7-4 17-6-5-4 3v-6zM7 13 17 7l-6 9" />,
   x: <path d="m5 4 14 16M19 4 5 20M5 4h4l10 16h-4Z" />,

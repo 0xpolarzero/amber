@@ -26,7 +26,7 @@ type PreviewContext = {
   user: string | null
   saved: readonly string[]
   messages: readonly Post[]
-  readQuestions: readonly string[]
+  readConversations: readonly string[]
   unreadCount: number
   dispatch: Dispatch<PreviewAction>
   dialog: PreviewDialog
@@ -55,9 +55,11 @@ export function PreviewProvider({
         (post) => post.author === user && state.conversations[post.id],
       )
     : []
-  const readQuestions = user ? (state.readQuestionsByUser[user] ?? []) : []
+  const readConversations = user
+    ? (state.readConversationsByUser[user] ?? [])
+    : []
   const unreadCount = messages.filter(
-    (post) => post.question && !readQuestions.includes(post.id),
+    (post) => !readConversations.includes(post.id),
   ).length
   const openDialog = setDialog
   useEffect(() => {
@@ -96,7 +98,7 @@ export function PreviewProvider({
         user,
         saved,
         messages,
-        readQuestions,
+        readConversations,
         unreadCount,
         dispatch,
         dialog,

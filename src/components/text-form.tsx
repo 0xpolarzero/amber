@@ -1,28 +1,20 @@
 import { useForm } from '@tanstack/react-form'
 import { useId } from 'react'
-import { AnswerForm, CommentForm } from '../domain/forms'
+import { CommentForm } from '../domain/forms'
 
-export function TextForm({
-  kind,
-  initial = '',
-  onSubmit,
-}: {
-  kind: 'comment' | 'answer'
-  initial?: string
-  onSubmit: (text: string) => void
-}) {
+export function TextForm({ onSubmit }: { onSubmit: (text: string) => void }) {
   const inputId = useId()
   const form = useForm({
-    defaultValues: { text: initial },
-    validators: { onChange: kind === 'comment' ? CommentForm : AnswerForm },
+    defaultValues: { text: '' },
+    validators: { onChange: CommentForm },
     onSubmit: ({ value, formApi }) => {
       onSubmit(value.text.trim())
-      if (kind === 'comment') formApi.reset()
+      formApi.reset()
     },
   })
   return (
     <form
-      className={kind === 'comment' ? 'compose-body' : ''}
+      className="compose-body"
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
@@ -31,12 +23,9 @@ export function TextForm({
     >
       <form.Field name="text">
         {(field) => (
-          <div className={kind === 'answer' ? 'form-field' : ''}>
-            <label
-              className={kind === 'comment' ? 'visually-hidden' : 'field-label'}
-              htmlFor={inputId}
-            >
-              {kind === 'comment' ? 'Your comment' : 'Your answer'}
+          <div>
+            <label className="visually-hidden" htmlFor={inputId}>
+              Your comment
             </label>
             <textarea
               className="edit-field"
@@ -44,12 +33,8 @@ export function TextForm({
               value={field.state.value}
               onChange={(event) => field.handleChange(event.target.value)}
               onBlur={field.handleBlur}
-              placeholder={
-                kind === 'comment'
-                  ? 'Ask a question. Share a thought.'
-                  : 'A sentence or two is plenty.'
-              }
-              maxLength={kind === 'comment' ? 2000 : 1000}
+              placeholder="Ask a question. Share a thought."
+              maxLength={2000}
               rows={3}
               aria-invalid={field.state.meta.errors.length > 0}
               aria-describedby={
@@ -65,11 +50,7 @@ export function TextForm({
         )}
       </form.Field>
       <div className="compose-footer">
-        <small>
-          {kind === 'comment'
-            ? 'Be curious. Be kind.'
-            : 'Only you can publish the update.'}
-        </small>
+        <small>Be curious. Be kind.</small>
         <form.Subscribe
           selector={(state) =>
             [state.canSubmit, state.isSubmitting, state.values.text] as const
@@ -81,7 +62,7 @@ export function TextForm({
               className="button"
               disabled={!canSubmit || submitting || !text.trim()}
             >
-              {kind === 'comment' ? 'Post comment' : 'Review update'}
+              Post comment
             </button>
           )}
         </form.Subscribe>

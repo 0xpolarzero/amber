@@ -1,11 +1,11 @@
 import { Link } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { ReplyComposer } from '../components/reply-composer'
 import type { Post } from '../domain/post'
 import { usePreview } from '../preview/provider'
-import type { PreviewConversation } from '../preview/state'
+import type { PostUpdate, PreviewConversation } from '../preview/state'
 import { MessagesSignIn } from './messages-page'
 
 export function ConversationPage({ postId }: { postId: string }) {
@@ -16,7 +16,7 @@ export function ConversationPage({ postId }: { postId: string }) {
   const conversation = post ? state.conversations[post.id] : undefined
   const available = Boolean(conversation)
   useEffect(() => {
-    if (user && available) dispatch({ type: 'readQuestion', postId })
+    if (user && available) dispatch({ type: 'readConversation', postId })
   }, [user, postId, available, dispatch])
 
   if (post && conversation)
@@ -57,33 +57,17 @@ function Conversation({
   post: Post
   conversation: PreviewConversation
 }) {
-  const { state, dispatch } = usePreview()
-  const [review, setReview] = useState<{
-    text: string
-    baseDetail: string
-  } | null>(null)
-  const [focusReply, setFocusReply] = useState(false)
-  const reviewHeading = useRef<HTMLHeadingElement>(null)
-  const completed = useRef<HTMLParagraphElement>(null)
-  const stale = review !== null && review.baseDetail !== post.detail
+  const { state } = usePreview()
+  const historyEnd = useRef<HTMLDivElement>(null)
+  const previousCount = useRef(conversation.messages.length)
   useEffect(() => {
-    if (review && !conversation.answer) {
-      reviewHeading.current?.focus({ preventScroll: true })
-      reviewHeading.current?.scrollIntoView({
+    if (conversation.messages.length > previousCount.current)
+      historyEnd.current?.scrollIntoView({
         block: 'nearest',
         behavior: 'instant',
       })
-    }
-  }, [review, conversation.answer])
-  useEffect(() => {
-    if (review && conversation.answer) {
-      completed.current?.focus({ preventScroll: true })
-      completed.current?.scrollIntoView({
-        block: 'nearest',
-        behavior: 'instant',
-      })
-    }
-  }, [review, conversation.answer])
+    previousCount.current = conversation.messages.length
+  }, [conversation.messages.length])
 
   return (
     <section
@@ -125,80 +109,71 @@ function Conversation({
         aria-label="Conversation history"
         aria-relevant="additions"
       >
-        <div className="chat-message">
-          <span className="chat-sender">Amber</span>
-          <p className="chat-bubble">{conversation.question}</p>
-        </div>
-        {conversation.answer && (
-          <div className="chat-message outgoing">
+        {conversation.messages.map((message, index) => (
+          <div
+            key={message.id}
+            ref={
+              index === conversation.messages.length - 1
+                ? historyEnd
+                : undefined
+            }
+            className={`chat-message ${message.sender === 'author' ? 'outgoing' : ''}`}
+          >
             <span className="chat-sender">
-              {state.people[post.author].name}
+              {message.sender === 'amber'
+                ? 'Amber'
+                : state.people[post.author].name}
             </span>
-            <p className="chat-bubble">{conversation.answer}</p>
+            <p className="chat-bubble">{message.text}</p>
+            {message.update && (
+              <PostUpdateDiff postId={post.id} update={message.update} />
+            )}
           </div>
-        )}
+        ))}
       </div>
       <div className="conversation-footer">
-        {conversation.answer ? (
-          <p className="conversation-complete" tabIndex={-1} ref={completed}>
-            <Icon name="check" />
-            <span>Post updated</span>
-            <Link to="/posts/$postId" params={{ postId: post.id }}>
-              View post
-              <Icon name="chevron" />
-            </Link>
-          </p>
-        ) : review ? (
-          <section
-            className="reply-review"
-            aria-labelledby="reply-review-title"
-          >
-            <h2 id="reply-review-title" ref={reviewHeading} tabIndex={-1}>
-              Review post update
-            </h2>
-            <p>This paragraph will be added to your post.</p>
-            <blockquote>{review.text}</blockquote>
-            <details className="review-current-post">
-              <summary>Current post</summary>
-              <p>{post.summary}</p>
-              <p>{post.detail}</p>
-            </details>
-            {stale && (
-              <p className="field-error" role="alert">
-                The post changed. Edit your reply and review the latest version.
-              </p>
-            )}
-            <div className="reply-review-actions">
-              <button
-                type="button"
-                className="button secondary"
-                onClick={() => {
-                  setFocusReply(true)
-                  setReview(null)
-                }}
-              >
-                Edit reply
-              </button>
-              <button
-                type="button"
-                className="button"
-                disabled={stale}
-                onClick={() =>
-                  dispatch({ type: 'answer', postId: post.id, ...review })
-                }
-              >
-                Accept update
-              </button>
-            </div>
-          </section>
-        ) : (
-          <ReplyComposer
-            postId={post.id}
-            draft={conversation.draft}
-            focusOnMount={focusReply}
-            onReview={(text) => setReview({ text, baseDetail: post.detail })}
-          />
-        )}
+        <ReplyComposer postId={post.id} draft={conversation.draft} />
+      </div>
+    </section>
+  )
+}
+
+function PostUpdateDiff({
+  postId,
+  update,
+}: {
+  postId: string
+  update: PostUpdate
+}) {
+  const field =
+    update.field === 'detail'
+      ? 'Details'
+      : update.field === 'summary'
+        ? 'Summary'
+        : 'Title'
+  return (
+    <section
+      className="post-update"
+      aria-label={`Changes to ${field.toLowerCase()}`}
+    >
+      <div className="post-update-header">
+        <Icon name="check" />
+        <span>Post updated</span>
+        <Link to="/posts/$postId" params={{ postId }}>
+          View post
+          <Icon name="chevron" />
+        </Link>
+      </div>
+      <h2>{field}</h2>
+      <div className="diff-line removed">
+        <span aria-hidden="true">−</span>
+        <span className="visually-hidden">Removed: </span>
+        <del>{update.before}</del>
+      </div>
+      <div className="diff-line added">
+        <span aria-hidden="true">+</span>
+        <span className="visually-hidden">Added: </span>
+        <ins>{update.after}</ins>
       </div>
     </section>
   )

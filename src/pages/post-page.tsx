@@ -65,7 +65,6 @@ export function PostPage({ postId }: { postId: string }) {
             <Avatar personId={user} />
             <TextForm
               key={`${post.id}-${user}`}
-              kind="comment"
               onSubmit={(text) => {
                 dispatch({
                   type: 'comment',

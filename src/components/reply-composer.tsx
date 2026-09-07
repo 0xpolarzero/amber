@@ -2,17 +2,14 @@ import { useForm } from '@tanstack/react-form'
 import { useEffect, useId, useRef } from 'react'
 import { AnswerForm } from '../domain/forms'
 import { usePreview } from '../preview/provider'
+import { Icon } from './icon'
 
 export function ReplyComposer({
   postId,
   draft,
-  focusOnMount,
-  onReview,
 }: {
   postId: string
   draft: string
-  focusOnMount: boolean
-  onReview: (text: string) => void
 }) {
   const { dispatch } = usePreview()
   const id = useId()
@@ -20,11 +17,20 @@ export function ReplyComposer({
   const form = useForm({
     defaultValues: { text: draft },
     validators: { onChange: AnswerForm },
-    onSubmit: ({ value }) => onReview(value.text.trim()),
+    onSubmit: ({ value, formApi }) => {
+      dispatch({
+        type: 'sendMessage',
+        postId,
+        id: crypto.randomUUID(),
+        text: value.text,
+      })
+      formApi.reset({ text: '' })
+      requestAnimationFrame(() => {
+        resizeReply(input.current)
+        input.current?.focus({ preventScroll: true })
+      })
+    },
   })
-  useEffect(() => {
-    if (focusOnMount) input.current?.focus()
-  }, [focusOnMount])
   useEffect(() => {
     resizeReply(input.current)
   }, [])
@@ -38,22 +44,22 @@ export function ReplyComposer({
     >
       <form.Field name="text">
         {(field) => (
-          <>
+          <div className="reply-input">
             <label className="visually-hidden" htmlFor={id}>
-              Your answer
+              Message Amber
             </label>
             <textarea
               id={id}
               ref={input}
-              rows={2}
+              rows={1}
               maxLength={1000}
-              placeholder="Reply to Amber…"
+              placeholder="Message Amber…"
               value={field.state.value}
               onChange={(event) => {
                 field.handleChange(event.target.value)
                 resizeReply(event.target)
                 dispatch({
-                  type: 'draftAnswer',
+                  type: 'draftMessage',
                   postId,
                   text: event.target.value,
                 })
@@ -62,7 +68,7 @@ export function ReplyComposer({
               onKeyDown={(event) => {
                 if (
                   event.key === 'Enter' &&
-                  (event.metaKey || event.ctrlKey) &&
+                  !event.shiftKey &&
                   !event.nativeEvent.isComposing
                 ) {
                   event.preventDefault()
@@ -71,35 +77,34 @@ export function ReplyComposer({
               }}
               aria-invalid={field.state.meta.errors.length > 0}
               aria-describedby={
-                field.state.meta.errors.length ? `${id}-error` : `${id}-hint`
+                field.state.meta.errors.length ? `${id}-error` : undefined
               }
             />
             {field.state.meta.errors.length > 0 && (
               <p className="field-error" id={`${id}-error`}>
-                Add a little text before continuing.
+                Write a message to send.
               </p>
             )}
-          </>
+          </div>
         )}
       </form.Field>
-      <div className="reply-composer-actions">
-        <small id={`${id}-hint`}>Review before updating your post.</small>
-        <form.Subscribe
-          selector={(state) =>
-            [state.canSubmit, state.isSubmitting, state.values.text] as const
-          }
-        >
-          {([canSubmit, submitting, text]) => (
-            <button
-              type="submit"
-              className="button"
-              disabled={!canSubmit || submitting || !text.trim()}
-            >
-              Review update
-            </button>
-          )}
-        </form.Subscribe>
-      </div>
+      <form.Subscribe
+        selector={(state) =>
+          [state.canSubmit, state.isSubmitting, state.values.text] as const
+        }
+      >
+        {([canSubmit, submitting, text]) => (
+          <button
+            type="submit"
+            className="message-send"
+            aria-label="Send message"
+            title="Send message"
+            disabled={!canSubmit || submitting || !text.trim()}
+          >
+            <Icon name="send" />
+          </button>
+        )}
+      </form.Subscribe>
     </form>
   )
 }

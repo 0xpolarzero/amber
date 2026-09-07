@@ -8,18 +8,18 @@ const author = () => previewReducer(initial(), { type: 'role', role: 'author' })
 describe('sample interactions', () => {
   it('only lets the recipient read a private question, retaining read state across account switches', () => {
     const visitor = initial()
-    const action = { type: 'readQuestion', postId: 'voice-notes' } as const
+    const action = { type: 'readConversation', postId: 'voice-notes' } as const
     expect(previewReducer(visitor, action)).toBe(visitor)
     const member = previewReducer(visitor, { type: 'role', role: 'member' })
     expect(previewReducer(member, action)).toBe(member)
     const read = previewReducer(author(), action)
-    expect(read.readQuestionsByUser.alex).toEqual(['voice-notes'])
+    expect(read.readConversationsByUser.alex).toEqual(['voice-notes'])
     expect(previewReducer(read, action)).toBe(read)
     const switched = previewReducer(read, { type: 'role', role: 'member' })
-    expect(switched.readQuestionsByUser.you ?? []).toEqual([])
+    expect(switched.readConversationsByUser.you ?? []).toEqual([])
     expect(
       previewReducer(switched, { type: 'role', role: 'author' })
-        .readQuestionsByUser.alex,
+        .readConversationsByUser.alex,
     ).toEqual(['voice-notes'])
   })
   it('rejects visitor writes and edits to someone else’s post', () => {
@@ -82,37 +82,10 @@ describe('sample interactions', () => {
       }).posts[0].comments,
     ).toHaveLength(3)
   })
-  it('does not overwrite a post edited after an answer was drafted', () => {
-    const state = author()
-    const baseDetail = state.posts[0].detail
-    const edited = previewReducer(state, {
-      type: 'edit',
-      postId: 'voice-notes',
-      title: 'A new title',
-      summary: 'A new summary',
-      detail: 'New details',
-    })
-    expect(
-      previewReducer(edited, {
-        type: 'answer',
-        postId: 'voice-notes',
-        baseDetail,
-        text: 'Available now.',
-      }),
-    ).toBe(edited)
-    const accepted = previewReducer(state, {
-      type: 'answer',
-      postId: 'voice-notes',
-      baseDetail,
-      text: 'Available now.',
-    })
-    expect(accepted.posts[0].detail).toContain('Available now.')
-    expect(accepted.posts[0].question).toBeUndefined()
-  })
   it('keeps a private draft across navigation and account changes', () => {
     const state = author()
     const action = {
-      type: 'draftAnswer',
+      type: 'draftMessage',
       postId: 'voice-notes',
       text: 'A demo is ready\nfor the group.',
     } as const
@@ -127,32 +100,105 @@ describe('sample interactions', () => {
       previewReducer(returned, { ...action, text: 'x'.repeat(1001) }),
     ).toBe(returned)
   })
-  it('retains the question and accepted reply, clears the draft, and rejects duplicate publication', () => {
+  it('sends messages without editing the post, retains history, and keeps follow-ups available', () => {
     const state = previewReducer(author(), {
-      type: 'draftAnswer',
+      type: 'draftMessage',
       postId: 'voice-notes',
-      text: '  Available now.  ',
+      text: '  Thanks!  ',
     })
     const action = {
-      type: 'answer',
+      type: 'sendMessage',
       postId: 'voice-notes',
-      baseDetail: state.posts[0].detail,
-      text: '  Available now.  ',
+      id: 'reply-1',
+      text: '  Thanks!  ',
     } as const
-    const accepted = previewReducer(state, action)
-    expect(accepted.conversations['voice-notes']).toEqual({
-      question: state.posts[0].question,
-      answer: 'Available now.',
-      draft: '',
+    const sent = previewReducer(state, action)
+    expect(sent.conversations['voice-notes'].messages.at(-1)).toEqual({
+      id: 'reply-1',
+      sender: 'author',
+      text: 'Thanks!',
     })
-    expect(accepted.posts[0].question).toBeUndefined()
-    expect(previewReducer(accepted, action)).toBe(accepted)
+    expect(sent.conversations['voice-notes'].draft).toBe('')
+    expect(sent.posts[0]).toBe(state.posts[0])
+    expect(previewReducer(sent, action)).toBe(sent)
+    expect(previewReducer(sent, { ...action, id: 'blank', text: '  ' })).toBe(
+      sent,
+    )
     expect(
-      previewReducer(accepted, {
-        type: 'draftAnswer',
+      previewReducer(sent, {
+        type: 'draftMessage',
         postId: 'voice-notes',
-        text: 'Another reply',
+        text: 'One more thing',
+      }).conversations['voice-notes'].draft,
+    ).toBe('One more thing')
+    const member = previewReducer(sent, { type: 'role', role: 'member' })
+    expect(previewReducer(member, { ...action, id: 'not-mine' })).toBe(member)
+  })
+  it('shows an already-applied example with an accurate before/after diff', () => {
+    const state = initial()
+    const conversation = state.conversations['voice-notes']
+    expect(conversation.messages.map((message) => message.sender)).toEqual([
+      'amber',
+      'author',
+      'amber',
+    ])
+    const update = conversation.messages.at(-1)?.update
+    expect(update?.before).toBe(fixtures.posts[0].summary)
+    expect(update?.after).toBe(state.posts[0].summary)
+    expect(update?.after).toContain('free demo')
+    expect(state.posts[0].question).toBeUndefined()
+  })
+  it('applies bot updates directly but rejects stale changes and duplicate responses', () => {
+    const state = previewReducer(author(), {
+      type: 'sendMessage',
+      postId: 'voice-notes',
+      id: 'correction',
+      text: 'The demo is now available on Windows.',
+    })
+    const action = {
+      type: 'applyPostUpdate',
+      postId: 'voice-notes',
+      id: 'update-2',
+      sourceMessageId: 'correction',
+      text: 'Added Windows availability.',
+      update: {
+        field: 'summary',
+        before: state.posts[0].summary,
+        after: 'A voice note app with a free demo for Mac and Windows.',
+      },
+    } as const
+    const updated = previewReducer(state, action)
+    expect(updated.posts[0].summary).toBe(action.update.after)
+    expect(
+      updated.conversations['voice-notes'].messages.at(-1)?.update,
+    ).toEqual(action.update)
+    expect(previewReducer(updated, action)).toBe(updated)
+    expect(
+      previewReducer(updated, {
+        ...action,
+        id: 'replay',
+        update: {
+          ...action.update,
+          before: action.update.after,
+          after: 'Duplicate update',
+        },
       }),
-    ).toBe(accepted)
+    ).toBe(updated)
+    const edited = previewReducer(state, {
+      type: 'edit',
+      postId: 'voice-notes',
+      title: state.posts[0].title,
+      summary: 'Author’s newer summary.',
+      detail: state.posts[0].detail,
+    })
+    expect(previewReducer(edited, action)).toBe(edited)
+    expect(
+      previewReducer(state, {
+        ...action,
+        update: { ...action.update, after: '' },
+      }),
+    ).toBe(state)
+    const member = previewReducer(state, { type: 'role', role: 'member' })
+    expect(previewReducer(member, action)).toBe(member)
   })
 })

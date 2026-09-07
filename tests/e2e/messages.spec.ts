@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('keeps a draft through navigation, reviews it, and retains the accepted conversation', async ({
+test('shows the applied AI update and its diff, with a normal message composer', async ({
   page,
 }) => {
   await page.goto('/messages')
@@ -9,59 +9,79 @@ test('keeps a draft through navigation, reviews it, and retains the accepted con
     .selectOption('author')
   await page.getByRole('link', { name: /Amber About Noted/ }).click()
   await expect(page).toHaveURL(/\/messages\/voice-notes$/)
-  await expect(page.getByRole('dialog')).toHaveCount(0)
-  const reply = page.getByRole('textbox', { name: 'Your answer' })
+  const history = page.getByRole('log', { name: 'Conversation history' })
   await expect(
-    page.getByRole('button', { name: 'Review update' }),
-  ).toBeDisabled()
-  await reply.fill('The demo is ready.')
-  await reply.press('Enter')
-  await reply.pressSequentially('The group can try it.')
-  const answer = 'The demo is ready.\nThe group can try it.'
-  await expect(reply).toHaveValue(answer)
-  await expect(
-    page.getByRole('heading', { name: 'Review post update' }),
-  ).toHaveCount(0)
-
-  await page
-    .getByRole('link', { name: /Noted Voice notes, finally searchable/ })
-    .click()
-  await expect(
-    page.getByRole('heading', { name: 'Voice notes, finally searchable.' }),
+    history.getByText(
+      'Yes! There’s a free Mac demo for the group. It works with English and Mandarin.',
+      { exact: true },
+    ),
   ).toBeVisible()
-  await expect(page.getByText(answer, { exact: true })).toHaveCount(0)
+  await expect(
+    history.getByText(
+      'I’ve added the demo availability and supported languages to your post.',
+      { exact: true },
+    ),
+  ).toBeVisible()
+  const diff = page.getByRole('region', { name: 'Changes to summary' })
+  await expect(diff.locator('del')).toContainText('A small app')
+  await expect(diff.locator('ins')).toContainText('free demo for the group')
+  const updatedSummary = await diff.locator('ins').innerText()
+  await expect(page.getByRole('button', { name: /Review|Accept/ })).toHaveCount(
+    0,
+  )
+  await expect(page.getByText('Review before updating your post.')).toHaveCount(
+    0,
+  )
+  await diff.getByRole('link', { name: 'View post' }).click()
+  await expect(page.getByText(updatedSummary, { exact: true })).toBeVisible()
   await page.goBack()
-  await expect(reply).toHaveValue(answer)
+  await expect(diff).toBeVisible()
+  await expect(
+    page.getByRole('textbox', { name: 'Message Amber' }),
+  ).toBeEnabled()
+})
+
+test('retains drafts and sends repeat messages without a review step', async ({
+  page,
+}) => {
+  await page.goto('/messages/voice-notes')
+  await page
+    .getByRole('combobox', { name: 'Preview account' })
+    .selectOption('author')
+  const reply = page.getByRole('textbox', { name: 'Message Amber' })
+  const send = page.getByRole('button', { name: 'Send message' })
+  await expect(send).toBeDisabled()
+  await reply.fill('Thanks for updating it.')
+  await reply.press('Shift+Enter')
+  await reply.pressSequentially('I’ll share more soon.')
+  const message = 'Thanks for updating it.\nI’ll share more soon.'
+  await expect(reply).toHaveValue(message)
   await page.getByRole('link', { name: 'Back to messages' }).click()
   await expect(page.getByText('Draft', { exact: true })).toBeVisible()
   await page.getByRole('link', { name: /Amber About Noted/ }).click()
-  await expect(reply).toHaveValue(answer)
-  await reply.press('Control+Enter')
+  await expect(reply).toHaveValue(message)
+  await reply.press('Enter')
   await expect(
-    page.getByRole('heading', { name: 'Review post update' }),
-  ).toBeFocused()
-  await page.getByRole('button', { name: 'Edit reply' }).click()
-  await expect(reply).toBeFocused()
-  await expect(reply).toHaveValue(answer)
-  await page.getByRole('button', { name: 'Review update' }).click()
-  await page.getByText('Current post', { exact: true }).click()
-  await expect(
-    page.getByRole('button', { name: 'Accept update' }),
-  ).toBeEnabled()
-  await page.getByRole('button', { name: 'Accept update' }).click()
-  await expect(reply).toHaveCount(0)
-  await expect(
-    page.getByRole('log').getByText(answer, { exact: true }),
+    page.getByRole('log').getByText(message, { exact: true }),
   ).toBeVisible()
-  await expect(page.getByText('Post updated', { exact: true })).toBeVisible()
+  await expect(reply).toHaveValue('')
+  await expect(reply).toBeFocused()
+  await expect(send).toBeDisabled()
+  await reply.fill('One more thing: a Windows version is next.')
+  await send.click()
+  await expect(
+    page
+      .getByRole('log')
+      .getByText('One more thing: a Windows version is next.', { exact: true }),
+  ).toBeVisible()
+  await expect(reply).toHaveValue('')
+  await expect(page.getByRole('log').locator('.chat-message')).toHaveCount(5)
   await page.getByRole('link', { name: 'Back to messages' }).click()
-  await expect(page.getByText('Post updated', { exact: true })).toBeVisible()
+  await expect(page.getByText('Draft', { exact: true })).toHaveCount(0)
   await page.getByRole('link', { name: /Amber About Noted/ }).click()
   await expect(
-    page.getByRole('log').getByText(answer, { exact: true }),
+    page.getByRole('log').getByText(message, { exact: true }),
   ).toBeVisible()
-  await page.getByRole('link', { name: 'View post', exact: true }).click()
-  await expect(page.getByText(answer, { exact: true })).toBeVisible()
 })
 
 test('guards direct conversation links and restores only the owner’s draft', async ({
@@ -84,7 +104,7 @@ test('guards direct conversation links and restores only the owner’s draft', a
   await expect(question).toHaveCount(0)
   await account.selectOption('author')
   await expect(question).toBeVisible()
-  const reply = page.getByRole('textbox', { name: 'Your answer' })
+  const reply = page.getByRole('textbox', { name: 'Message Amber' })
   await reply.fill('A private unfinished reply.')
   await account.selectOption('member')
   await expect(reply).toHaveCount(0)
@@ -104,7 +124,7 @@ test('guards direct conversation links and restores only the owner’s draft', a
   ).toBeVisible()
 })
 
-test('fits long replies and keeps the composer usable in the viewport', async ({
+test('fits the diff and long messages on mobile and desktop', async ({
   page,
   isMobile,
 }) => {
@@ -112,9 +132,22 @@ test('fits long replies and keeps the composer usable in the viewport', async ({
   await page
     .getByRole('combobox', { name: 'Preview account' })
     .selectOption('author')
-  const reply = page.getByRole('textbox', { name: 'Your answer' })
-  const review = page.getByRole('button', { name: 'Review update' })
-  await expect(review).toBeInViewport()
+  await expect(
+    page.getByRole('region', { name: 'Changes to summary' }),
+  ).toBeVisible()
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true)
+  const reply = page.getByRole('textbox', { name: 'Message Amber' })
+  const send = page.getByRole('button', { name: 'Send message' })
+  await page
+    .locator('.reply-composer')
+    .evaluate((element) =>
+      element.scrollIntoView({ block: 'center', behavior: 'instant' }),
+    )
+  await expect(send).toBeInViewport()
   const composerBounds = await page.locator('.reply-composer').boundingBox()
   const controlsBounds = await page.locator('.preview-controls').boundingBox()
   if (!composerBounds || !controlsBounds)
@@ -129,19 +162,11 @@ test('fits long replies and keeps the composer usable in the viewport', async ({
       ),
     ).toBeGreaterThanOrEqual(16)
   await reply.fill('a'.repeat(1000))
-  await review.click()
-  await expect(
-    page.getByRole('region', { name: 'Review post update' }),
-  ).toBeVisible()
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true)
-  await page.getByRole('button', { name: 'Accept update' }).click()
+  await send.click()
   await expect(
     page.getByRole('log').getByText('a'.repeat(1000), { exact: true }),
   ).toBeVisible()
+  await expect(reply).toHaveValue('')
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

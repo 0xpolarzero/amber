@@ -4,7 +4,7 @@
 
 The reviewed UI now runs as the React app: `pnpm dev`, then open http://127.0.0.1:3000. The [original feed prototype](./feed-prototype.html) remains a reference ([design notes](./design-direction.md)).
 
-**Built foundation:** routed sample feed, sorting, search, group/author/bookmark filters, profiles, comments, author editing and answer review. Accounts and changes are local previews. The integration tasks below remain planned; no real messages are processed yet.
+**Built foundation:** routed sample feed, sorting, search, group/author/bookmark filters, profiles, comments, author editing, chat and an automatic-update diff example. Accounts and changes are local previews. The integration tasks below remain planned; no real messages are processed yet.
 
 Proposed for review. Each numbered task delivers one checkable result. Refer to its number when suggesting changes.
 
@@ -17,7 +17,7 @@ A searchable showcase of one Telegram group's projects. Authors control their po
 | Feed `/` | Stationary Group, Author, Bookmarks, sort and search controls. Search has its own row on mobile. Removable filters and Clear filters below, including Me. Group and author choices narrow each other. |
 | Post `/posts/:id` | Summary, project/source links, author, comments. Owners get Edit, Remove and private AI questions. |
 | Author `/people/:id` | Name, linked X profile and projects. Exists before they join. |
-| Messages `/messages` | Private bot conversations with an unread badge. Open `/messages/:postId` for context, history, a draft reply and update review. |
+| Messages `/messages` | Private bot conversations with an unread badge. Open `/messages/:postId` for context, history, messages, drafts and diffs of applied AI changes. |
 | Admin `/admin` | Submissions to review, reported comments and worker health. |
 
 ```text
@@ -77,7 +77,7 @@ Build in order. Tasks 01–04 settle the main uncertainties; task 08 delivers th
 | 18 | Login and ownership | Verified Telegram ID claims the author; other accounts cannot edit their posts. |
 | 19 | Edit/remove posts | Save owner changes; prevent stale AI overwrites and reimport of removed posts. |
 | 20 | Questions and answers | Show up to three private questions; save answers and enqueue revision together. |
-| 21 | Suggested revisions | Owner accepts/dismisses visible changes; acceptance respects newer edits. |
+| 21 | Automatic revisions and diffs | Apply AI changes, show the exact diff in chat, and preserve newer author edits. |
 | 22 | X login | X-only visitors sign in/out without claiming Telegram posts. |
 | 23 | Account linking | Prove both identities; explain conflicts; never merge by username. |
 | 24 | Comments | Signed-in posting, own-comment deletion, reporting and server-enforced rate limits work. |

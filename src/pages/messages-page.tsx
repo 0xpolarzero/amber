@@ -1,9 +1,10 @@
+import { Link } from '@tanstack/react-router'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { usePreview } from '../preview/provider'
 
 export function MessagesPage() {
-  const { state, user, messages, readQuestions } = usePreview()
+  const { state, user, messages, readConversations } = usePreview()
   return (
     <>
       <header className="feed-header">
@@ -15,9 +16,7 @@ export function MessagesPage() {
         <div className="message-list">
           {messages.map((post) => {
             const conversation = state.conversations[post.id]
-            const unread = Boolean(
-              post.question && !readQuestions.includes(post.id),
-            )
+            const unread = Boolean(!readConversations.includes(post.id))
             return (
               <Link
                 key={post.id}
@@ -42,17 +41,11 @@ export function MessagesPage() {
                   </span>
                   <span className="message-subject">{post.title}</span>
                   <span className="message-preview">
-                    {conversation.draft ||
-                      conversation.answer ||
-                      conversation.question}
+                    {conversation.draft || conversation.messages.at(-1)?.text}
                   </span>
-                  <span className="message-status">
-                    {conversation.draft
-                      ? 'Draft'
-                      : conversation.answer
-                        ? 'Post updated'
-                        : 'Reply needed'}
-                  </span>
+                  {conversation.draft && (
+                    <span className="message-status">Draft</span>
+                  )}
                 </span>
                 <Icon name="chevron" />
               </Link>
@@ -91,5 +84,3 @@ export function MessagesSignIn() {
     </div>
   )
 }
-
-import { Link } from '@tanstack/react-router'

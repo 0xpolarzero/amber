@@ -50,15 +50,15 @@ export function ProjectLink({ post }: { post: Post }) {
   )
 }
 export function OwnerPrompt({ post }: { post: Post }) {
-  const { user } = usePreview()
-  return post.author === user && post.question ? (
+  const { user, state } = usePreview()
+  return post.author === user && state.conversations[post.id] ? (
     <Link
       className="owner-prompt"
       to="/messages/$postId"
       params={{ postId: post.id }}
     >
       <Icon name="spark" />
-      <span>One detail would help. Add an answer.</span>
+      <span>Message Amber</span>
       <Icon name="chevron" />
     </Link>
   ) : null

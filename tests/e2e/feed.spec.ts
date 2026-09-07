@@ -130,7 +130,7 @@ test('adds and deletes your comment without editing someone else’s post', asyn
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
-test('lets the author edit and review an answer before adding it to the post', async ({
+test('lets the author edit a post and open its private conversation', async ({
   page,
 }) => {
   await page
@@ -147,29 +147,21 @@ test('lets the author edit and review an answer before adding it to the post', a
   await expect(
     page.getByRole('link', { name: 'Search your voice notes.', exact: true }),
   ).toBeVisible()
+  await page.getByRole('link', { name: 'Message Amber' }).click()
   await page
-    .getByRole('link', { name: 'One detail would help. Add an answer.' })
-    .click()
-  await page
-    .getByRole('textbox', { name: 'Your answer' })
+    .getByRole('textbox', { name: 'Message Amber' })
     .fill('The first demo is available to the group.')
-  await page.getByRole('button', { name: 'Review update' }).click()
+  await page.getByRole('button', { name: 'Send message' }).click()
   await expect(
     page
-      .getByRole('region', { name: 'Review post update' })
+      .getByRole('log')
       .getByText('The first demo is available to the group.', { exact: true }),
   ).toBeVisible()
-  await page.getByRole('button', { name: 'Accept update' }).click()
-  await expect(
-    page.getByRole('link', { name: 'One detail would help. Add an answer.' }),
-  ).toHaveCount(0)
   await page
     .getByRole('link', { name: /Noted Search your voice notes/ })
     .click()
   await expect(
-    page.getByText('The first demo is available to the group.', {
-      exact: true,
-    }),
+    page.getByRole('heading', { name: 'Search your voice notes.' }),
   ).toBeVisible()
 })
 

@@ -1,6 +1,6 @@
 # Current architecture
 
-Updated 6 September 2026. This replaces the initial stack recommendation in research.md. The web app now implements the reviewed UI with fictional fixtures and temporary local state; authentication, collection, model processing, PostgreSQL and the worker remain planned. See the [README](../README.md) for the current structure and commands.
+Updated 7 September 2026. This replaces the initial stack recommendation in research.md. The web app now implements the reviewed UI with fictional fixtures and temporary local state; authentication, collection, model processing, PostgreSQL and the worker remain planned. See the [README](../README.md) for the current structure and commands.
 
 Review the proposed screens and numbered deliveries in [the HTML implementation plan](./implementation-plan.html) ([Markdown](./implementation-plan.md)).
 
@@ -97,7 +97,7 @@ The two writes from the collector are one transaction, not independent sends.
 3. Debounce related messages briefly, grouping by author, thread/replies, album and project link. Queue a bounded classification/summary job. Ingestion continues even when model jobs are paused or slow.
 4. Request an ignore decision or JSON post proposal: title, short explanation, evidence/source IDs, links and missing-information questions. Parse the CLI JSON envelope, then parse and validate its response string with Effect Schema; CLI JSON output alone does not enforce the post schema. Application code verifies source references and author ownership.
 5. Save the post and questions. Automatically publish entries that satisfy the agreed selection and attribution rules; send uncertain matches to review. This follows the requested automatic-entry flow. The author can edit or remove their entry after login.
-6. Answers persist immediately and enqueue a revision job. Human-edited fields remain protected from automatic replacement. There is no running agent waiting for somebody to answer.
+6. Private messages persist immediately and enqueue processing. The worker applies supported post changes automatically and records the exact before/after diff as a bot message. No acceptance step. Conditional version checks prevent stale updates from overwriting newer author edits; stale work is regenerated against the current post. There is no running agent waiting for somebody to answer.
 
 Message-ID polling finds additions. Track edits and deletions through MTProto updates/recovery or explicit reconciliation of known messages; do not describe a highest-ID cursor as complete synchronization. [Telegram update synchronization](https://core.telegram.org/api/updates)
 
@@ -121,12 +121,14 @@ Open a post
   Service reads Postgres
   Query caches the response and React renders it
 
-Answer a question
+Send a message to Amber
   Form validates the shared Effect schema
   Server revalidates input and checks ownership
-  Transaction saves the answer and a revision job
-  Query refreshes the dashboard
-  Worker generates a suggested revision asynchronously
+  Transaction saves the message and a processing job
+  Query refreshes the conversation
+  Worker applies a validated update asynchronously
+  Transaction stores the changed post, bot response and before/after diff
+  Query refreshes the post and conversation
 ```
 
 The GramJS reader uses the project owner's session. Website users log in separately with Telegram OIDC or X OAuth. Match a Telegram author by the verified numeric Telegram user ID, and link X explicitly to the same internal account. X-only login permits comments, not ownership of somebody's Telegram posts. Keep all reader credentials server-side.

@@ -821,7 +821,7 @@ main {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 22px 0;
+  padding: 16px 0;
 }
 
 .conversation-header .icon-button {
@@ -892,9 +892,9 @@ main {
 .conversation-history {
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 18px;
   flex: 1;
-  padding: 34px 0 40px;
+  padding: 24px 0 16px;
 }
 
 .chat-message {
@@ -910,7 +910,7 @@ main {
 }
 
 .chat-bubble {
-  padding: 13px 16px;
+  padding: 10px 14px;
   border-radius: 3px 16px 16px;
   background: var(--soft);
   font-size: 14px;
@@ -938,114 +938,123 @@ main {
   padding-top: 12px;
 }
 
-.reply-composer,
-.reply-review {
-  padding: 16px;
+.reply-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 8px 8px 8px 16px;
   border: 1px solid #dededb;
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--paper);
 }
 
 .reply-composer:focus-within {
   border-color: #999;
 }
-
+.reply-input {
+  flex: 1;
+  min-width: 0;
+}
 .reply-composer textarea {
   display: block;
   width: 100%;
-  min-height: 66px;
-  max-height: 200px;
+  min-height: 44px;
+  max-height: 180px;
   border: 0;
-  padding: 0 0 10px;
+  padding: 10px 0;
   resize: none;
   font-size: 14px;
   line-height: 1.7;
   color: var(--ink);
   background: transparent;
 }
-
 .reply-composer textarea:focus-visible {
   outline: none;
 }
-
 .reply-composer textarea::placeholder {
   color: var(--quiet);
 }
-
-.reply-composer-actions,
-.reply-review-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 10px;
+.message-send {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  color: white;
 }
-
-.reply-composer-actions small {
-  font-size: 11px;
-  color: var(--quiet);
+.message-send:hover {
+  background: #3d3d3d;
 }
-
-.reply-review h2 {
-  font-size: 14px;
-  font-weight: 600;
-  scroll-margin-top: 100px;
-}
-
-.reply-review > p,
-.review-current-post {
-  color: var(--quiet);
-  font-size: 12px;
-  margin-top: 5px;
-}
-
-.reply-review blockquote {
-  padding: 12px 14px;
-  margin: 16px 0 6px;
+.message-send:disabled {
   background: var(--soft);
-  border-radius: 8px;
-  font-size: 14px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  color: var(--quiet);
+  opacity: 1;
+}
+.message-send svg {
+  width: 19px;
+  height: 19px;
 }
 
-.review-current-post summary {
-  display: list-item;
-  cursor: pointer;
-  padding: 12px 0;
+.post-update {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
 }
-
-.review-current-post p {
-  margin: 0 0 12px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.conversation-complete {
+.post-update-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 16px 0;
-  border-top: 1px solid var(--line);
-  font-size: 12px;
+  gap: 6px;
+  padding: 0 12px;
+  font-size: 11px;
   color: var(--secondary);
 }
-
-.conversation-complete > svg {
-  width: 16px;
-  height: 16px;
-}
-
-.conversation-complete a {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  margin-left: auto;
-}
-
-.conversation-complete a svg {
+.post-update-header svg {
   width: 14px;
   height: 14px;
+}
+.post-update-header a {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  min-height: 44px;
+}
+.post-update-header a:hover {
+  color: var(--ink);
+}
+.post-update-header a:focus-visible {
+  outline-offset: -2px;
+}
+.post-update h2 {
+  padding: 7px 12px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 550;
+  color: var(--quiet);
+}
+.diff-line {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.diff-line.removed {
+  background: #fcf1f0;
+  color: #884b43;
+}
+.diff-line.added {
+  background: #eef7ef;
+  color: #346548;
+}
+.diff-line ins {
+  text-decoration: none;
 }
 
 /* Feed posts */
@@ -1516,11 +1525,6 @@ main {
 
 .button.secondary:hover {
   background: var(--soft);
-}
-
-.conversation-footer .button {
-  min-height: 44px;
-  flex-shrink: 0;
 }
 
 .comment {
@@ -2294,14 +2298,7 @@ dialog::backdrop {
   .chat-message {
     max-width: 90%;
   }
-  .reply-composer {
-    padding: 12px;
-  }
   .reply-composer textarea {
     font-size: 16px;
-  }
-  .reply-composer-actions small {
-    font-size: 10px;
-    max-width: 135px;
   }
 }
