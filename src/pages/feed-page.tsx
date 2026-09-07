@@ -71,8 +71,8 @@ export function FeedPage({ search }: { search: FeedSearch }) {
                   : search.sort === 'comments'
                     ? 'Comments'
                     : 'Bookmarks'}
+                <Icon name="chevronDown" />
               </span>
-              <Icon name="chevronDown" />
             </label>
           }
           searchControl={
