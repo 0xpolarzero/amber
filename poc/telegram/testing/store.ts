@@ -1,7 +1,7 @@
 import { Effect, Schema } from 'effect'
 import * as S from '../schemas'
-import { tools, type TelegramPorts, type Ports } from '../tools'
-import { memories, notedPage } from './telegram-fixtures'
+import { type Ports, tools } from '../tools'
+import { memories, notedPage } from './fixtures'
 
 // In-memory application boundary for the example. No Telegram, network or real database writes.
 export function telegramStore(
@@ -23,7 +23,7 @@ export function telegramStore(
       try: f,
       catch: (error) => new S.Failure({ operation: 'example-store', message: String(error) }),
     })
-  const ports: Omit<TelegramPorts, 'model'> = {
+  const ports: Omit<Ports, 'model'> = {
     progress: (event) =>
       run(() => {
         progress.push(event)

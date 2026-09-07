@@ -1,12 +1,12 @@
 import * as Interpreter from '@smthrs/flow/Interpreter'
 import { Effect, Layer } from 'effect'
-import * as T from './telegram.workflow'
-import * as S from './schemas'
-import { checked, createModelTasks } from './model'
 import { validateDraft, validateSelection } from './guards'
-import type { TelegramPorts } from './tools'
-import selectionPrompt from './prompts/selection'
+import { checked, createModelTasks } from './model'
 import postPrompt from './prompts/post'
+import selectionPrompt from './prompts/selection'
+import * as S from './schemas'
+import type { Ports } from './tools'
+import * as T from './workflow'
 
 const projectTools = [
   'searchWeb',
@@ -16,7 +16,7 @@ const projectTools = [
   'searchPosts',
 ] as const
 
-export function telegramLayers(ports: TelegramPorts) {
+export function telegramLayers(ports: Ports) {
   const { track, generate } = createModelTasks(ports)
   return Layer.mergeAll(
     T.LoadBatch.toLayer(ports.loadBatch),

@@ -1,6 +1,6 @@
 import { Effect, Schema } from 'effect'
 import * as S from './schemas'
-import { tools, type Ports, type Run, type Scope, type ToolName } from './tools'
+import { type Ports, type Run, type Scope, type ToolName, tools } from './tools'
 
 export type ModelPorts = Pick<Ports, 'model' | 'readTool' | 'progress'>
 

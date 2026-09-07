@@ -1,17 +1,18 @@
 // Executable example: real Smithers flow, fake Telegram/storage/web/model boundaries.
 // The model replies are scripted. This tests the pipeline, not prompt quality.
+
+import * as Action from '@smthrs/flow/Action'
 import { Deferred, Effect, Layer } from 'effect'
 import { expect, it } from 'vitest'
-import * as Action from '@smthrs/flow/Action'
-import { TelegramBatch } from './telegram.workflow'
-import { telegramLayers } from './telegram.agents'
-import selectionPrompt from './prompts/selection'
+import { telegramLayers } from './agents'
 import postPrompt from './prompts/post'
-import { batch, initialPosts, memories, responses } from './testing/telegram-fixtures'
-import { telegramStore } from './testing/telegram-store'
-import { testEngine } from './testing/engine'
-import type { Ports } from './tools'
+import selectionPrompt from './prompts/selection'
 import type * as S from './schemas'
+import { testEngine } from './testing/engine'
+import { batch, initialPosts, memories, responses } from './testing/fixtures'
+import { telegramStore } from './testing/store'
+import type { Ports } from './tools'
+import { TelegramBatch } from './workflow'
 
 it('turns a pulled batch into a new post, an updated post and one question for the right author', async () => {
   const store = telegramStore(batch, initialPosts)
@@ -131,5 +132,5 @@ it('turns a pulled batch into a new post, an updated post and one question for t
   )
   await expect(
     `${JSON.stringify({ mode: 'scripted-model', ...store.result() }, null, 2)}\n`,
-  ).toMatchFileSnapshot('./telegram.result.json')
+  ).toMatchFileSnapshot('./result.json')
 })

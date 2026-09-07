@@ -11,8 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgentRouteImport } from './routes/agent'
-import { Route as AgentDesignRouteImport } from './routes/agent-design'
-import { Route as AgentWorkflowRouteImport } from './routes/agent-workflow'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as PlanRouteImport } from './routes/plan'
@@ -30,16 +28,6 @@ const IndexRoute = IndexRouteImport.update({
 const AgentRoute = AgentRouteImport.update({
   id: '/agent',
   path: '/agent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AgentDesignRoute = AgentDesignRouteImport.update({
-  id: '/agent-design',
-  path: '/agent-design',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AgentWorkflowRoute = AgentWorkflowRouteImport.update({
-  id: '/agent-workflow',
-  path: '/agent-workflow',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -86,8 +74,6 @@ const PostsPostIdRoute = PostsPostIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agent': typeof AgentRoute
-  '/agent-design': typeof AgentDesignRoute
-  '/agent-workflow': typeof AgentWorkflowRoute
   '/dashboard': typeof DashboardRoute
   '/messages': typeof MessagesRouteWithChildren
   '/plan': typeof PlanRoute
@@ -100,8 +86,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agent': typeof AgentRoute
-  '/agent-design': typeof AgentDesignRoute
-  '/agent-workflow': typeof AgentWorkflowRoute
   '/dashboard': typeof DashboardRoute
   '/plan': typeof PlanRoute
   '/saved': typeof SavedRoute
@@ -114,8 +98,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/agent': typeof AgentRoute
-  '/agent-design': typeof AgentDesignRoute
-  '/agent-workflow': typeof AgentWorkflowRoute
   '/dashboard': typeof DashboardRoute
   '/messages': typeof MessagesRouteWithChildren
   '/plan': typeof PlanRoute
@@ -130,8 +112,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/agent'
-    | '/agent-design'
-    | '/agent-workflow'
     | '/dashboard'
     | '/messages'
     | '/plan'
@@ -144,8 +124,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/agent'
-    | '/agent-design'
-    | '/agent-workflow'
     | '/dashboard'
     | '/plan'
     | '/saved'
@@ -157,8 +135,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/agent'
-    | '/agent-design'
-    | '/agent-workflow'
     | '/dashboard'
     | '/messages'
     | '/plan'
@@ -172,8 +148,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgentRoute: typeof AgentRoute
-  AgentDesignRoute: typeof AgentDesignRoute
-  AgentWorkflowRoute: typeof AgentWorkflowRoute
   DashboardRoute: typeof DashboardRoute
   MessagesRoute: typeof MessagesRouteWithChildren
   PlanRoute: typeof PlanRoute
@@ -196,20 +170,6 @@ declare module '@tanstack/react-router' {
       path: '/agent'
       fullPath: '/agent'
       preLoaderRoute: typeof AgentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/agent-design': {
-      id: '/agent-design'
-      path: '/agent-design'
-      fullPath: '/agent-design'
-      preLoaderRoute: typeof AgentDesignRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/agent-workflow': {
-      id: '/agent-workflow'
-      path: '/agent-workflow'
-      fullPath: '/agent-workflow'
-      preLoaderRoute: typeof AgentWorkflowRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -288,8 +248,6 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgentRoute: AgentRoute,
-  AgentDesignRoute: AgentDesignRoute,
-  AgentWorkflowRoute: AgentWorkflowRoute,
   DashboardRoute: DashboardRoute,
   MessagesRoute: MessagesRouteWithChildren,
   PlanRoute: PlanRoute,

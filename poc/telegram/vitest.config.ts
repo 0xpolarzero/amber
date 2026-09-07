@@ -5,7 +5,10 @@ import { resolve } from 'node:path'
 import { defineConfig } from 'vitest/config'
 
 const source = process.env.SMITHERS_SOURCE
-if (!source) throw new Error('Set SMITHERS_SOURCE to the Smithers checkout pinned in workflow.ts.')
+if (!source)
+  throw new Error(
+    'Set SMITHERS_SOURCE to the Smithers checkout pinned in poc/telegram/vitest.config.ts.',
+  )
 
 const require = createRequire(import.meta.url)
 const revision = '6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c'
@@ -36,5 +39,5 @@ export default defineConfig({
       },
     },
   ],
-  test: { include: ['docs/agent/*.test.ts'] },
+  test: { include: ['poc/telegram/**/*.test.ts'] },
 })

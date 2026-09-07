@@ -1,26 +1,5 @@
 import type * as S from './schemas'
 
-export function validateChanges(
-  userId: string,
-  context: typeof S.Context.Type,
-  answer: typeof S.Answer.Type,
-) {
-  if (context.userId !== userId) throw new Error('Context belongs to another user.')
-  const ids = new Set<string>()
-  for (const change of answer.changes) {
-    const post = context.posts.find((post) => post.id === change.postId)
-    if (
-      !post ||
-      post.authorId !== userId ||
-      post.version !== change.expectedVersion ||
-      ids.has(change.postId) ||
-      !Object.keys(change.patch).length
-    )
-      throw new Error('Change needs a distinct, owned, retrieved post at its expected version.')
-    ids.add(change.postId)
-  }
-}
-
 export function validateSelection(
   batch: typeof S.BatchContext.Type,
   selection: typeof S.Selection.Type,

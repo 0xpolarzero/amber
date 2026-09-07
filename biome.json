@@ -4,6 +4,7 @@
     "includes": [
       "src/**",
       "tests/**",
+      "poc/**",
       "*.json",
       "*.ts",
       "!src/routeTree.gen.ts"
@@ -14,5 +15,6 @@
     "formatter": { "quoteStyle": "single", "semicolons": "asNeeded" }
   },
   "linter": { "enabled": true, "rules": { "preset": "recommended" } },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } }
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "overrides": [{ "includes": ["poc/**"], "formatter": { "lineWidth": 100 } }]
 }

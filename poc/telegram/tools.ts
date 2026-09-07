@@ -1,8 +1,7 @@
 /** All model tools are read-only. Database writes are application actions below. */
-import { Effect, Schema } from 'effect'
-import type * as C from './chat.workflow'
-import type * as T from './telegram.workflow'
+import { type Effect, Schema } from 'effect'
 import * as S from './schemas'
+import type * as T from './workflow'
 
 const Query = Schema.Struct({
   query: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(240)),
@@ -70,40 +69,8 @@ export type Ports = {
     status: 'running' | 'done' | 'failed'
   }) => Run<void>
 
-  // ADMISSION (before AgentTurn): authenticate; atomically reject if this conversation has
-  // an active turn; save user message + durable job + activeTurnId. Same client ID is idempotent.
-  // Closing a tab never cancels the job. Drafting is allowed while sending is locked.
-  // Read three completed pairs before this message, excluding the current turn.
-  loadOpening: Handler<typeof C.LoadOpening>
-  // Execute planned searches with this user's access, plus visible posts. Deduplicate hits.
-  // Freeze message retrieval at this turn's sequence. Load ALL memories and outstanding
-  // messages, without silent truncation. Return exact editable post versions.
-  readContext: Handler<typeof C.ReadContext>
-  // Transaction keyed by messageId: recheck owned post versions + memory version, apply
-  // patches, persist actual before/after diffs, reply + needsReply, and two pending branches.
-  // On conflict publish nothing; refresh context and regenerate. Reply is visible here.
-  publish: Handler<typeof C.Publish>
-  // Fresh full memory snapshot, also on retries; no tombstones or restore semantics.
-  readMemories: Handler<typeof C.ReadMemories>
-  // Transaction checks snapshot version, applies model's create/replace/remove operations,
-  // records evidence and branch completion. No-op output still completes the branch.
-  // Concurrent manual memory edits cause a fresh memory-task attempt, not silent overwrite.
-  saveMemories: Handler<typeof C.SaveMemories>
-  // Update only supplied, earlier, still-unaddressed messages owned by this user. Record
-  // answered/ignored, reason, and the user message responsible; complete the branch.
-  // If an answered request points to an unpublished candidate, attach the clarification,
-  // increment its revision and enqueue Project in the SAME transaction. Ignored requests
-  // close without requeueing. The project writer waits for this chat turn to finish.
-  saveResolutions: Handler<typeof C.SaveResolutions>
-  // Persist saved branch input + bounded retry/backoff; return completed:false. Retry only
-  // this branch via RetryMaintenance with a fresh attempt ID. Keep the turn locked.
-  queueMaintenanceRetry: Handler<typeof C.QueueMaintenanceRetry>
-  // Read BOTH durable branch records. Unlock only if both completed, otherwise return false.
-  // Repeated calls are harmless. Exhausted retries remain visible as failed with Retry.
-  finishTurn: Handler<typeof C.FinishTurn>
-
   // TELEGRAM ADMISSION: one GramJS reader per group. Save raw messages, cursor and batch
-  // outbox job in ONE transaction before acknowledging a page; see agent.html for pagination.
+  // outbox job in ONE transaction before acknowledging a page.
   // Keep immutable batch snapshots + reply/album context; separate new IDs from old context.
   loadBatch: Handler<typeof T.LoadBatch>
   // Persist selection + ignored reasons. Assign stable candidate IDs once (batchId + ordinal).
@@ -128,16 +95,3 @@ export type Ports = {
   // also reconciles the batch so the final retry can finish it without rerunning selection.
   finishBatch: Handler<typeof T.FinishBatch>
 }
-
-export type TelegramPorts = Pick<
-  Ports,
-  | 'model'
-  | 'readTool'
-  | 'progress'
-  | 'loadBatch'
-  | 'queueProjects'
-  | 'loadProject'
-  | 'publishProject'
-  | 'queueProjectRetry'
-  | 'finishBatch'
->
