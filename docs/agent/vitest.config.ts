@@ -36,5 +36,5 @@ export default defineConfig({
       },
     },
   ],
-  test: { include: ['docs/agent/workflow.test.ts'] },
+  test: { include: ['docs/agent/*.test.ts'] },
 })

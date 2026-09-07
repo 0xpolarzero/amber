@@ -17,7 +17,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
-    "test:agent-reference": "vitest run --config docs/agent/vitest.config.ts"
+    "test:agent-reference": "vitest run --config docs/agent/vitest.config.ts",
+    "test:telegram": "vitest run --config docs/agent/vitest.config.ts docs/agent/telegram.test.ts"
   },
   "dependencies": {
     "@tanstack/react-form": "1.33.5",

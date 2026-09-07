@@ -128,3 +128,16 @@ export type Ports = {
   // also reconciles the batch so the final retry can finish it without rerunning selection.
   finishBatch: Handler<typeof T.FinishBatch>
 }
+
+export type TelegramPorts = Pick<
+  Ports,
+  | 'model'
+  | 'readTool'
+  | 'progress'
+  | 'loadBatch'
+  | 'queueProjects'
+  | 'loadProject'
+  | 'publishProject'
+  | 'queueProjectRetry'
+  | 'finishBatch'
+>

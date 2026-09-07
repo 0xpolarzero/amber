@@ -1,7 +1,5 @@
-import { createHash, randomBytes } from 'node:crypto'
-import * as FlowEngine from '@smthrs/engine/FlowEngine'
 import * as Graph from '@smthrs/flow/Graph'
-import { Crypto, Deferred, Effect, Layer, Schema } from 'effect'
+import { Deferred, Effect, Layer, Schema } from 'effect'
 import { describe, expect, it } from 'vitest'
 import { AgentTurn, RetryMaintenance, type RetryInput } from './chat.workflow'
 import { TelegramBatch } from './telegram.workflow'
@@ -9,6 +7,7 @@ import { layers } from './runtime'
 import { validateChanges, validateDraft, validateSelection } from './guards'
 import type { Ports } from './tools'
 import * as S from './schemas'
+import { testEngine } from './testing/engine'
 
 const turn = { userId: 'alex', messageId: 'm4' }
 const context: typeof S.Context.Type = {
@@ -72,16 +71,6 @@ const selection: typeof S.Selection.Type = {
   ],
   ignored: [],
 }
-const crypto = Layer.succeed(
-  Crypto.Crypto,
-  Crypto.make({
-    randomBytes: (size) => randomBytes(size),
-    digest: (algorithm, data) =>
-      Effect.sync(
-        () => new Uint8Array(createHash(algorithm.replace('-', '')).update(data).digest()),
-      ),
-  }),
-)
 
 function harness(
   options: {
@@ -259,10 +248,7 @@ function harness(
       finishBatch: ({ results }) =>
         Effect.succeed({ completed: Object.values(results).every((r) => r.outcome !== 'retry') }),
     }
-    const host = layers(ports).pipe(
-      Layer.provideMerge(FlowEngine.layerMemory),
-      Layer.provideMerge(crypto),
-    )
+    const host = layers(ports).pipe(Layer.provideMerge(testEngine))
     return { host, events, inputs, retry: () => retry }
   })
 }
