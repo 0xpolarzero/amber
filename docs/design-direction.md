@@ -17,7 +17,7 @@ The feed is the home screen: one narrow column, white background, dark text, sub
 | Visit a creator | Open a simple profile with their projects. |
 | Own a post | Edit or remove it; answer private questions and review additions. |
 
-Use neutral descriptions for automatic summaries. First-person language belongs to original quotations or author edits. Source attribution stays available on the detail page.
+Use neutral descriptions for automatic summaries. First-person language belongs to original quotations or author edits. Source attribution stays available through View original message on the detail page. Use Feed as the home heading and show only the project count on profiles; omit generic group-origin captions.
 
 The user selected a single sort dropdown in place of feed tabs. Bookmarks and the current author’s posts are filters on the feed, not navigation sections. Bookmark sorting uses sample aggregate counts plus the current preview's bookmarks. The app preserves this design and the prototype interactions: account switching, unread status, replies and edits use temporary sample state and reset on reload. Project/source links do not contact external services. Real login, storage, collection and AI processing remain in the implementation plan.
 

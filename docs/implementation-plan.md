@@ -21,7 +21,7 @@ A searchable showcase of one Telegram group's projects. Authors control their po
 | Admin `/admin` | Submissions to review, reported comments and worker health. |
 
 ```text
-PROJECTS FROM THE GROUP                  Search…    Sign in
+AMBER                                   Search…    Sign in
 
 Built a tool that turns meeting notes into tasks
 Two plain sentences explaining what it does and the result.

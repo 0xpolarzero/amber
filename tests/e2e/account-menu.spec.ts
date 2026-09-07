@@ -34,7 +34,7 @@ test('account dropdown contains working profile and sign-out actions', async ({
   await trigger.click()
   await expect(menu).toBeHidden()
   await trigger.click()
-  await page.getByRole('heading', { name: 'From the group' }).click()
+  await page.getByRole('heading', { name: 'Feed' }).click()
   await expect(menu).toBeHidden()
   await trigger.click()
   await menu.getByRole('menuitem', { name: 'Your profile' }).click()

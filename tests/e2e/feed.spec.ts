@@ -5,9 +5,7 @@ test.beforeEach(async ({ page }) => {
     throw error
   })
   await page.goto('/')
-  await expect(
-    page.getByRole('heading', { name: 'From the group' }),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Feed' })).toBeVisible()
 })
 
 test('serves real HTML, valid routes and the review plan', async ({

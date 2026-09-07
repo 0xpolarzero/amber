@@ -47,7 +47,7 @@ export function FeedPage({ search }: { search: FeedSearch }) {
     <>
       <header className="feed-header">
         <div className="heading-line">
-          <h1>From the group</h1>
+          <h1>Feed</h1>
           <div className="feed-controls">
             <label className="sort-control">
               <span className="visually-hidden">Sort posts</span>

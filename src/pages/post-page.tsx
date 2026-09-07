@@ -40,7 +40,6 @@ export function PostPage({ postId }: { postId: string }) {
           <ProjectLink post={post} />
           <OwnerPrompt post={post} />
           <div className="post-provenance">
-            <span>From the group ·</span>
             <button
               type="button"
               onClick={() =>

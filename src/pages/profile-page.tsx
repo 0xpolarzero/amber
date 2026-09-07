@@ -22,8 +22,7 @@ export function ProfilePage({ personId }: { personId: string }) {
         <h1>{person.name}</h1>
         <p>{person.bio}</p>
         <div className="profile-meta">
-          From the group · {posts.length}{' '}
-          {posts.length === 1 ? 'project' : 'projects'}
+          {posts.length} {posts.length === 1 ? 'project' : 'projects'}
         </div>
       </header>
       <h2 className="section-label">Shared work</h2>
