@@ -44,6 +44,10 @@ it('turns a pulled batch into a new post, an updated post and one question for t
         const result = yield* request.callTool(call.name, call.input)
         observations.push({ task: author, tool: call.name, result })
       }
+      for (const call of response.nativeTools ?? []) {
+        yield* request.observe({ kind: 'native-tool', ...call })
+        observations.push({ task: author, tool: call.name, result: call.output })
+      }
       return response.output
     })
   const host = telegramLayers({ ...store.ports, model }).pipe(
@@ -102,8 +106,8 @@ it('turns a pulled batch into a new post, an updated post and one question for t
         expect.arrayContaining([
           expect.objectContaining({
             task: 'alex',
-            tool: 'readPage',
-            result: expect.objectContaining({ url: 'https://noted.example' }),
+            tool: 'read_url_content',
+            result: expect.stringContaining('https://noted.example'),
           }),
           { task: 'bea', tool: 'searchPosts', result: initialPosts },
         ]),

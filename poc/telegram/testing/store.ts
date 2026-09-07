@@ -1,7 +1,7 @@
 import { Effect, Schema } from 'effect'
 import * as S from '../schemas'
 import { type Ports, tools } from '../tools'
-import { memories, notedPage } from './fixtures'
+import { memories } from './fixtures'
 
 // In-memory application boundary for the example. No Telegram, network or real database writes.
 export function telegramStore(
@@ -67,11 +67,6 @@ export function telegramStore(
       run(() => {
         if (scope.groupId !== batch.groupId || scope.batchId !== batch.batchId)
           throw new Error('Wrong scope')
-        if (name === 'readPage') {
-          const { url } = Schema.decodeUnknownSync(tools.readPage.input)(input)
-          if (url !== notedPage.url) throw new Error('Unknown fixture page')
-          return notedPage
-        }
         if (name === 'readMessages') {
           const { ids } = Schema.decodeUnknownSync(tools.readMessages.input)(input)
           return batch.messages.filter((message) => ids.includes(message.id))
@@ -88,10 +83,6 @@ export function telegramStore(
         if (name === 'searchMessages') {
           const { query } = Schema.decodeUnknownSync(tools.searchMessages.input)(input)
           return batch.messages.filter((message) => matches(message.text, query)).slice(0, 20)
-        }
-        if (name === 'searchWeb') {
-          const { query } = Schema.decodeUnknownSync(tools.searchWeb.input)(input)
-          return matches(notedPage.title, query) ? [notedPage] : []
         }
         throw new Error(`No fixture for tool: ${name}`)
       }),

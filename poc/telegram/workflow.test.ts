@@ -27,6 +27,20 @@ it('uses Gemini to create Alex’s post, update Bea’s post and ignore unrelate
             }),
           ),
         ),
+      observe: (observation) =>
+        request.observe(observation).pipe(
+          Effect.tap(() =>
+            Effect.sync(() => {
+              if (observation.kind === 'native-tool')
+                research.push({
+                  task: request.task,
+                  tool: observation.name,
+                  input: observation.input,
+                  output: observation.output,
+                })
+            }),
+          ),
+        ),
     }).pipe(
       Effect.tap((output) =>
         Effect.sync(() => {
@@ -80,7 +94,8 @@ it('uses Gemini to create Alex’s post, update Bea’s post and ignore unrelate
   expect(store.posts[1]).toMatchObject({ id: 'tab-tidy', version: 3 })
   expect(store.diffs).toHaveLength(1)
   expect(store.ignored.map((item) => item.messageId)).toContain('101')
-  expect(research.some((call) => call.tool === 'readPage')).toBe(true)
+  expect(research.some((call) => call.tool === 'read_url_content')).toBe(true)
+  expect(research.some((call) => call.tool === 'search_web')).toBe(true)
   expect(research.some((call) => call.tool === 'searchPosts')).toBe(true)
   // The open language-support question belongs to the maker, never the person who asked it.
   expect(store.questions).toEqual([expect.objectContaining({ authorId: 'alex', needsReply: true })])

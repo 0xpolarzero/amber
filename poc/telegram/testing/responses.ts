@@ -1,5 +1,5 @@
 import type * as S from '../schemas'
-import type { ToolName } from '../tools'
+import type { NativeToolName, ToolName } from '../tools'
 
 // Deliberately scripted AI decisions, not outputs from a live model.
 // Everything after each response still goes through the real schemas, guards and workflow.
@@ -9,6 +9,7 @@ export const responses: {
     string,
     {
       tools: { name: ToolName; input: unknown }[]
+      nativeTools?: { name: NativeToolName; input: unknown; output: unknown }[]
       output: Extract<typeof S.Proposal.Type, { kind: 'post' }>
     }
   >
@@ -25,7 +26,13 @@ export const responses: {
       tools: [
         { name: 'searchPosts', input: { query: 'Noted' } },
         { name: 'readMessages', input: { ids: ['104'] } },
-        { name: 'readPage', input: { url: 'https://noted.example' } },
+      ],
+      nativeTools: [
+        {
+          name: 'read_url_content',
+          input: { Url: 'https://noted.example' },
+          output: 'Noted is an offline voice transcription app. https://noted.example',
+        },
       ],
       output: {
         kind: 'post',

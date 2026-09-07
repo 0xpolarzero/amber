@@ -8,13 +8,8 @@ import * as S from './schemas'
 import type { Ports } from './tools'
 import * as T from './workflow'
 
-const projectTools = [
-  'searchWeb',
-  'readPage',
-  'searchMessages',
-  'readMessages',
-  'searchPosts',
-] as const
+const projectTools = ['searchMessages', 'readMessages', 'searchPosts'] as const
+const nativeWebTools = ['search_web', 'read_url_content'] as const
 
 export function telegramLayers(ports: Ports) {
   const { track, generate } = createModelTasks(ports)
@@ -24,7 +19,7 @@ export function telegramLayers(ports: Ports) {
       track(
         'selection',
         { batchId: input.batchId, groupId: input.groupId },
-        generate(S.Selection, 'selection', selectionPrompt, input, {}).pipe(
+        generate(S.Selection, 'selection', selectionPrompt, input, {}, [], []).pipe(
           Effect.flatMap(({ value }) =>
             checked('selection-evidence', () => {
               validateSelection(input, value)
@@ -45,7 +40,7 @@ export function telegramLayers(ports: Ports) {
       return track(
         'post',
         scope,
-        generate(S.Proposal, 'post', postPrompt, input, scope, projectTools).pipe(
+        generate(S.Proposal, 'post', postPrompt, input, scope, projectTools, nativeWebTools).pipe(
           Effect.flatMap(({ value: proposal, evidence }) =>
             checked('project-evidence', () => {
               const draft = { proposal, evidence }
