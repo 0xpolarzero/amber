@@ -21,7 +21,8 @@
     {
       "includes": [
         "poc/telegram/result.json",
-        "poc/telegram/native-web-result.json"
+        "poc/telegram/native-web-result.json",
+        "poc/telegram/fetched-page-result.json"
       ],
       "formatter": { "enabled": false }
     }

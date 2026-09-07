@@ -59,7 +59,7 @@ it('uses native search and fetch and records their actual source evidence', asyn
   expect(configuration).toMatchObject({
     agent: 'amber',
     model: modelId,
-    declaredTools: ['finish', 'search_web', 'read_url_content'],
+    declaredTools: ['finish', 'search_web', 'read_url_content', 'amber/readFetchedPage'],
   })
   expect(configuration?.controlProvenance).toBe('antigravity-stream-json-v1')
   // finish is represented by the terminal structured result, not a tool step in CLI 1.1.27.

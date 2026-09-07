@@ -6,7 +6,7 @@
   "scripts": {
     "test": "vitest run testing",
     "test:live": "vitest run workflow.test.ts native-web.test.ts --maxWorkers=1",
-    "test:native": "vitest run native-web.test.ts",
+    "test:native": "vitest run native-web.test.ts fetched-page.live.test.ts --maxWorkers=1",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

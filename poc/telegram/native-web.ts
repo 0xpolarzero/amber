@@ -75,9 +75,9 @@ function searchPages(result: CapturedNativeOutput) {
 }
 
 function fetchedPage(input: unknown, result: CapturedNativeOutput) {
-  if (!input || typeof input !== 'object' || !result.pageContent?.trim()) return []
+  if (!input || typeof input !== 'object' || !result.pageContent?.trim()) return undefined
   const requested = Reflect.get(input, 'Url')
-  if (typeof requested !== 'string') return []
+  if (typeof requested !== 'string') return undefined
   const requestedUrl = publicUrl(requested)
   const receipt = /^The full content of the article at (https?:\/\/\S+) has been saved to:/im.exec(
     result.toolOutput,
@@ -92,20 +92,26 @@ function fetchedPage(input: unknown, result: CapturedNativeOutput) {
     new URL(receiptUrl).href !== new URL(requestedUrl).href ||
     new URL(contentUrl).href !== new URL(requestedUrl).href
   )
-    return []
+    return undefined
   const title =
     /^Title:\s*(.+)$/im.exec(result.pageContent)?.[1]?.trim() || new URL(requestedUrl).hostname
-  return [
-    {
-      url: requestedUrl,
-      title: title.slice(0, 300),
-      text: result.pageContent.slice(0, maximumTextLength),
-    },
-  ] satisfies (typeof S.WebPage.Type)[]
+  return {
+    url: requestedUrl,
+    title: title.slice(0, 300),
+    text: result.pageContent,
+  }
+}
+
+export function fetchedPageFromNativeTool(input: unknown, output: unknown) {
+  const result = captured(output)
+  if (result?.status !== 'success' || !result.toolOutput.trim()) return undefined
+  return fetchedPage(input, result)
 }
 
 export function pagesFromNativeTool(name: NativeToolName, input: unknown, output: unknown) {
   const result = captured(output)
   if (result?.status !== 'success' || !result.toolOutput.trim()) return []
-  return name === 'search_web' ? searchPages(result) : fetchedPage(input, result)
+  if (name === 'search_web') return searchPages(result)
+  const page = fetchedPage(input, result)
+  return page ? [{ ...page, text: page.text.slice(0, maximumTextLength) }] : []
 }

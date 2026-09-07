@@ -8,10 +8,19 @@ import {
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js'
 import { Effect } from 'effect'
-import type { Ports } from './tools'
+import type { Run } from './tools'
+
+export type McpTools = {
+  tools: readonly {
+    name: string
+    description: string
+    inputSchema: unknown
+  }[]
+  callTool: (name: string, input: unknown) => Run<unknown>
+}
 
 // One private, temporary MCP endpoint per task. The closure retains the task's scope.
-export async function serveTools(request: Parameters<Ports['model']>[0], signal: AbortSignal) {
+export async function serveTools(request: McpTools, signal: AbortSignal) {
   const token = randomUUID()
   const clients = new Set<Server>()
   const http = createServer(async (req, res) => {

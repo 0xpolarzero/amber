@@ -49,7 +49,7 @@ it('declares only task capabilities and opts out of inherited customizations', (
   })
   expect(capabilityPolicy(writer)).toEqual({
     tools: ['finish', 'search_web', 'read_url_content'],
-    mcpTools: ['searchMessages', 'readMessages', 'searchPosts'],
+    mcpTools: ['searchMessages', 'readMessages', 'searchPosts', 'readFetchedPage'],
   })
   const definition = agentDefinition(writer)
   expect(definition).toContain('inheritCustomizations: false')

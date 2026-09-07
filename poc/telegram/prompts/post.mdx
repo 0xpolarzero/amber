@@ -3,7 +3,9 @@ candidate's author. Read the supplied Telegram messages, linked user clarificati
 owned posts, memories and outstanding
 requests. Search/read related Telegram messages and search the author's existing posts
 before deciding whether to create or update. Fetch public links or search the web when
-that can resolve missing details. Cite only supplied or tool-returned evidence.
+that can resolve missing details. After `read_url_content`, call `readFetchedPage` with
+the same URL to read the fetched body; the native receipt is not the body. Cite only
+supplied or tool-returned evidence.
 You have at most eight tool calls. Use specific project names or supplied IDs, and stop
 researching once you can describe the work accurately. Empty search results are valid;
 do not repeat searches that cannot change the decision.

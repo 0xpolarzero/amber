@@ -109,6 +109,7 @@ it('uses Gemini to create Alex’s post, update Bea’s post and ignore unrelate
     'amber/searchMessages',
     'amber/readMessages',
     'amber/searchPosts',
+    'amber/readFetchedPage',
   ])
   // The open language-support question belongs to the maker, never the person who asked it.
   expect(store.questions).toEqual([expect.objectContaining({ authorId: 'alex', needsReply: true })])

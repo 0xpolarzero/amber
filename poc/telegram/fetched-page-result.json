@@ -1,0 +1,20 @@
+{
+  "mode": "live-fetched-page",
+  "cli": "agy 1.1.27",
+  "model": "gemini-3.8-flash-medium",
+  "sourceHost": "httpbin.org",
+  "configuredTools": [
+    "finish",
+    "read_url_content",
+    "amber/readFetchedPage"
+  ],
+  "observedTools": [
+    "read_url_content",
+    "amber/readFetchedPage"
+  ],
+  "failedTools": [],
+  "fetchStatus": "success",
+  "bodyUuid": "e84b6a4f-fb87-4c65-81fb-82b2cfd1f1bf",
+  "resultUuid": "e84b6a4f-fb87-4c65-81fb-82b2cfd1f1bf",
+  "exactMatch": true
+}

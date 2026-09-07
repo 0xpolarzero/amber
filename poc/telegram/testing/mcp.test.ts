@@ -11,10 +11,6 @@ it('carries a scoped read over native MCP and rejects an unauthenticated request
   const calls: unknown[] = []
   const bridge = await serveTools(
     {
-      task: 'post',
-      instruction: '',
-      input: {},
-      outputSchema: {},
       tools: [
         {
           name: 'searchPosts',
@@ -22,13 +18,11 @@ it('carries a scoped read over native MCP and rejects an unauthenticated request
           inputSchema: jsonSchema(Schema.Struct({ query: Schema.String })),
         },
       ],
-      nativeTools: [],
       callTool: (name, input) =>
         Effect.sync(() => {
           calls.push({ name, input })
           return [{ id: 'owned-post' }]
         }),
-      observe: () => Effect.void,
     },
     new AbortController().signal,
   )

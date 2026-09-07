@@ -10,24 +10,24 @@
       "id": "batch-1:0",
       "authorId": "alex",
       "version": 1,
-      "title": "Noted: Local voice note transcription for Mac",
-      "summary": "Noted is a free, offline Mac tool that transcribes voice notes locally using on-device Whisper.",
-      "detail": "Noted transcribes voice notes locally on Mac using on-device Whisper. It is free, works offline, and is available at https://noted.example."
+      "title": "Noted: Local voice note transcription on Mac",
+      "summary": "A free Mac app that transcribes voice notes locally and offline using on-device Whisper.",
+      "detail": "Noted is a free application for Mac that transcribes voice notes locally. It runs Whisper on the device to perform transcription offline without needing an internet connection. Available at https://noted.example."
     },
     {
       "id": "tab-tidy",
       "authorId": "bea",
       "version": 3,
       "title": "Tab tidy",
-      "summary": "A Chrome extension that groups tabs by project rather than just domain.",
-      "detail": "Tab tidy organizes browser tabs into project-based groups rather than only by domain, keeping related resources such as GitHub, docs, and issues together."
+      "summary": "A Chrome extension that groups tabs by project as well as domain, keeping related resources like GitHub, docs, and issues together.",
+      "detail": "Tab tidy is a Chrome extension that organizes browser tabs into groups. An update adds project-based grouping alongside domain grouping, allowing related pages across different domains—such as GitHub repositories, documentation, and issue trackers—to stay in the same tab group."
     }
   ],
   "questions": [
     {
       "authorId": "alex",
       "postId": "batch-1:0",
-      "text": "Which languages does Noted support?",
+      "text": "Does Noted support Mandarin or other languages?",
       "needsReply": true
     }
   ],
@@ -47,15 +47,15 @@
         "authorId": "bea",
         "version": 3,
         "title": "Tab tidy",
-        "summary": "A Chrome extension that groups tabs by project rather than just domain.",
-        "detail": "Tab tidy organizes browser tabs into project-based groups rather than only by domain, keeping related resources such as GitHub, docs, and issues together."
+        "summary": "A Chrome extension that groups tabs by project as well as domain, keeping related resources like GitHub, docs, and issues together.",
+        "detail": "Tab tidy is a Chrome extension that organizes browser tabs into groups. An update adds project-based grouping alongside domain grouping, allowing related pages across different domains—such as GitHub repositories, documentation, and issue trackers—to stay in the same tab group."
       }
     }
   ],
   "ignored": [
     {
       "messageId": "101",
-      "reason": "General AI news reaction and commentary rather than personal project work."
+      "reason": "General AI announcement reaction rather than firsthand work"
     }
   ],
   "sources": {
@@ -160,9 +160,64 @@
         "ignored": [
           {
             "messageId": "101",
-            "reason": "General AI news reaction and commentary rather than personal project work."
+            "reason": "General AI announcement reaction rather than firsthand work"
           }
         ]
+      }
+    },
+    {
+      "task": "post",
+      "input": {
+        "work": {
+          "batchId": "batch-1",
+          "groupId": "ai-builders",
+          "candidateId": "batch-1:1",
+          "revision": 0,
+          "candidate": {
+            "authorId": "bea",
+            "project": "Tab tidy",
+            "messageIds": [
+              "103"
+            ]
+          }
+        },
+        "messages": [
+          {
+            "id": "103",
+            "authorId": "bea",
+            "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+            "replyToId": null,
+            "albumId": null
+          }
+        ],
+        "clarifications": [],
+        "posts": [
+          {
+            "id": "tab-tidy",
+            "authorId": "bea",
+            "version": 2,
+            "title": "Tab tidy",
+            "summary": "A Chrome extension that groups tabs by domain.",
+            "detail": "Related tabs share a group based on their domain."
+          }
+        ],
+        "memories": [],
+        "unaddressed": []
+      },
+      "output": {
+        "detail": "Tab tidy is a Chrome extension that organizes browser tabs into groups. An update adds project-based grouping alongside domain grouping, allowing related pages across different domains—such as GitHub repositories, documentation, and issue trackers—to stay in the same tab group.",
+        "existingPostId": "tab-tidy",
+        "expectedVersion": 2,
+        "kind": "post",
+        "question": null,
+        "sources": [
+          {
+            "kind": "telegram",
+            "messageId": "103"
+          }
+        ],
+        "summary": "A Chrome extension that groups tabs by project as well as domain, keeping related resources like GitHub, docs, and issues together.",
+        "title": "Tab tidy"
       }
     },
     {
@@ -217,11 +272,11 @@
         "unaddressed": []
       },
       "output": {
-        "detail": "Noted transcribes voice notes locally on Mac using on-device Whisper. It is free, works offline, and is available at https://noted.example.",
+        "detail": "Noted is a free application for Mac that transcribes voice notes locally. It runs Whisper on the device to perform transcription offline without needing an internet connection. Available at https://noted.example.",
         "existingPostId": null,
         "expectedVersion": null,
         "kind": "post",
-        "question": "Which languages does Noted support?",
+        "question": "Does Noted support Mandarin or other languages?",
         "sources": [
           {
             "kind": "telegram",
@@ -236,75 +291,12 @@
             "messageId": "105"
           }
         ],
-        "summary": "Noted is a free, offline Mac tool that transcribes voice notes locally using on-device Whisper.",
-        "title": "Noted: Local voice note transcription for Mac"
-      }
-    },
-    {
-      "task": "post",
-      "input": {
-        "work": {
-          "batchId": "batch-1",
-          "groupId": "ai-builders",
-          "candidateId": "batch-1:1",
-          "revision": 0,
-          "candidate": {
-            "authorId": "bea",
-            "project": "Tab tidy",
-            "messageIds": [
-              "103"
-            ]
-          }
-        },
-        "messages": [
-          {
-            "id": "103",
-            "authorId": "bea",
-            "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
-            "replyToId": null,
-            "albumId": null
-          }
-        ],
-        "clarifications": [],
-        "posts": [
-          {
-            "id": "tab-tidy",
-            "authorId": "bea",
-            "version": 2,
-            "title": "Tab tidy",
-            "summary": "A Chrome extension that groups tabs by domain.",
-            "detail": "Related tabs share a group based on their domain."
-          }
-        ],
-        "memories": [],
-        "unaddressed": []
-      },
-      "output": {
-        "detail": "Tab tidy organizes browser tabs into project-based groups rather than only by domain, keeping related resources such as GitHub, docs, and issues together.",
-        "existingPostId": "tab-tidy",
-        "expectedVersion": 2,
-        "kind": "post",
-        "question": null,
-        "sources": [
-          {
-            "kind": "telegram",
-            "messageId": "103"
-          }
-        ],
-        "summary": "A Chrome extension that groups tabs by project rather than just domain.",
-        "title": "Tab tidy"
+        "summary": "A free Mac app that transcribes voice notes locally and offline using on-device Whisper.",
+        "title": "Noted: Local voice note transcription on Mac"
       }
     }
   ],
   "research": [
-    {
-      "task": "post",
-      "tool": "searchPosts",
-      "input": {
-        "query": "Noted"
-      },
-      "output": []
-    },
     {
       "task": "post",
       "tool": "searchPosts",
@@ -321,6 +313,30 @@
           "detail": "Related tabs share a group based on their domain."
         }
       ]
+    },
+    {
+      "task": "post",
+      "tool": "searchMessages",
+      "input": {
+        "query": "Tab tidy"
+      },
+      "output": [
+        {
+          "id": "103",
+          "authorId": "bea",
+          "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+          "replyToId": null,
+          "albumId": null
+        }
+      ]
+    },
+    {
+      "task": "post",
+      "tool": "searchPosts",
+      "input": {
+        "query": "Noted"
+      },
+      "output": []
     },
     {
       "task": "post",
@@ -347,48 +363,17 @@
     },
     {
       "task": "post",
-      "tool": "searchMessages",
-      "input": {
-        "query": "alex"
-      },
-      "output": []
-    },
-    {
-      "task": "post",
-      "tool": "searchMessages",
-      "input": {
-        "query": "Tab tidy"
-      },
-      "output": [
-        {
-          "id": "103",
-          "authorId": "bea",
-          "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
-          "replyToId": null,
-          "albumId": null
-        }
-      ]
-    },
-    {
-      "task": "post",
       "tool": "readMessages",
       "input": {
         "ids": [
-          "101",
           "102",
           "103",
           "104",
-          "105"
+          "105",
+          "106"
         ]
       },
       "output": [
-        {
-          "id": "101",
-          "authorId": "carl",
-          "text": "The new Gemini announcement looks impressive!",
-          "replyToId": null,
-          "albumId": null
-        },
         {
           "id": "102",
           "authorId": "alex",
@@ -418,14 +403,6 @@
           "albumId": null
         }
       ]
-    },
-    {
-      "task": "post",
-      "tool": "searchPosts",
-      "input": {
-        "query": "bea"
-      },
-      "output": []
     }
   ],
   "configurations": [
@@ -511,7 +488,8 @@
         "read_url_content",
         "amber/searchMessages",
         "amber/readMessages",
-        "amber/searchPosts"
+        "amber/searchPosts",
+        "amber/readFetchedPage"
       ],
       "runtimeInventory": [
         "ask_custom_permission",
@@ -574,7 +552,6 @@
       ],
       "observedTools": [
         "amber/searchPosts",
-        "amber/searchMessages",
         "amber/searchMessages"
       ],
       "failedTools": [],
@@ -591,7 +568,8 @@
         "read_url_content",
         "amber/searchMessages",
         "amber/readMessages",
-        "amber/searchPosts"
+        "amber/searchPosts",
+        "amber/readFetchedPage"
       ],
       "runtimeInventory": [
         "ask_custom_permission",
@@ -655,8 +633,7 @@
       "observedTools": [
         "amber/searchPosts",
         "amber/searchMessages",
-        "amber/readMessages",
-        "amber/searchPosts"
+        "amber/readMessages"
       ],
       "failedTools": [],
       "controlProvenance": "antigravity-stream-json-v1"
@@ -700,7 +677,7 @@
     {
       "task": "post",
       "scope": {
-        "userId": "alex",
+        "userId": "bea",
         "groupId": "ai-builders",
         "batchId": "batch-1"
       },
@@ -709,7 +686,7 @@
     {
       "task": "post",
       "scope": {
-        "userId": "bea",
+        "userId": "alex",
         "groupId": "ai-builders",
         "batchId": "batch-1"
       },
