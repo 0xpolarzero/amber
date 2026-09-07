@@ -137,8 +137,8 @@ test('lets the author edit and review an answer before adding it to the post', a
   await page
     .getByRole('combobox', { name: 'Preview account' })
     .selectOption('author')
-  await page.getByRole('button', { name: 'Your account' }).click()
-  await page.getByRole('button', { name: 'Filter by me', exact: true }).click()
+  await page.getByRole('combobox', { name: 'Filter by author' }).click()
+  await page.getByRole('option', { name: /Me Alex Chen/ }).click()
   await page.getByRole('button', { name: 'Edit post', exact: true }).click()
   await page
     .getByRole('textbox', { name: 'Title', exact: true })

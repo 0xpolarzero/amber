@@ -1,12 +1,13 @@
 import { Link } from '@tanstack/react-router'
-import type { ReactNode } from 'react'
+import { type ReactNode, useRef } from 'react'
 import { PreviewDialogs } from '../preview/dialogs'
 import { usePreview } from '../preview/provider'
-import { Avatar } from './avatar'
+import { AccountMenu } from './account-menu'
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { state, user, openDialog, dispatch, notice, unreadCount } =
     usePreview()
+  const signIn = useRef<HTMLButtonElement>(null)
   return (
     <>
       <a className="skip" href="#main">
@@ -47,18 +48,19 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="account">
             {user ? (
-              <button
-                type="button"
-                className="avatar-button"
-                aria-label="Your account"
-                onClick={() => openDialog({ kind: 'account' })}
-              >
-                <Avatar personId={user} />
-              </button>
+              <AccountMenu
+                key={user}
+                user={user}
+                onSignOut={() => {
+                  dispatch({ type: 'role', role: 'visitor' })
+                  requestAnimationFrame(() => signIn.current?.focus())
+                }}
+              />
             ) : (
               <button
                 type="button"
                 className="signin"
+                ref={signIn}
                 onClick={() => openDialog({ kind: 'signin' })}
               >
                 Sign in

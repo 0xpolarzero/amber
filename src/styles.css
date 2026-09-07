@@ -275,6 +275,65 @@ textarea {
   opacity: 0.8;
 }
 
+.account-menu {
+  position: relative;
+  display: flex;
+}
+
+.account-menu > .avatar-button[aria-expanded="true"] {
+  box-shadow: 0 0 0 4px var(--soft);
+}
+
+.account-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 12px);
+  width: 208px;
+  max-width: calc(100vw - 36px);
+  padding: 5px;
+  border: 1px solid #e5e5e1;
+  border-radius: 10px;
+  background: var(--paper);
+  box-shadow: 0 8px 24px #0000000d;
+}
+
+.account-menu-name {
+  padding: 9px 10px 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+.account-dropdown [role="menuitem"] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 12px;
+  color: var(--secondary);
+}
+
+.account-dropdown [role="menuitem"]:hover,
+.account-dropdown [role="menuitem"]:focus {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.account-dropdown [role="menuitem"]:focus-visible {
+  outline-offset: -2px;
+}
+
+.account-dropdown svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* Feed controls */
 main {
   max-width: 650px;

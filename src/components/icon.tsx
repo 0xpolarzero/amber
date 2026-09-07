@@ -43,6 +43,7 @@ const glyphs = {
       <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
     </>
   ),
+  logout: <path d="M9 4H4v16h5M14 8l4 4-4 4M8 12h10" />,
 }
 
 export type IconName = keyof typeof glyphs

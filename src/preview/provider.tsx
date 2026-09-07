@@ -18,7 +18,6 @@ import {
 
 export type PreviewDialog =
   | { kind: 'signin'; savePostId?: string }
-  | { kind: 'account' }
   | { kind: 'menu' | 'edit' | 'question' | 'remove'; postId: string }
   | null
 

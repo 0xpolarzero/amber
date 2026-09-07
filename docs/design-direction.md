@@ -7,6 +7,7 @@ The feed is the home screen: one narrow column, white background, dark text, sub
 | Interaction | Proposed behavior |
 | --- | --- |
 | Navigate | Feed and Messages are the two main sections. |
+| Account | The avatar opens a compact dropdown with your name, Your profile and Sign out. The Me shortcut stays in the author filter. Outside clicks, Escape and Tab close the menu. |
 | Filter | Bookmarks adds a removable Bookmarked filter. The searchable author combobox adds removable author chips, including Me. Multiple authors match any selected person; bookmarks and text search narrow those results. Filters live in the URL. |
 | Messages | Private bot questions for the connected account. The numbered badge counts unread questions and clears as they are opened. Questions remain available until an answer is accepted. Visitors see a sign-in prompt; accounts without questions see an empty inbox. |
 | Browse | One compact dropdown: Newest, Most commented, Most bookmarked. Newest is the default; equal counts keep newest first. |

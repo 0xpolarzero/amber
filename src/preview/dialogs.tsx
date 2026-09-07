@@ -1,7 +1,6 @@
 import { useForm } from '@tanstack/react-form'
 import { useNavigate } from '@tanstack/react-router'
 import { useId, useState } from 'react'
-import { Avatar } from '../components/avatar'
 import { Dialog } from '../components/dialog'
 import { Icon } from '../components/icon'
 import { TextForm } from '../components/text-form'
@@ -60,56 +59,6 @@ export function PreviewDialogs() {
       </Dialog>
     )
   }
-  if (dialog.kind === 'account')
-    return (
-      <Dialog title="Your account" onClose={close}>
-        {user && (
-          <>
-            <Avatar personId={user} size="large" />
-            <p className="dialog-copy">
-              {state.people[user].name} · Sample account
-            </p>
-            <div className="menu-options">
-              <button
-                type="button"
-                onClick={() => {
-                  close()
-                  void navigate({
-                    to: '/',
-                    search: { sort: 'latest', q: '', authors: ['me'] },
-                  })
-                }}
-              >
-                <Icon name="user" />
-                Filter by me
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  close()
-                  void navigate({
-                    to: '/people/$personId',
-                    params: { personId: user },
-                  })
-                }}
-              >
-                <Icon name="user" />
-                Your profile
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  dispatch({ type: 'role', role: 'visitor' })
-                  close()
-                }}
-              >
-                Sign out
-              </button>
-            </div>
-          </>
-        )}
-      </Dialog>
-    )
   const post = state.posts.find((post) => post.id === dialog.postId)
   if (!post)
     return (
