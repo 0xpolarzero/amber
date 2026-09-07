@@ -19,7 +19,14 @@ export type AgentMessage = {
   sourceMessageId?: string
   memorySaved?: AgentMemory
   usedMemories?: readonly AgentMemory[]
+  needsReply?: boolean
+  addressedBy?: string
 }
+export const isUnaddressed = (message: AgentMessage) =>
+  message.sender === 'amber' &&
+  Boolean(message.needsReply) &&
+  !message.addressedBy
+
 export type AgentConversation = {
   draft: string
   messages: readonly AgentMessage[]
@@ -35,6 +42,11 @@ export type PreviewAction =
   | { type: 'role'; role: PreviewRole }
   | { type: 'save'; postId: string }
   | { type: 'readAgent' }
+  | {
+      type: 'markAnswered'
+      messageIds: readonly string[]
+      userMessageId: string
+    }
   | { type: 'draftMessage'; text: string }
   | { type: 'saveMemory'; id: string; text: string; sourceMessageId?: string }
   | { type: 'forgetMemory'; id: string }
@@ -55,6 +67,7 @@ export type PreviewAction =
       id: string
       text: string
       memorySavedId?: string
+      needsReply?: boolean
       memoryIds?: readonly string[]
     }
   | {
@@ -116,6 +129,29 @@ export function previewReducer(
   if (action.type === 'readAgent') {
     if (agent.readThrough === agent.messages.length) return state
     return withAgent({ ...agent, readThrough: agent.messages.length })
+  }
+  if (action.type === 'markAnswered') {
+    const replyIndex = agent.messages.findIndex(
+      (message) =>
+        message.id === action.userMessageId && message.sender === 'user',
+    )
+    if (replyIndex < 0) return state
+    const targets = agent.messages.filter(
+      (message, index) =>
+        action.messageIds.includes(message.id) &&
+        index < replyIndex &&
+        isUnaddressed(message),
+    )
+    if (!targets.length || targets.length !== new Set(action.messageIds).size)
+      return state
+    return withAgent({
+      ...agent,
+      messages: agent.messages.map((message) =>
+        action.messageIds.includes(message.id)
+          ? { ...message, addressedBy: action.userMessageId }
+          : message,
+      ),
+    })
   }
   if (action.type === 'draftMessage') {
     if (action.text.length > 1000 || action.text === agent.draft) return state
@@ -210,6 +246,9 @@ export function previewReducer(
       ...(action.postId ? { postId: action.postId } : {}),
       ...(usedMemories.length ? { usedMemories } : {}),
       ...(memorySaved ? { memorySaved } : {}),
+      ...(action.type === 'agentMessage' && action.needsReply
+        ? { needsReply: true }
+        : {}),
       ...(action.type === 'applyPostUpdate'
         ? { update: action.update, sourceMessageId: action.sourceMessageId }
         : {}),

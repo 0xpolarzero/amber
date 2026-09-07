@@ -4,7 +4,11 @@ import { AgentMemoryDialog } from '../components/agent-memory'
 import { Icon } from '../components/icon'
 import { ReplyComposer } from '../components/reply-composer'
 import { usePreview } from '../preview/provider'
-import type { AgentConversation, PostUpdate } from '../preview/state'
+import {
+  type AgentConversation,
+  isUnaddressed,
+  type PostUpdate,
+} from '../preview/state'
 
 export function AgentPage({ postId }: { postId?: string }) {
   const { user, agent, openDialog } = usePreview()
@@ -41,6 +45,7 @@ function AgentChat({
   const navigate = useNavigate()
   const [memoryOpen, setMemoryOpen] = useState(false)
   const history = useRef<HTMLDivElement>(null)
+  const unaddressed = agent.messages.filter(isUnaddressed)
   const context = state.posts.find((post) => post.id === postId)
   useEffect(() => {
     if (agent.messages.length > agent.readThrough)
@@ -66,6 +71,21 @@ function AgentChat({
           <h1>Amber</h1>
           <p>Your agent, across your posts.</p>
         </div>
+        {unaddressed.length > 0 && (
+          <button
+            className="unaddressed-jump"
+            type="button"
+            onClick={() => {
+              const message = document.getElementById(
+                `message-${unaddressed[0].id}`,
+              )
+              message?.scrollIntoView({ block: 'center' })
+              message?.focus({ preventScroll: true })
+            }}
+          >
+            {unaddressed.length} unaddressed
+          </button>
+        )}
         <button
           className="memory-button"
           type="button"
@@ -91,13 +111,17 @@ function AgentChat({
           <div
             key={message.id}
             id={`message-${message.id}`}
-            className={`chat-message ${message.sender === 'user' ? 'outgoing' : ''}`}
+            tabIndex={-1}
+            className={`chat-message ${message.sender === 'user' ? 'outgoing' : ''} ${isUnaddressed(message) ? 'unaddressed' : ''}`}
           >
             <span className="chat-sender">
               {message.sender === 'amber' ? 'Amber' : state.people[user].name}
             </span>
             {message.postId && !message.update && (
               <PostReference postId={message.postId} />
+            )}
+            {isUnaddressed(message) && (
+              <span className="unaddressed-label">Unaddressed</span>
             )}
             <p className="chat-bubble">{message.text}</p>
             {message.memorySaved && (

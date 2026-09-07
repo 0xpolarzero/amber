@@ -82,7 +82,7 @@ test('keeps the draft and history when switching post context and supports norma
   await expect(
     page.getByRole('log').getByText('A general question.', { exact: true }),
   ).toBeVisible()
-  await expect(page.getByRole('log').locator('.chat-message')).toHaveCount(9)
+  await expect(page.getByRole('log').locator('.chat-message')).toHaveCount(10)
 })
 
 test('lets the user inspect, edit, forget and add memory', async ({ page }) => {
@@ -121,7 +121,7 @@ test('lets the user inspect, edit, forget and add memory', async ({ page }) => {
     dialog.getByText('Write my posts in French.', { exact: true }),
   ).toBeVisible()
   await page.keyboard.press('Escape')
-  await expect(page.getByRole('log').locator('.chat-message')).toHaveCount(7)
+  await expect(page.getByRole('log').locator('.chat-message')).toHaveCount(8)
 })
 
 test('keeps chat, drafts and memory separate for each account, including members without posts', async ({
@@ -218,4 +218,31 @@ test('fits the Agent, memory dialog and long replies on desktop and mobile', asy
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true)
+})
+
+test('unaddressed messages survive reading the chat and sending an unrelated reply', async ({
+  page,
+}) => {
+  await page.goto('/agent')
+  await page
+    .getByRole('combobox', { name: 'Preview account' })
+    .selectOption('author')
+  const jump = page.getByRole('button', { name: '1 unaddressed', exact: true })
+  await jump.click()
+  await expect(page.getByText('Unaddressed', { exact: true })).toBeVisible()
+  await expect(page.locator('.chat-message.unaddressed')).toBeFocused()
+  await page
+    .getByRole('textbox', { name: 'Message Amber' })
+    .fill('Thanks for the update.')
+  await page.getByRole('button', { name: 'Send message' }).click()
+  await expect(jump).toBeVisible()
+  await page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name: 'Feed' })
+    .click()
+  await page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name: 'Agent', exact: true })
+    .click()
+  await expect(jump).toBeVisible()
 })

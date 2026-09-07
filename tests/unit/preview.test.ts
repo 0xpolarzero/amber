@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { createPreviewState, previewReducer } from '../../src/preview/state'
+import {
+  createPreviewState,
+  isUnaddressed,
+  previewReducer,
+} from '../../src/preview/state'
 import fixtures from '../../src/server/fixtures.json'
 
 const initial = () => createPreviewState(fixtures)
@@ -230,5 +234,37 @@ describe('sample interactions', () => {
     expect(previewReducer(forgotten, action)).toBe(forgotten)
     const member = previewReducer(state, { type: 'role', role: 'member' })
     expect(previewReducer(member, action)).toBe(member)
+  })
+})
+
+describe('unaddressed agent messages', () => {
+  it('only resolves an earlier question using a received message from the same account', () => {
+    const state = author()
+    const read = previewReducer(state, { type: 'readAgent' })
+    expect(
+      read.agentByUser.alex.messages.filter(isUnaddressed).map((m) => m.id),
+    ).toEqual(['noted-follow-up'])
+    const sent = previewReducer(read, {
+      type: 'sendMessage',
+      id: 'offline-answer',
+      text: 'Yes, transcription works offline.',
+    })
+    expect(sent.agentByUser.alex.messages.filter(isUnaddressed)).toHaveLength(1)
+    const action = {
+      type: 'markAnswered',
+      messageIds: ['noted-follow-up'],
+      userMessageId: 'offline-answer',
+    } as const
+    expect(
+      previewReducer(sent, { ...action, userMessageId: 'noted-reply' }),
+    ).toBe(sent)
+    const member = previewReducer(sent, { type: 'role', role: 'member' })
+    expect(previewReducer(member, action)).toBe(member)
+    const answered = previewReducer(sent, action)
+    expect(answered.agentByUser.alex.messages.filter(isUnaddressed)).toEqual([])
+    expect(answered.agentByUser.alex.messages.at(-2)?.addressedBy).toBe(
+      'offline-answer',
+    )
+    expect(previewReducer(answered, action)).toBe(answered)
   })
 })

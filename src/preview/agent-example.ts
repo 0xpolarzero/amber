@@ -14,6 +14,7 @@ export function agentExampleActions(feed: Feed): readonly PreviewAction[] {
     {
       type: 'agentMessage',
       id: 'noted-question',
+      needsReply: true,
       postId: noted.id,
       text: 'Can someone try Noted, or is it still a personal tool?',
     },
@@ -22,6 +23,11 @@ export function agentExampleActions(feed: Feed): readonly PreviewAction[] {
       id: 'noted-reply',
       postId: noted.id,
       text: 'There’s a free Mac demo. It supports English and Mandarin. For all my posts, keep the descriptions short and factual. No hype.',
+    },
+    {
+      type: 'markAnswered',
+      messageIds: ['noted-question'],
+      userMessageId: 'noted-reply',
     },
     {
       type: 'saveMemory',
@@ -52,6 +58,7 @@ export function agentExampleActions(feed: Feed): readonly PreviewAction[] {
     {
       type: 'agentMessage',
       id: 'tabs-question',
+      needsReply: true,
       postId: tabs.id,
       text: 'And for Tab tidy, is the beta free to try?',
     },
@@ -60,6 +67,11 @@ export function agentExampleActions(feed: Feed): readonly PreviewAction[] {
       id: 'tabs-reply',
       postId: tabs.id,
       text: 'Yes, it’s a browser extension. Free while it’s in beta.',
+    },
+    {
+      type: 'markAnswered',
+      messageIds: ['tabs-question'],
+      userMessageId: 'tabs-reply',
     },
     {
       type: 'applyPostUpdate',
@@ -74,6 +86,13 @@ export function agentExampleActions(feed: Feed): readonly PreviewAction[] {
         after:
           'A browser extension that groups open tabs into a searchable library. The beta is free.',
       },
+    },
+    {
+      type: 'agentMessage',
+      id: 'noted-follow-up',
+      postId: noted.id,
+      needsReply: true,
+      text: 'Does Noted work fully offline, including transcription?',
     },
   ]
 }
