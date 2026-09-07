@@ -1,0 +1,20 @@
+minimumReleaseAge: 10080
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+
+# Smithers 1.0 is not published yet. Install its packages from one immutable revision.
+# Declare all seven directly: pnpm 11.1.3 loses transitive Git subdirectory paths in the lockfile.
+# https://github.com/smithersai/smithers/blob/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c/apps/site/docs/installation.mdx
+overrides:
+  '@smthrs/canonical': git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/canonical
+  '@smthrs/crypto': git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/crypto
+  '@smthrs/database': git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/database
+  '@smthrs/engine': git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/engine
+  '@smthrs/flow': git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/flow
+  '@smthrs/keys': git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/keys
+  '@smthrs/plan': git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/plan
+
+# Use the pinned TypeScript sources directly; no dependency build scripts are needed.
+ignoreScripts: true
+# Required for the explicit Git overrides above. Scoped to this standalone PoC.
+blockExoticSubdeps: false

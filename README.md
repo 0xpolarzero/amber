@@ -57,4 +57,4 @@ See the [implementation plan](docs/implementation-plan.md), [design direction](d
 
 Start with the [Telegram PoC test](poc/telegram/workflow.test.ts): [fake messages and model responses](poc/telegram/testing/fixtures.ts) run through the workflow to produce [this saved result](poc/telegram/result.json). Prompts, tools and schemas live in the same folder. The model is scripted.
 
-Run `SMITHERS_SOURCE=/path/to/smithers pnpm test:telegram` using the Smithers revision pinned in [the test config](poc/telegram/vitest.config.ts).
+Install with `pnpm --dir poc/telegram install`, then run `pnpm test:telegram`. The PoC has its own [package](poc/telegram/package.json), lockfile and TypeScript config. Smithers 1.0 is [not yet published](https://github.com/smithersai/smithers/blob/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c/apps/site/docs/installation.mdx), so its packages use the Git revision pinned in [the PoC dependency config](poc/telegram/pnpm-workspace.yaml).

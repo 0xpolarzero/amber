@@ -23,7 +23,12 @@ jobs:
         with:
           node-version-file: .node-version
           cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            poc/telegram/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir poc/telegram install --frozen-lockfile
       - run: pnpm check
+      - run: pnpm test:telegram
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
