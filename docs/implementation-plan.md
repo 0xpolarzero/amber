@@ -17,7 +17,7 @@ A searchable showcase of one Telegram group's projects. Authors control their po
 | Feed `/` | Stationary Group, Author, Bookmarks, sort and search controls. Search has its own row on mobile. Removable filters and Clear filters below, including Me. Group and author choices narrow each other. |
 | Post `/posts/:id` | Summary, project/source links, author, comments. Owners get Edit, Remove and private AI questions. |
 | Author `/people/:id` | Name, linked X profile and projects. Exists before they join. |
-| Messages `/messages` | Private bot questions and suggested revisions. Unread badge for the connected account. |
+| Messages `/messages` | Private bot conversations with an unread badge. Open `/messages/:postId` for context, history, a draft reply and update review. |
 | Admin `/admin` | Submissions to review, reported comments and worker health. |
 
 ```text

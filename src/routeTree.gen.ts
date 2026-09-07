@@ -14,6 +14,8 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as SavedRouteImport } from './routes/saved'
+import { Route as MessagesIndexRouteImport } from './routes/messages.index'
+import { Route as MessagesPostIdRouteImport } from './routes/messages.$postId'
 import { Route as PeoplePersonIdRouteImport } from './routes/people.$personId'
 import { Route as PostsPostIdRouteImport } from './routes/posts.$postId'
 
@@ -42,6 +44,16 @@ const SavedRoute = SavedRouteImport.update({
   path: '/saved',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MessagesIndexRoute = MessagesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MessagesRoute,
+} as any)
+const MessagesPostIdRoute = MessagesPostIdRouteImport.update({
+  id: '/$postId',
+  path: '/$postId',
+  getParentRoute: () => MessagesRoute,
+} as any)
 const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
   id: '/people/$personId',
   path: '/people/$personId',
@@ -56,30 +68,35 @@ const PostsPostIdRoute = PostsPostIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/messages': typeof MessagesRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/plan': typeof PlanRoute
   '/saved': typeof SavedRoute
+  '/messages/$postId': typeof MessagesPostIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/posts/$postId': typeof PostsPostIdRoute
+  '/messages/': typeof MessagesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/messages': typeof MessagesRoute
   '/plan': typeof PlanRoute
   '/saved': typeof SavedRoute
+  '/messages/$postId': typeof MessagesPostIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/posts/$postId': typeof PostsPostIdRoute
+  '/messages': typeof MessagesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/messages': typeof MessagesRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/plan': typeof PlanRoute
   '/saved': typeof SavedRoute
+  '/messages/$postId': typeof MessagesPostIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/posts/$postId': typeof PostsPostIdRoute
+  '/messages/': typeof MessagesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -89,17 +106,20 @@ export interface FileRouteTypes {
     | '/messages'
     | '/plan'
     | '/saved'
+    | '/messages/$postId'
     | '/people/$personId'
     | '/posts/$postId'
+    | '/messages/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/dashboard'
-    | '/messages'
     | '/plan'
     | '/saved'
+    | '/messages/$postId'
     | '/people/$personId'
     | '/posts/$postId'
+    | '/messages'
   id:
     | '__root__'
     | '/'
@@ -107,14 +127,16 @@ export interface FileRouteTypes {
     | '/messages'
     | '/plan'
     | '/saved'
+    | '/messages/$postId'
     | '/people/$personId'
     | '/posts/$postId'
+    | '/messages/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
-  MessagesRoute: typeof MessagesRoute
+  MessagesRoute: typeof MessagesRouteWithChildren
   PlanRoute: typeof PlanRoute
   SavedRoute: typeof SavedRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
@@ -158,6 +180,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SavedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/messages/': {
+      id: '/messages/'
+      path: '/'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof MessagesIndexRouteImport
+      parentRoute: typeof MessagesRoute
+    }
+    '/messages/$postId': {
+      id: '/messages/$postId'
+      path: '/$postId'
+      fullPath: '/messages/$postId'
+      preLoaderRoute: typeof MessagesPostIdRouteImport
+      parentRoute: typeof MessagesRoute
+    }
     '/people/$personId': {
       id: '/people/$personId'
       path: '/people/$personId'
@@ -175,10 +211,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MessagesRouteChildren {
+  MessagesPostIdRoute: typeof MessagesPostIdRoute
+  MessagesIndexRoute: typeof MessagesIndexRoute
+}
+
+const MessagesRouteChildren: MessagesRouteChildren = {
+  MessagesPostIdRoute: MessagesPostIdRoute,
+  MessagesIndexRoute: MessagesIndexRoute,
+}
+
+const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
+  MessagesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
-  MessagesRoute: MessagesRoute,
+  MessagesRoute: MessagesRouteWithChildren,
   PlanRoute: PlanRoute,
   SavedRoute: SavedRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,

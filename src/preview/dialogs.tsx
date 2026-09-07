@@ -1,9 +1,8 @@
 import { useForm } from '@tanstack/react-form'
 import { useNavigate } from '@tanstack/react-router'
-import { useId, useState } from 'react'
+import { useId } from 'react'
 import { Dialog } from '../components/dialog'
 import { Icon } from '../components/icon'
-import { TextForm } from '../components/text-form'
 import { EditPostForm } from '../domain/forms'
 import type { Post } from '../domain/post'
 import { usePreview } from './provider'
@@ -147,12 +146,6 @@ export function PreviewDialogs() {
         <EditForm key={post.id} post={post} onClose={close} />
       </Dialog>
     )
-  if (dialog.kind === 'question')
-    return (
-      <Dialog title="One detail would help." onClose={close}>
-        <AnswerReview key={post.id} post={post} onClose={close} />
-      </Dialog>
-    )
   return (
     <Dialog title="Remove this post?" onClose={close}>
       <p className="dialog-copy">
@@ -264,69 +257,5 @@ function EditForm({ post, onClose }: { post: Post; onClose: () => void }) {
         </form.Subscribe>
       </div>
     </form>
-  )
-}
-
-function AnswerReview({ post, onClose }: { post: Post; onClose: () => void }) {
-  const { dispatch, notify } = usePreview()
-  const [answer, setAnswer] = useState('')
-  const [reviewing, setReviewing] = useState(false)
-  const [baseDetail] = useState(post.detail)
-  if (!post.question)
-    return <p className="dialog-copy">This post is up to date.</p>
-  if (!reviewing)
-    return (
-      <>
-        <span className="question-label">Only visible to you</span>
-        <p className="question-title">{post.question}</p>
-        <TextForm
-          kind="answer"
-          initial={answer}
-          onSubmit={(text) => {
-            setAnswer(text)
-            setReviewing(true)
-          }}
-        />
-      </>
-    )
-  return (
-    <>
-      <p className="dialog-copy">This paragraph will be added to your post.</p>
-      <div className="answer-context">{answer}</div>
-      <p className="dialog-footnote">
-        Preview: your own wording. AI suggestions come later.
-      </p>
-      {post.detail !== baseDetail && (
-        <p className="field-error">
-          The post changed. Close this dialog and review it again.
-        </p>
-      )}
-      <div className="dialog-actions">
-        <button
-          type="button"
-          className="button secondary"
-          onClick={() => setReviewing(false)}
-        >
-          Back to answer
-        </button>
-        <button
-          type="button"
-          className="button"
-          disabled={post.detail !== baseDetail}
-          onClick={() => {
-            dispatch({
-              type: 'answer',
-              postId: post.id,
-              text: answer,
-              baseDetail,
-            })
-            onClose()
-            notify('Your answer is part of the post.')
-          }}
-        >
-          Accept update
-        </button>
-      </div>
-    </>
   )
 }

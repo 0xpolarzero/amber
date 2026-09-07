@@ -28,7 +28,7 @@ For the first browser test run, install Chromium with `pnpm exec playwright inst
 
 ## What works now
 
-Browse, sort, search, combine group, author (including Me) and bookmark filters, open posts and profiles, add comments, and edit sample posts. Group and author choices narrow each other. Messages holds private bot questions with an unread count and lets authors review answers before adding them to posts. The bottom selector switches between Visitor, Member and Author so we can review each experience.
+Browse, sort, search, combine group, author (including Me) and bookmark filters, open posts and profiles, add comments, and edit sample posts. Group and author choices narrow each other. Messages opens private conversations with post context, drafts, an unread count and reply history. Authors review the exact update before adding it to a post. Drafts survive navigation; all preview state resets on reload. The bottom selector switches between Visitor, Member and Author so we can review each experience.
 
 Posts, people and the two groups are fictional fixtures. Account switching and changes use local preview state that resets on reload. Telegram/X sign-in, project links and source links are previews. Real authentication, Telegram collection, Gemini processing, PostgreSQL and the persistent queue are not implemented.
 
@@ -37,7 +37,7 @@ Posts, people and the two groups are fictional fixtures. Account switching and c
 ```text
 src/
   routes/       URLs, loaders and the page shell
-  pages/        Feed, messages, post and profile screens
+  pages/        Feed, inbox, conversation, post and profile screens
   components/   Shared UI, forms and icons
   queries/      TanStack Query definitions
   domain/       Effect schemas and pure post rules

@@ -50,17 +50,17 @@ export function ProjectLink({ post }: { post: Post }) {
   )
 }
 export function OwnerPrompt({ post }: { post: Post }) {
-  const { user, openDialog } = usePreview()
+  const { user } = usePreview()
   return post.author === user && post.question ? (
-    <button
-      type="button"
+    <Link
       className="owner-prompt"
-      onClick={() => openDialog({ kind: 'question', postId: post.id })}
+      to="/messages/$postId"
+      params={{ postId: post.id }}
     >
       <Icon name="spark" />
       <span>One detail would help. Add an answer.</span>
       <Icon name="chevron" />
-    </button>
+    </Link>
   ) : null
 }
 export function PostActions({ post }: { post: Post }) {

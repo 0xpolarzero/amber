@@ -1,4 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { MessagesPage } from '../pages/messages-page'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/messages')({ component: MessagesPage })
+export const Route = createFileRoute('/messages')({
+  head: () => ({ meta: [{ title: 'Messages · Amber' }] }),
+  component: Outlet,
+})

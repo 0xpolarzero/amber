@@ -18,7 +18,7 @@ import {
 
 export type PreviewDialog =
   | { kind: 'signin'; savePostId?: string }
-  | { kind: 'menu' | 'edit' | 'question' | 'remove'; postId: string }
+  | { kind: 'menu' | 'edit' | 'remove'; postId: string }
   | null
 
 type PreviewContext = {
@@ -51,17 +51,15 @@ export function PreviewProvider({
   const user = currentUser(state.role)
   const saved = user ? (state.savedByUser[user] ?? []) : []
   const messages = user
-    ? state.posts.filter((post) => post.author === user && post.question)
+    ? state.posts.filter(
+        (post) => post.author === user && state.conversations[post.id],
+      )
     : []
   const readQuestions = user ? (state.readQuestionsByUser[user] ?? []) : []
   const unreadCount = messages.filter(
-    (post) => !readQuestions.includes(post.id),
+    (post) => post.question && !readQuestions.includes(post.id),
   ).length
-  const openDialog = (next: PreviewDialog) => {
-    if (next?.kind === 'question')
-      dispatch({ type: 'readQuestion', postId: next.postId })
-    setDialog(next)
-  }
+  const openDialog = setDialog
   useEffect(() => {
     if (!notice.text) return
     const timer = setTimeout(

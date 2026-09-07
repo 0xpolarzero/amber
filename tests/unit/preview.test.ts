@@ -109,4 +109,50 @@ describe('sample interactions', () => {
     expect(accepted.posts[0].detail).toContain('Available now.')
     expect(accepted.posts[0].question).toBeUndefined()
   })
+  it('keeps a private draft across navigation and account changes', () => {
+    const state = author()
+    const action = {
+      type: 'draftAnswer',
+      postId: 'voice-notes',
+      text: 'A demo is ready\nfor the group.',
+    } as const
+    const drafted = previewReducer(state, action)
+    expect(drafted.conversations['voice-notes'].draft).toBe(action.text)
+    expect(drafted.posts[0]).toBe(state.posts[0])
+    const member = previewReducer(drafted, { type: 'role', role: 'member' })
+    expect(previewReducer(member, { ...action, text: 'Not mine' })).toBe(member)
+    const returned = previewReducer(member, { type: 'role', role: 'author' })
+    expect(returned.conversations['voice-notes'].draft).toBe(action.text)
+    expect(
+      previewReducer(returned, { ...action, text: 'x'.repeat(1001) }),
+    ).toBe(returned)
+  })
+  it('retains the question and accepted reply, clears the draft, and rejects duplicate publication', () => {
+    const state = previewReducer(author(), {
+      type: 'draftAnswer',
+      postId: 'voice-notes',
+      text: '  Available now.  ',
+    })
+    const action = {
+      type: 'answer',
+      postId: 'voice-notes',
+      baseDetail: state.posts[0].detail,
+      text: '  Available now.  ',
+    } as const
+    const accepted = previewReducer(state, action)
+    expect(accepted.conversations['voice-notes']).toEqual({
+      question: state.posts[0].question,
+      answer: 'Available now.',
+      draft: '',
+    })
+    expect(accepted.posts[0].question).toBeUndefined()
+    expect(previewReducer(accepted, action)).toBe(accepted)
+    expect(
+      previewReducer(accepted, {
+        type: 'draftAnswer',
+        postId: 'voice-notes',
+        text: 'Another reply',
+      }),
+    ).toBe(accepted)
+  })
 })

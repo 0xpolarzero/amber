@@ -3,40 +3,27 @@ import { Icon } from '../components/icon'
 import { usePreview } from '../preview/provider'
 
 export function MessagesPage() {
-  const { user, messages, readQuestions, openDialog } = usePreview()
+  const { state, user, messages, readQuestions } = usePreview()
   return (
     <>
       <header className="feed-header">
         <h1>Messages</h1>
-        <p className="feed-subtitle">A little context, just between us.</p>
       </header>
       {!user ? (
-        <div className="empty">
-          <div className="empty-icon">
-            <Icon name="comment" />
-          </div>
-          <h2>Your messages stay with you.</h2>
-          <p>Sign in to answer private questions about your projects.</p>
-          <button
-            type="button"
-            className="button"
-            onClick={() => openDialog({ kind: 'signin' })}
-          >
-            Sign in
-          </button>
-        </div>
+        <MessagesSignIn />
       ) : messages.length ? (
         <div className="message-list">
           {messages.map((post) => {
-            const unread = !readQuestions.includes(post.id)
+            const conversation = state.conversations[post.id]
+            const unread = Boolean(
+              post.question && !readQuestions.includes(post.id),
+            )
             return (
-              <button
+              <Link
                 key={post.id}
-                type="button"
                 className={`message-row ${unread ? 'unread' : ''}`}
-                onClick={() =>
-                  openDialog({ kind: 'question', postId: post.id })
-                }
+                to="/messages/$postId"
+                params={{ postId: post.id }}
               >
                 <span className="message-avatar">
                   <Icon name="spark" />
@@ -54,15 +41,25 @@ export function MessagesPage() {
                     )}
                   </span>
                   <span className="message-subject">{post.title}</span>
-                  <span className="message-preview">{post.question}</span>
+                  <span className="message-preview">
+                    {conversation.draft ||
+                      conversation.answer ||
+                      conversation.question}
+                  </span>
+                  <span className="message-status">
+                    {conversation.draft
+                      ? 'Draft'
+                      : conversation.answer
+                        ? 'Post updated'
+                        : 'Reply needed'}
+                  </span>
                 </span>
                 <Icon name="chevron" />
-              </button>
+              </Link>
             )
           })}
           <p className="messages-note">
-            Only you can see these questions. You review every update before it
-            appears on your post.
+            Private conversations about your posts.
           </p>
         </div>
       ) : (
@@ -74,3 +71,25 @@ export function MessagesPage() {
     </>
   )
 }
+
+export function MessagesSignIn() {
+  const { openDialog } = usePreview()
+  return (
+    <div className="empty">
+      <div className="empty-icon">
+        <Icon name="comment" />
+      </div>
+      <h2>Your messages stay with you.</h2>
+      <p>Sign in to answer private questions about your projects.</p>
+      <button
+        type="button"
+        className="button"
+        onClick={() => openDialog({ kind: 'signin' })}
+      >
+        Sign in
+      </button>
+    </div>
+  )
+}
+
+import { Link } from '@tanstack/react-router'

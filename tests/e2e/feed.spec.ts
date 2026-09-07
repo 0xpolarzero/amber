@@ -148,7 +148,7 @@ test('lets the author edit and review an answer before adding it to the post', a
     page.getByRole('link', { name: 'Search your voice notes.', exact: true }),
   ).toBeVisible()
   await page
-    .getByRole('button', { name: 'One detail would help. Add an answer.' })
+    .getByRole('link', { name: 'One detail would help. Add an answer.' })
     .click()
   await page
     .getByRole('textbox', { name: 'Your answer' })
@@ -156,15 +156,15 @@ test('lets the author edit and review an answer before adding it to the post', a
   await page.getByRole('button', { name: 'Review update' }).click()
   await expect(
     page
-      .getByRole('dialog')
+      .getByRole('region', { name: 'Review post update' })
       .getByText('The first demo is available to the group.', { exact: true }),
   ).toBeVisible()
   await page.getByRole('button', { name: 'Accept update' }).click()
   await expect(
-    page.getByRole('button', { name: 'One detail would help. Add an answer.' }),
+    page.getByRole('link', { name: 'One detail would help. Add an answer.' }),
   ).toHaveCount(0)
   await page
-    .getByRole('link', { name: 'Search your voice notes.', exact: true })
+    .getByRole('link', { name: /Noted Search your voice notes/ })
     .click()
   await expect(
     page.getByText('The first demo is available to the group.', {
@@ -312,12 +312,14 @@ test('shows private questions and an unread count only for their recipient', asy
   await expect(
     nav.getByRole('link', { name: 'Messages 1 unread' }),
   ).toBeVisible()
-  await page.getByRole('button', { name: /Amber About Noted/ }).click()
-  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('link', { name: /Amber About Noted/ }).click()
+  await expect(
+    page.getByRole('log', { name: 'Conversation history' }),
+  ).toBeVisible()
   await expect(
     nav.getByRole('link', { name: 'Messages', exact: true }),
   ).toBeVisible()
-  await page.keyboard.press('Escape')
+  await page.getByRole('link', { name: 'Back to messages' }).click()
   await page
     .getByRole('combobox', { name: 'Preview account' })
     .selectOption('member')
@@ -329,15 +331,6 @@ test('shows private questions and an unread count only for their recipient', asy
     .selectOption('author')
   await expect(
     nav.getByRole('link', { name: 'Messages', exact: true }),
-  ).toBeVisible()
-  await page.getByRole('button', { name: /Amber About Noted/ }).click()
-  await page
-    .getByRole('textbox', { name: 'Your answer' })
-    .fill('The group can try a demo now.')
-  await page.getByRole('button', { name: 'Review update' }).click()
-  await page.getByRole('button', { name: 'Accept update' }).click()
-  await expect(
-    page.getByRole('heading', { name: 'All quiet here.' }),
   ).toBeVisible()
 })
 
