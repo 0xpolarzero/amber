@@ -9,13 +9,18 @@ function publicUrl(raw: string) {
     const clean = raw.replace(/[),.;]+$/, '')
     const url = new URL(clean)
     if (!['http:', 'https:'].includes(url.protocol)) return undefined
+    if (url.username || url.password) return undefined
+    const hostname = url.hostname.replace(/^\[|\]$/g, '')
     if (
-      url.hostname === 'localhost' ||
-      url.hostname === '0.0.0.0' ||
-      url.hostname === '::1' ||
-      url.hostname.startsWith('127.') ||
-      url.hostname.startsWith('10.') ||
-      url.hostname.startsWith('192.168.')
+      hostname === 'localhost' ||
+      hostname.endsWith('.local') ||
+      hostname === '0.0.0.0' ||
+      hostname === '::1' ||
+      hostname.startsWith('127.') ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('169.254.') ||
+      hostname.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
     )
       return undefined
     return clean

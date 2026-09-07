@@ -140,7 +140,7 @@ it('does not turn failed tools, private URLs or arbitrary structured output into
     pagesFromNativeTool(
       'search_web',
       { query: 'private' },
-      'http://127.0.0.1/secret and https://public.example/source',
+      'http://127.0.0.1/secret http://172.16.0.1/secret https://user:pass@example.com and https://public.example/source',
     ),
   ).toEqual([expect.objectContaining({ url: 'https://public.example/source' })])
   expect(
