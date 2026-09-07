@@ -5,6 +5,7 @@ import { Effect, Schema } from 'effect'
 import { expect, it } from 'vitest'
 import { antigravity, modelId } from './antigravity'
 import { jsonSchema } from './model'
+import fetchedPagePrompt from './prompts/fetched-page.mdx?raw'
 import type { ModelObservation } from './tools'
 
 const Result = Schema.Struct({ uuid: Schema.NullOr(Schema.String) })
@@ -12,17 +13,12 @@ const Result = Schema.Struct({ uuid: Schema.NullOr(Schema.String) })
 it('makes the current native fetch body readable through the scoped reader', async () => {
   const nonce = randomUUID()
   const sourceUrl = `https://httpbin.org/uuid?amber_probe=${nonce}`
+  const instruction = fetchedPagePrompt.replace('__SOURCE_URL__', sourceUrl).trimEnd()
   const observations: ModelObservation[] = []
   const raw = await Effect.runPromise(
     antigravity({
       task: 'fetched-page-verification',
-      instruction: [
-        `Call read_url_content with exactly ${sourceUrl}.`,
-        'After that call completes, call the Amber MCP tool readFetchedPage with the same URL.',
-        'The native fetch receipt is not the response body. Read the body through readFetchedPage.',
-        'Return the uuid field from the actual response body, or null if the body is unreadable.',
-        'Do not use view_file, shell, filesystem, browser, or subagent tools.',
-      ].join('\n'),
+      instruction,
       input: { probe: 'fresh-body-read' },
       outputSchema: jsonSchema(Result),
       tools: [],

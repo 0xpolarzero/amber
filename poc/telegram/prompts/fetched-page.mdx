@@ -1,0 +1,5 @@
+Call read_url_content with exactly __SOURCE_URL__.
+After that call completes, call the Amber MCP tool readFetchedPage with the same URL.
+The native fetch receipt is not the response body. Read the body through readFetchedPage.
+Return the uuid field from the actual response body, or null if the body is unreadable.
+Do not use view_file, shell, filesystem, browser, or subagent tools.
