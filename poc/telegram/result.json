@@ -1,28 +1,33 @@
 {
-  "mode": "scripted-model",
+  "mode": "live-model",
+  "model": "gemini-3.8-flash-medium",
+  "receipt": {
+    "completed": true
+  },
+  "retries": [],
   "posts": [
     {
       "id": "batch-1:0",
       "authorId": "alex",
       "version": 1,
       "title": "Noted",
-      "summary": "A free Mac app that transcribes voice notes offline.",
-      "detail": "Noted uses Whisper on the device. https://noted.example"
+      "summary": "Noted is a free Mac app that records voice notes and transcribes them locally and offline using on-device Whisper.",
+      "detail": "Noted is a free Mac app that records voice notes and transcribes audio locally using Whisper. The app runs on-device and works offline without requiring an internet connection.\n\nNoted is available at https://noted.example."
     },
     {
       "id": "tab-tidy",
       "authorId": "bea",
       "version": 3,
       "title": "Tab tidy",
-      "summary": "A Chrome extension that groups tabs by project.",
-      "detail": "A project’s GitHub, documentation and issue tabs can now share a group."
+      "summary": "A Chrome extension that groups tabs by project rather than just domain.",
+      "detail": "Tab tidy now organizes tabs by project rather than solely by domain, allowing related tabs such as GitHub repositories, documentation, and issue trackers to stay grouped together."
     }
   ],
   "questions": [
     {
       "authorId": "alex",
       "postId": "batch-1:0",
-      "text": "Does Noted support Mandarin transcription?",
+      "text": "Which languages does Noted support?",
       "needsReply": true
     }
   ],
@@ -42,15 +47,15 @@
         "authorId": "bea",
         "version": 3,
         "title": "Tab tidy",
-        "summary": "A Chrome extension that groups tabs by project.",
-        "detail": "A project’s GitHub, documentation and issue tabs can now share a group."
+        "summary": "A Chrome extension that groups tabs by project rather than just domain.",
+        "detail": "Tab tidy now organizes tabs by project rather than solely by domain, allowing related tabs such as GitHub repositories, documentation, and issue trackers to stay grouped together."
       }
     }
   ],
   "ignored": [
     {
       "messageId": "101",
-      "reason": "Reaction to AI news, not work the sender made."
+      "reason": "General reaction to AI news announcement rather than personal project work"
     }
   ],
   "sources": {
@@ -74,5 +79,353 @@
         "messageId": "103"
       }
     ]
-  }
+  },
+  "answers": [
+    {
+      "task": "selection",
+      "input": {
+        "batchId": "batch-1",
+        "groupId": "ai-builders",
+        "messages": [
+          {
+            "id": "90",
+            "authorId": "dana",
+            "text": "I released Clipbook last month. It saves copied links.",
+            "replyToId": null,
+            "albumId": null
+          },
+          {
+            "id": "101",
+            "authorId": "carl",
+            "text": "The new Gemini announcement looks impressive!",
+            "replyToId": null,
+            "albumId": null
+          },
+          {
+            "id": "102",
+            "authorId": "alex",
+            "text": "I built Noted: voice notes transcribed locally on a Mac. https://noted.example",
+            "replyToId": null,
+            "albumId": null
+          },
+          {
+            "id": "103",
+            "authorId": "bea",
+            "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+            "replyToId": null,
+            "albumId": null
+          },
+          {
+            "id": "104",
+            "authorId": "alex",
+            "text": "It uses Whisper on the device. It is free and works offline.",
+            "replyToId": "102",
+            "albumId": null
+          },
+          {
+            "id": "105",
+            "authorId": "carl",
+            "text": "Does Noted understand Mandarin?",
+            "replyToId": "102",
+            "albumId": null
+          }
+        ],
+        "newMessageIds": [
+          "101",
+          "102",
+          "103",
+          "104",
+          "105"
+        ]
+      },
+      "output": {
+        "candidates": [
+          {
+            "authorId": "alex",
+            "messageIds": [
+              "102",
+              "104",
+              "105"
+            ],
+            "project": "Noted"
+          },
+          {
+            "authorId": "bea",
+            "messageIds": [
+              "103"
+            ],
+            "project": "Tab tidy"
+          }
+        ],
+        "ignored": [
+          {
+            "messageId": "101",
+            "reason": "General reaction to AI news announcement rather than personal project work"
+          }
+        ]
+      }
+    },
+    {
+      "task": "post",
+      "input": {
+        "work": {
+          "batchId": "batch-1",
+          "groupId": "ai-builders",
+          "candidateId": "batch-1:1",
+          "revision": 0,
+          "candidate": {
+            "authorId": "bea",
+            "project": "Tab tidy",
+            "messageIds": [
+              "103"
+            ]
+          }
+        },
+        "messages": [
+          {
+            "id": "103",
+            "authorId": "bea",
+            "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+            "replyToId": null,
+            "albumId": null
+          }
+        ],
+        "clarifications": [],
+        "posts": [
+          {
+            "id": "tab-tidy",
+            "authorId": "bea",
+            "version": 2,
+            "title": "Tab tidy",
+            "summary": "A Chrome extension that groups tabs by domain.",
+            "detail": "Related tabs share a group based on their domain."
+          }
+        ],
+        "memories": [],
+        "unaddressed": []
+      },
+      "output": {
+        "detail": "Tab tidy now organizes tabs by project rather than solely by domain, allowing related tabs such as GitHub repositories, documentation, and issue trackers to stay grouped together.",
+        "existingPostId": "tab-tidy",
+        "expectedVersion": 2,
+        "kind": "post",
+        "question": null,
+        "sources": [
+          {
+            "kind": "telegram",
+            "messageId": "103"
+          }
+        ],
+        "summary": "A Chrome extension that groups tabs by project rather than just domain.",
+        "title": "Tab tidy"
+      }
+    },
+    {
+      "task": "post",
+      "input": {
+        "work": {
+          "batchId": "batch-1",
+          "groupId": "ai-builders",
+          "candidateId": "batch-1:0",
+          "revision": 0,
+          "candidate": {
+            "authorId": "alex",
+            "project": "Noted",
+            "messageIds": [
+              "102",
+              "104",
+              "105"
+            ]
+          }
+        },
+        "messages": [
+          {
+            "id": "102",
+            "authorId": "alex",
+            "text": "I built Noted: voice notes transcribed locally on a Mac. https://noted.example",
+            "replyToId": null,
+            "albumId": null
+          },
+          {
+            "id": "104",
+            "authorId": "alex",
+            "text": "It uses Whisper on the device. It is free and works offline.",
+            "replyToId": "102",
+            "albumId": null
+          },
+          {
+            "id": "105",
+            "authorId": "carl",
+            "text": "Does Noted understand Mandarin?",
+            "replyToId": "102",
+            "albumId": null
+          }
+        ],
+        "clarifications": [],
+        "posts": [],
+        "memories": [
+          {
+            "id": "style",
+            "text": "Keep my posts short and factual. No hype."
+          }
+        ],
+        "unaddressed": []
+      },
+      "output": {
+        "detail": "Noted is a free Mac app that records voice notes and transcribes audio locally using Whisper. The app runs on-device and works offline without requiring an internet connection.\n\nNoted is available at https://noted.example.",
+        "existingPostId": null,
+        "expectedVersion": null,
+        "kind": "post",
+        "question": "Which languages does Noted support?",
+        "sources": [
+          {
+            "kind": "telegram",
+            "messageId": "102"
+          },
+          {
+            "kind": "telegram",
+            "messageId": "104"
+          },
+          {
+            "kind": "web",
+            "url": "https://noted.example"
+          }
+        ],
+        "summary": "Noted is a free Mac app that records voice notes and transcribes them locally and offline using on-device Whisper.",
+        "title": "Noted"
+      }
+    }
+  ],
+  "research": [
+    {
+      "task": "post",
+      "tool": "readPage",
+      "input": {
+        "url": "https://noted.example"
+      },
+      "output": {
+        "url": "https://noted.example",
+        "title": "Noted",
+        "text": "Noted is a free Mac app. It records voice notes and transcribes them locally with Whisper. No internet connection is required. Language support is not documented yet."
+      }
+    },
+    {
+      "task": "post",
+      "tool": "searchPosts",
+      "input": {
+        "query": "Noted"
+      },
+      "output": []
+    },
+    {
+      "task": "post",
+      "tool": "searchMessages",
+      "input": {
+        "query": "Noted"
+      },
+      "output": [
+        {
+          "id": "102",
+          "authorId": "alex",
+          "text": "I built Noted: voice notes transcribed locally on a Mac. https://noted.example",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "105",
+          "authorId": "carl",
+          "text": "Does Noted understand Mandarin?",
+          "replyToId": "102",
+          "albumId": null
+        }
+      ]
+    },
+    {
+      "task": "post",
+      "tool": "searchPosts",
+      "input": {
+        "query": "Tab tidy"
+      },
+      "output": [
+        {
+          "id": "tab-tidy",
+          "authorId": "bea",
+          "version": 2,
+          "title": "Tab tidy",
+          "summary": "A Chrome extension that groups tabs by domain.",
+          "detail": "Related tabs share a group based on their domain."
+        }
+      ]
+    },
+    {
+      "task": "post",
+      "tool": "searchMessages",
+      "input": {
+        "query": "Tab tidy"
+      },
+      "output": [
+        {
+          "id": "103",
+          "authorId": "bea",
+          "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+          "replyToId": null,
+          "albumId": null
+        }
+      ]
+    }
+  ],
+  "progress": [
+    {
+      "task": "selection",
+      "scope": {
+        "batchId": "batch-1",
+        "groupId": "ai-builders"
+      },
+      "status": "running"
+    },
+    {
+      "task": "selection",
+      "scope": {
+        "batchId": "batch-1",
+        "groupId": "ai-builders"
+      },
+      "status": "done"
+    },
+    {
+      "task": "post",
+      "scope": {
+        "userId": "alex",
+        "groupId": "ai-builders",
+        "batchId": "batch-1"
+      },
+      "status": "running"
+    },
+    {
+      "task": "post",
+      "scope": {
+        "userId": "bea",
+        "groupId": "ai-builders",
+        "batchId": "batch-1"
+      },
+      "status": "running"
+    },
+    {
+      "task": "post",
+      "scope": {
+        "userId": "bea",
+        "groupId": "ai-builders",
+        "batchId": "batch-1"
+      },
+      "status": "done"
+    },
+    {
+      "task": "post",
+      "scope": {
+        "userId": "alex",
+        "groupId": "ai-builders",
+        "batchId": "batch-1"
+      },
+      "status": "done"
+    }
+  ]
 }

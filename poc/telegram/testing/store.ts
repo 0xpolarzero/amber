@@ -16,6 +16,12 @@ export function telegramStore(
   const diffs: { postId: string; before: typeof S.Post.Type; after: typeof S.Post.Type }[] = []
   const retries: string[] = []
   const progress: Parameters<Ports['progress']>[0][] = []
+  const matches = (text: string, query: string) =>
+    query
+      .toLowerCase()
+      .split(/\W+/)
+      .filter((word) => word.length > 2)
+      .some((word) => text.toLowerCase().includes(word))
   let selection: typeof S.Selection.Type = { candidates: [], ignored: [] }
   let work: (typeof S.WorkItem.Type)[] | undefined
   const run = <A>(f: () => A) =>
@@ -72,11 +78,20 @@ export function telegramStore(
         }
         if (name === 'searchPosts') {
           const { query } = Schema.decodeUnknownSync(tools.searchPosts.input)(input)
-          return [...posts.values()].filter(
-            (post) =>
-              post.authorId === scope.userId &&
-              post.title.toLowerCase().includes(query.toLowerCase()),
-          )
+          return [...posts.values()]
+            .filter(
+              (post) =>
+                post.authorId === scope.userId && matches(`${post.title} ${post.summary}`, query),
+            )
+            .slice(0, 10)
+        }
+        if (name === 'searchMessages') {
+          const { query } = Schema.decodeUnknownSync(tools.searchMessages.input)(input)
+          return batch.messages.filter((message) => matches(message.text, query)).slice(0, 20)
+        }
+        if (name === 'searchWeb') {
+          const { query } = Schema.decodeUnknownSync(tools.searchWeb.input)(input)
+          return matches(notedPage.title, query) ? [notedPage] : []
         }
         throw new Error(`No fixture for tool: ${name}`)
       }),

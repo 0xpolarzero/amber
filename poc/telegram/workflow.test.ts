@@ -1,136 +1,87 @@
-// Executable example: real Smithers flow, fake Telegram/storage/web/model boundaries.
-// The model replies are scripted. This tests the pipeline, not prompt quality.
-
+// Real Gemini decisions; fictional Telegram messages, web pages and in-memory storage.
+import { writeFile } from 'node:fs/promises'
 import * as Action from '@smthrs/flow/Action'
-import { Deferred, Effect, Layer } from 'effect'
+import { Effect, Layer } from 'effect'
 import { expect, it } from 'vitest'
 import { telegramLayers } from './agents'
-import postPrompt from './prompts/post.mdx?raw'
-import selectionPrompt from './prompts/selection.mdx?raw'
-import type * as S from './schemas'
+import { antigravity, modelId } from './antigravity'
 import { testEngine } from './testing/engine'
-import { batch, initialPosts, memories, responses } from './testing/fixtures'
+import { batch, initialPosts } from './testing/fixtures'
 import { telegramStore } from './testing/store'
 import type { Ports } from './tools'
 import { TelegramBatch } from './workflow'
 
-it('turns a pulled batch into a new post, an updated post and one question for the right author', async () => {
+it('uses Gemini to create Alex’s post, update Bea’s post and ignore unrelated chatter', async () => {
   const store = telegramStore(batch, initialPosts)
-  const requests: Parameters<Ports['model']>[0][] = []
-  const observations: { task: string; tool: string; result: unknown }[] = []
-  const writersStarted = new Set<string>()
-  const bothWriters = await Effect.runPromise(Deferred.make<void>())
-
+  const answers: { task: string; input: unknown; output: unknown }[] = []
+  const research: { task: string; tool: string; input: unknown; output: unknown }[] = []
   const model: Ports['model'] = (request) =>
-    Effect.gen(function* () {
-      requests.push(request)
-      if (request.task === 'selection') {
-        expect(request.instruction).toContain(selectionPrompt)
-        expect(request.input).toEqual(batch)
-        expect(request.tools).toEqual([])
-        return responses.selection
-      }
-      expect(request.task).toBe('post')
-      expect(request.instruction).toContain(postPrompt)
-      const input = request.input as typeof S.ProjectContext.Type
-      const author = input.work.candidate.authorId
-      const response = responses.posts[author]
-      if (!response) throw new Error(`Unexpected author: ${author}`)
-      writersStarted.add(author)
-      if (writersStarted.size === 2) yield* Deferred.succeed(bothWriters, undefined)
-      yield* Deferred.await(bothWriters) // Fails by timeout if project writers become sequential.
-      for (const call of response.tools) {
-        const result = yield* request.callTool(call.name, call.input)
-        observations.push({ task: author, tool: call.name, result })
-      }
-      return response.output
-    })
-  const host = telegramLayers({ ...store.ports, model }).pipe(
-    Layer.provideMerge(Action.layerImplementations),
-    Layer.provideMerge(testEngine),
-  )
-  await Effect.runPromise(
-    Effect.gen(function* () {
-      const input = { batchId: batch.batchId, groupId: batch.groupId }
-      const result = yield* TelegramBatch.execute(input, { executionId: batch.batchId })
-      expect(store.retries).toEqual([])
-      expect(result).toEqual({ completed: true })
-
-      // Ordinary chatter and old context never become posts. Related messages become ONE post.
-      expect(
-        store.posts.map(({ authorId, title, version, summary }) => ({
-          authorId,
-          title,
-          version,
-          summary,
-        })),
-      ).toEqual([
-        {
-          authorId: 'alex',
-          title: 'Noted',
-          version: 1,
-          summary: 'A free Mac app that transcribes voice notes offline.',
-        },
-        {
-          authorId: 'bea',
-          title: 'Tab tidy',
-          version: 3,
-          summary: 'A Chrome extension that groups tabs by project.',
-        },
-      ])
-      expect(store.ignored.map((item) => item.messageId)).toEqual(['101'])
-      expect(store.questions).toEqual([
-        {
-          authorId: 'alex',
-          postId: 'batch-1:0',
-          needsReply: true,
-          text: 'Does Noted support Mandarin transcription?',
-        },
-      ])
-      expect(store.diffs).toEqual([
-        {
-          postId: 'tab-tidy',
-          before: initialPosts[0],
-          after: store.posts[1],
-        },
-      ])
-      expect(store.sources.get('batch-1:0')).toEqual(responses.posts.alex.output.sources)
-
-      // Research uses the real tool allowlist and returned evidence, not an empty stub.
-      expect(observations).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            task: 'alex',
-            tool: 'readPage',
-            result: expect.objectContaining({ url: 'https://noted.example' }),
+    antigravity({
+      ...request,
+      callTool: (tool, input) =>
+        request.callTool(tool, input).pipe(
+          Effect.tap((output) =>
+            Effect.sync(() => {
+              research.push({ task: request.task, tool, input, output })
+              console.info(`  ${tool} ${JSON.stringify(input)}`)
+            }),
+          ),
+        ),
+    }).pipe(
+      Effect.tap((output) =>
+        Effect.sync(() => {
+          answers.push({ task: request.task, input: request.input, output })
+        }),
+      ),
+    )
+  const host = telegramLayers({
+    ...store.ports,
+    model,
+    progress: (event) =>
+      store.ports.progress(event).pipe(
+        Effect.tap(() =>
+          Effect.sync(() => {
+            console.info(`${event.task} ${event.scope.userId ?? 'batch'}: ${event.status}`)
           }),
-          { task: 'bea', tool: 'searchPosts', result: initialPosts },
-        ]),
-      )
-      const writers = requests
-        .filter((request) => request.task === 'post')
-        .map((request) => request.input as typeof S.ProjectContext.Type)
-      expect(
-        writers
-          .find((input) => input.work.candidate.authorId === 'alex')
-          ?.messages.map((m) => m.id),
-      ).toEqual(['102', '104', '105'])
-      expect(writers.find((input) => input.work.candidate.authorId === 'alex')?.memories).toEqual(
-        memories.alex,
-      )
-      expect(writers.find((input) => input.work.candidate.authorId === 'bea')?.memories).toEqual([])
-      expect(
-        store.progress.filter((event) => event.task === 'post' && event.status === 'done'),
-      ).toHaveLength(2)
+        ),
+      ),
+  }).pipe(Layer.provideMerge(Action.layerImplementations), Layer.provideMerge(testEngine))
 
-      // Redelivering the same job reuses the completed run and preserves the saved result.
-      const saved = JSON.stringify(store.result())
-      yield* TelegramBatch.execute(input, { executionId: batch.batchId })
-      expect(JSON.stringify(store.result())).toBe(saved)
-      expect(requests).toHaveLength(3)
-    }).pipe(Effect.provide(host), Effect.timeout('3 seconds')),
+  const receipt = await Effect.runPromise(
+    TelegramBatch.execute(batch, { executionId: batch.batchId }).pipe(
+      Effect.provide(host),
+      Effect.timeout('5 minutes'),
+    ),
   )
-  await expect(
-    `${JSON.stringify({ mode: 'scripted-model', ...store.result() }, null, 2)}\n`,
-  ).toMatchFileSnapshot('./result.json')
-})
+  // This is an observation for human review, never an exact-text expectation.
+  await writeFile(
+    new URL('./result.json', import.meta.url),
+    `${JSON.stringify(
+      {
+        mode: 'live-model',
+        model: modelId,
+        receipt,
+        retries: store.retries,
+        ...store.result(),
+        answers,
+        research,
+        progress: store.progress,
+      },
+      null,
+      2,
+    )}\n`,
+  )
+
+  expect(store.retries).toEqual([])
+  expect(receipt.completed).toBe(true)
+  expect(answers).toHaveLength(3)
+  expect(store.posts.map((post) => post.authorId)).toEqual(['alex', 'bea'])
+  expect(store.posts[0]).toMatchObject({ version: 1 })
+  expect(store.posts[1]).toMatchObject({ id: 'tab-tidy', version: 3 })
+  expect(store.diffs).toHaveLength(1)
+  expect(store.ignored.map((item) => item.messageId)).toContain('101')
+  expect(research.some((call) => call.tool === 'readPage')).toBe(true)
+  expect(research.some((call) => call.tool === 'searchPosts')).toBe(true)
+  // The open language-support question belongs to the maker, never the person who asked it.
+  expect(store.questions).toEqual([expect.objectContaining({ authorId: 'alex', needsReply: true })])
+}, 330_000)

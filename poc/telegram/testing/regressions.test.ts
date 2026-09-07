@@ -8,7 +8,8 @@ import * as S from '../schemas'
 import type { Ports } from '../tools'
 import { TelegramBatch } from '../workflow'
 import { testEngine } from './engine'
-import { batch, initialPosts, responses } from './fixtures'
+import { batch, initialPosts } from './fixtures'
+import { responses } from './responses'
 import { telegramStore } from './store'
 
 it('plans the batch without executing models', () => {

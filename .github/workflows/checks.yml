@@ -29,6 +29,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --dir poc/telegram install --frozen-lockfile
       - run: pnpm check
-      - run: pnpm test:telegram
+      - run: pnpm --dir poc/telegram test
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e

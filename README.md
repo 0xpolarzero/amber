@@ -30,7 +30,7 @@ For the first browser test run, install Chromium with `pnpm exec playwright inst
 
 Browse, sort, search, combine group, author (including Me) and bookmark filters, open posts and profiles, add comments, and edit sample posts. Group and author choices narrow each other. Agent opens one private conversation per account, across all posts. Post links identify the context; automatic updates include diffs. A scripted example records a writing preference once and reuses it for Noted and Tab tidy. Memory can be inspected, edited, forgotten or added. Sending illustrates task progress and locks the next send until the example finishes, while allowing drafting. The timing is explicitly labelled as a preview; no model runs. Drafts survive navigation and post changes; all preview state resets on reload. The bottom selector switches between Visitor, Member and Author so we can review each experience.
 
-Posts, people and the two groups are fictional fixtures. Account switching and changes use local preview state that resets on reload. Telegram/X sign-in, project links and source links are previews. Real authentication, Telegram collection, Gemini processing, PostgreSQL and the persistent queue are not implemented.
+Posts, people and the two groups are fictional fixtures. Account switching and changes use local preview state that resets on reload. Telegram/X sign-in, project links and source links are previews. The app is not connected to real authentication, Telegram collection, model processing, PostgreSQL or a persistent queue. The separate Telegram PoC below makes real model requests.
 
 ## Structure
 
@@ -55,6 +55,13 @@ TanStack Router connects the screens, Query manages loaded data, Form manages in
 
 See the [implementation plan](docs/implementation-plan.md), [design direction](docs/design-direction.md), [planned architecture](docs/architecture.md) and [implementation notes](docs/implementation-notes.md). The original [HTML prototype](docs/feed-prototype.html) remains as a design reference.
 
-Start with the [Telegram PoC test](poc/telegram/workflow.test.ts): [fake messages and model responses](poc/telegram/testing/fixtures.ts) run through the workflow to produce [this saved result](poc/telegram/result.json). Prompts, tools and schemas live in the same folder. The model is scripted.
+Start with the [Telegram PoC test](poc/telegram/workflow.test.ts): [fictional messages](poc/telegram/testing/fixtures.ts) pass through real Smithers workflows and real Gemini 3.8 Flash requests. Telegram, storage and web results remain fixtures. The test checks ownership, creation versus update, research and follow-up routing without requiring exact wording. Its `result.json` records the generated posts, questions, diffs, model answers and tool results for human review.
 
-Install with `pnpm --dir poc/telegram install`, then run `pnpm test:telegram`. The PoC has its own [package](poc/telegram/package.json), lockfile and TypeScript config. Smithers 1.0 is [not yet published](https://github.com/smithersai/smithers/blob/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c/apps/site/docs/installation.mdx), so its packages use the Git revision pinned in [the PoC dependency config](poc/telegram/pnpm-workspace.yaml).
+Install the PoC with `pnpm --dir poc/telegram install`. Install [Antigravity CLI](https://antigravity.google/docs/cli/install/) and run `agy` once to sign in with Google Pro. This adapter was tested with CLI 1.1.27. Google [ended consumer Gemini CLI access](https://developers.googleblog.com/en/an-important-update-transitioning-gemini-cli-to-antigravity-cli/); Antigravity is the supported subscription route.
+
+In `~/.gemini/antigravity-cli/settings.json`, set `useG1Credits` to `false` and add `mcp(amber/*)` to `permissions.allow`. Preserve any existing settings. Antigravity omits the default `false` value when saving; the adapter rejects an explicit `true`. The [credit setting](https://antigravity.google/docs/cli/credits/) disables overage fallback. The [MCP permission](https://antigravity.google/docs/cli/mcp/) allows only the PoC's read tools. The adapter starts each task in a fresh workspace, limits model concurrency to two, and validates every returned value with Effect.
+
+- `pnpm test:telegram`: **live subscription requests**; inspect `poc/telegram/result.json` afterward.
+- `pnpm --dir poc/telegram test`: deterministic workflow and native MCP transport tests, also run in CI.
+
+The PoC has its own [package](poc/telegram/package.json), lockfile and TypeScript config. Smithers 1.0 is [not yet published](https://github.com/smithersai/smithers/blob/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c/apps/site/docs/installation.mdx), so its packages use the Git revision pinned in [the PoC dependency config](poc/telegram/pnpm-workspace.yaml).
