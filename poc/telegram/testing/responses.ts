@@ -31,7 +31,15 @@ export const responses: {
         {
           name: 'read_url_content',
           input: { Url: 'https://noted.example' },
-          output: 'Noted is an offline voice transcription app. https://noted.example',
+          // Deterministic native-tool fixture. Live verification is in native-web.test.ts.
+          output: {
+            provenance: 'antigravity-cli-step-artifact-v1',
+            status: 'success',
+            toolOutput:
+              'The full content of the article at https://noted.example/ has been saved to: /fixture/content.md',
+            pageContent:
+              'Title: Noted\nSource: https://noted.example/\n\nNoted is an offline voice transcription app.',
+          },
         },
       ],
       output: {

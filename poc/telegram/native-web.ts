@@ -1,81 +1,111 @@
+import { isIP } from 'node:net'
 import type * as S from './schemas'
 import type { NativeToolName } from './tools'
 
 const maximumTextLength = 12_000
-const urlKeys = new Set(['url', 'Url', 'link', 'href'])
+
+export type CapturedNativeOutput = {
+  provenance: 'antigravity-cli-step-artifact-v1'
+  status: 'success' | 'error'
+  toolOutput: string
+  pageContent?: string
+  error?: string
+}
 
 function publicUrl(raw: string) {
   try {
-    const clean = raw.replace(/[),.;]+$/, '')
-    const url = new URL(clean)
-    if (!['http:', 'https:'].includes(url.protocol)) return undefined
-    if (url.username || url.password) return undefined
-    const hostname = url.hostname.replace(/^\[|\]$/g, '')
+    const url = new URL(raw.trim())
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password)
+      return undefined
+    const hostname = url.hostname.replace(/^\[|\]$/g, '').toLowerCase()
+    // Direct IP targets are unnecessary for Amber research and are rejected rather than trying
+    // to maintain a partial private-range list. Provider-side DNS resolution remains outside the
+    // application's control, so this is an evidence filter, not a complete SSRF boundary.
     if (
+      isIP(hostname) ||
+      !hostname.includes('.') ||
       hostname === 'localhost' ||
+      hostname.endsWith('.localhost') ||
       hostname.endsWith('.local') ||
-      hostname === '0.0.0.0' ||
-      hostname === '::1' ||
-      hostname.startsWith('127.') ||
-      hostname.startsWith('10.') ||
-      hostname.startsWith('169.254.') ||
-      hostname.startsWith('192.168.') ||
-      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+      hostname.endsWith('.internal')
     )
       return undefined
-    return clean
+    return raw.trim()
   } catch {
     return undefined
   }
 }
 
-function outputText(output: unknown) {
-  if (typeof output === 'string') return output.slice(0, maximumTextLength)
-  try {
-    return JSON.stringify(output).slice(0, maximumTextLength)
-  } catch {
-    return ''
+function captured(output: unknown): CapturedNativeOutput | undefined {
+  if (!output || typeof output !== 'object') return undefined
+  if (Reflect.get(output, 'provenance') !== 'antigravity-cli-step-artifact-v1') return undefined
+  const status = Reflect.get(output, 'status')
+  const toolOutput = Reflect.get(output, 'toolOutput')
+  if (!['success', 'error'].includes(String(status)) || typeof toolOutput !== 'string')
+    return undefined
+  const pageContent = Reflect.get(output, 'pageContent')
+  const error = Reflect.get(output, 'error')
+  return {
+    provenance: 'antigravity-cli-step-artifact-v1',
+    status: status as CapturedNativeOutput['status'],
+    toolOutput,
+    ...(typeof pageContent === 'string' ? { pageContent } : {}),
+    ...(typeof error === 'string' ? { error } : {}),
   }
 }
 
-function resultUrls(value: unknown, found = new Set<string>()): Set<string> {
-  if (typeof value === 'string') {
-    for (const match of value.matchAll(/https?:\/\/[^\s<>"']+/g)) {
-      const url = publicUrl(match[0])
-      if (url) found.add(url)
-    }
-  } else if (Array.isArray(value)) {
-    for (const item of value) resultUrls(item, found)
-  } else if (value && typeof value === 'object') {
-    for (const [key, item] of Object.entries(value)) {
-      if (urlKeys.has(key) && typeof item === 'string') {
-        const url = publicUrl(item)
-        if (url) found.add(url)
-      }
-      resultUrls(item, found)
-    }
+function searchPages(result: CapturedNativeOutput) {
+  const marker = /^Sources:\s*$/im.exec(result.toolOutput)
+  if (!marker) return []
+  const sourceBlock = result.toolOutput.slice(marker.index + marker[0].length)
+  const pages: (typeof S.WebPage.Type)[] = []
+  for (const line of sourceBlock.split('\n')) {
+    const match = /^\s*\[\d+\]\s+\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)\s*$/.exec(line)
+    if (!match) continue
+    const url = publicUrl(match[2])
+    if (!url) continue
+    pages.push({
+      url,
+      title: match[1].slice(0, 300),
+      text: result.toolOutput.slice(0, maximumTextLength),
+    })
+    if (pages.length === 5) break
   }
-  return found
+  return pages
+}
+
+function fetchedPage(input: unknown, result: CapturedNativeOutput) {
+  if (!input || typeof input !== 'object' || !result.pageContent?.trim()) return []
+  const requested = Reflect.get(input, 'Url')
+  if (typeof requested !== 'string') return []
+  const requestedUrl = publicUrl(requested)
+  const receipt = /^The full content of the article at (https?:\/\/\S+) has been saved to:/im.exec(
+    result.toolOutput,
+  )
+  const receiptUrl = receipt ? publicUrl(receipt[1]) : undefined
+  const contentSource = /^Source:\s*(https?:\/\/\S+)\s*$/im.exec(result.pageContent)
+  const contentUrl = contentSource ? publicUrl(contentSource[1]) : undefined
+  if (
+    !requestedUrl ||
+    !receiptUrl ||
+    !contentUrl ||
+    new URL(receiptUrl).href !== new URL(requestedUrl).href ||
+    new URL(contentUrl).href !== new URL(requestedUrl).href
+  )
+    return []
+  const title =
+    /^Title:\s*(.+)$/im.exec(result.pageContent)?.[1]?.trim() || new URL(requestedUrl).hostname
+  return [
+    {
+      url: requestedUrl,
+      title: title.slice(0, 300),
+      text: result.pageContent.slice(0, maximumTextLength),
+    },
+  ] satisfies (typeof S.WebPage.Type)[]
 }
 
 export function pagesFromNativeTool(name: NativeToolName, input: unknown, output: unknown) {
-  let text = outputText(output)
-  const urls = resultUrls(output)
-  if (name === 'read_url_content' && input && typeof input === 'object') {
-    const raw = Reflect.get(input, 'Url')
-    if (typeof raw === 'string') {
-      const url = publicUrl(raw)
-      if (url) urls.add(url)
-    }
-  }
-  // CLI 1.1.27 exposes the successful tool name and parameters but no native web body in NDJSON.
-  // A fetched URL is evidence only because parseAntigravityStream observed its completed call.
-  if (!text.trim() && name === 'read_url_content' && urls.size)
-    text = 'Antigravity completed read_url_content; CLI 1.1.27 omitted its page body from NDJSON.'
-  if (!text.trim()) return []
-  return [...urls].slice(0, 5).map((url) => ({
-    url,
-    title: new URL(url).hostname,
-    text,
-  })) satisfies (typeof S.WebPage.Type)[]
+  const result = captured(output)
+  if (result?.status !== 'success' || !result.toolOutput.trim()) return []
+  return name === 'search_web' ? searchPages(result) : fetchedPage(input, result)
 }

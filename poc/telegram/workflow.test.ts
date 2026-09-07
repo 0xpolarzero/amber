@@ -8,18 +8,16 @@ import { antigravity, modelId } from './antigravity'
 import { testEngine } from './testing/engine'
 import { batch, initialPosts } from './testing/fixtures'
 import { telegramStore } from './testing/store'
-import type { Ports } from './tools'
+import type { ModelObservation, Ports } from './tools'
 import { TelegramBatch } from './workflow'
 
 it('uses Gemini to create Alex’s post, update Bea’s post and ignore unrelated chatter', async () => {
   const store = telegramStore(batch, initialPosts)
   const answers: { task: string; input: unknown; output: unknown }[] = []
   const research: { task: string; tool: string; input: unknown; output: unknown }[] = []
-  const configurations: {
+  const configurations: (Extract<ModelObservation, { kind: 'configuration' }> & {
     task: string
-    declaredTools: readonly string[]
-    runtimeInventory: readonly string[]
-  }[] = []
+  })[] = []
   const model: Ports['model'] = (request) =>
     antigravity({
       ...request,

@@ -107,7 +107,11 @@ it('turns a pulled batch into a new post, an updated post and one question for t
           expect.objectContaining({
             task: 'alex',
             tool: 'read_url_content',
-            result: expect.stringContaining('https://noted.example'),
+            result: expect.objectContaining({
+              provenance: 'antigravity-cli-step-artifact-v1',
+              status: 'success',
+              pageContent: expect.stringContaining('https://noted.example'),
+            }),
           }),
           { task: 'bea', tool: 'searchPosts', result: initialPosts },
         ]),

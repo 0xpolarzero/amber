@@ -1,10 +1,16 @@
-import { spawn } from 'node:child_process'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Effect } from 'effect'
 import { expect, it } from 'vitest'
-import { agentDefinition, capabilityPolicy, modelId, parseAntigravityStream } from '../antigravity'
+import {
+  agentDefinition,
+  capabilityPolicy,
+  modelId,
+  nativeCallsFromArtifactRoot,
+  parseAntigravityStream,
+  successfulAndFailedTools,
+} from '../antigravity'
 import { pagesFromNativeTool } from '../native-web'
 import type { Ports } from '../tools'
 
@@ -21,36 +27,12 @@ const request = (overrides: Partial<Parameters<Ports['model']>[0]> = {}) =>
     ...overrides,
   }) satisfies Parameters<Ports['model']>[0]
 
-async function runHook(call: unknown) {
-  const cwd = await mkdtemp(join(tmpdir(), 'amber-hook-test-'))
-  const policy = join(cwd, 'policy.json')
-  await writeFile(
-    policy,
-    JSON.stringify({
-      tools: ['finish', 'search_web', 'read_url_content'],
-      mcpTools: ['searchMessages', 'readMessages', 'searchPosts'],
-    }),
-  )
-  try {
-    return await new Promise<Record<string, unknown>>((resolve, reject) => {
-      const child = spawn(process.execPath, [
-        new URL('../antigravity-hook.mjs', import.meta.url).pathname,
-        policy,
-      ])
-      let stdout = ''
-      let stderr = ''
-      child.stdout.setEncoding('utf8').on('data', (chunk) => (stdout += chunk))
-      child.stderr.setEncoding('utf8').on('data', (chunk) => (stderr += chunk))
-      child.on('error', reject)
-      child.on('close', (code) =>
-        code === 0 ? resolve(JSON.parse(stdout)) : reject(new Error(stderr || String(code))),
-      )
-      child.stdin.end(JSON.stringify({ toolCall: call }))
-    })
-  } finally {
-    await rm(cwd, { recursive: true, force: true })
-  }
-}
+const captured = (toolOutput: string, pageContent?: string, status = 'success') => ({
+  provenance: 'antigravity-cli-step-artifact-v1',
+  status,
+  toolOutput,
+  ...(pageContent ? { pageContent } : {}),
+})
 
 it('declares only task capabilities and opts out of inherited customizations', () => {
   const selection = request()
@@ -78,27 +60,20 @@ it('declares only task capabilities and opts out of inherited customizations', (
   expect(definition).not.toMatch(/run_command|view_file|invoke_subagent/)
 })
 
-it('parses the selected configuration and successful native web steps from NDJSON', () => {
+it('parses completed native steps and reads their CLI artifacts', async () => {
   const raw = [
     {
       event: 'init',
-      init: {
-        agent: 'amber',
-        model: modelId,
-        tools: ['finish', 'search_web', 'read_url_content'],
-      },
+      init: { agent: 'amber', model: modelId, tools: ['finish', 'search_web'] },
     },
     {
       event: 'step_update',
       step_update: {
         state: 'DONE',
         step_type: 'tool',
+        step_index: 1,
         tool_name: 'search_web',
-        tool_info: {
-          name: 'search_web',
-          parameters: { query: 'IANA example domains' },
-          output: 'Example Domains — https://www.iana.org/help/example-domains',
-        },
+        tool_info: { name: 'search_web', parameters: { query: 'IANA example domains' } },
       },
     },
     {
@@ -106,61 +81,108 @@ it('parses the selected configuration and successful native web steps from NDJSO
       step_update: {
         state: 'DONE',
         step_type: 'tool',
+        step_index: 2,
         tool_name: 'read_url_content',
         tool_info: {
           name: 'read_url_content',
           parameters: { Url: 'https://www.iana.org/help/example-domains' },
-          output: 'IANA-managed reserved domains.',
         },
       },
     },
     {
       event: 'result',
-      result: { status: 'SUCCESS', structured_output: { result: { fact: 'reserved' } } },
+      result: {
+        conversation_id: '11111111-1111-1111-1111-111111111111',
+        status: 'SUCCESS',
+        structured_output: { result: { fact: 'reserved' } },
+      },
     },
   ]
     .map((event) => JSON.stringify(event))
     .join('\n')
-  const stream = parseAntigravityStream(raw)
-  expect(stream.init).toMatchObject({ agent: 'amber', model: modelId })
-  expect(stream.nativeCalls.map(({ name }) => name)).toEqual(['search_web', 'read_url_content'])
-  expect(
-    stream.nativeCalls.flatMap(({ name, input, output }) =>
-      pagesFromNativeTool(name, input, output),
-    ),
-  ).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ url: 'https://www.iana.org/help/example-domains' }),
-    ]),
+  const artifacts = await mkdtemp(join(tmpdir(), 'amber-artifacts-test-'))
+  await mkdir(join(artifacts, '1'), { recursive: true })
+  await mkdir(join(artifacts, '2'), { recursive: true })
+  await writeFile(
+    join(artifacts, '1/output.txt'),
+    'Summary with unrelated https://unrelated.example/body.\n\nSources:\n[1] [iana.org](https://www.iana.org/help/example-domains)',
   )
+  await writeFile(
+    join(artifacts, '2/output.txt'),
+    'The full content of the article at https://www.iana.org/help/example-domains has been saved to: content.md',
+  )
+  await writeFile(
+    join(artifacts, '2/content.md'),
+    'Title: Example Domains\nSource: https://www.iana.org/help/example-domains\n\nIANA-managed reserved domains.',
+  )
+  try {
+    const stream = parseAntigravityStream(raw)
+    const nativeCalls = await nativeCallsFromArtifactRoot(artifacts, stream.nativeCalls)
+    expect(nativeCalls.map(({ name }) => name)).toEqual(['search_web', 'read_url_content'])
+    expect(
+      nativeCalls.flatMap(({ name, input, output }) => pagesFromNativeTool(name, input, output)),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ url: 'https://www.iana.org/help/example-domains' }),
+      ]),
+    )
+  } finally {
+    await rm(artifacts, { recursive: true, force: true })
+  }
 })
 
-it('does not turn failed tools, private URLs or arbitrary structured output into evidence', () => {
+it('accepts only successful result structures and source-specific URLs', () => {
   expect(
     pagesFromNativeTool(
       'search_web',
       { query: 'private' },
-      'http://127.0.0.1/secret http://172.16.0.1/secret https://user:pass@example.com and https://public.example/source',
+      captured(
+        'Body link: https://unrelated.example/body\n\nSources:\n[1] [private](http://127.0.0.1/secret)\n[2] [credential](https://user:pass@example.com/secret)\n[3] [source](https://public.example/source)',
+      ),
     ),
   ).toEqual([expect.objectContaining({ url: 'https://public.example/source' })])
+  expect(pagesFromNativeTool('search_web', {}, 'https://invented.example')).toEqual([])
+  expect(pagesFromNativeTool('search_web', {}, captured('https://not-a-source.example'))).toEqual(
+    [],
+  )
   expect(
     pagesFromNativeTool(
       'read_url_content',
       { Url: 'https://www.iana.org/help/example-domains' },
       undefined,
     ),
-  ).toEqual([
-    expect.objectContaining({
-      url: 'https://www.iana.org/help/example-domains',
-      text: expect.stringContaining('omitted its page body'),
-    }),
-  ])
+  ).toEqual([])
+  expect(
+    pagesFromNativeTool(
+      'read_url_content',
+      { Url: 'https://www.iana.org/help/example-domains' },
+      captured(
+        'The full content of the article at https://www.iana.org/help/example-domains has been saved to: content.md',
+      ),
+    ),
+  ).toEqual([])
+  expect(
+    pagesFromNativeTool(
+      'read_url_content',
+      { Url: 'https://www.iana.org/help/example-domains' },
+      captured(
+        'Encountered error in step execution: fetch failed for https://www.iana.org/help/example-domains',
+        'Source: https://www.iana.org/help/example-domains',
+        'error',
+      ),
+    ),
+  ).toEqual([])
+})
+
+it('keeps failed stream steps observable and rejects malformed streams', () => {
   const raw = [
     { event: 'init', init: { agent: 'amber', model: modelId, tools: [] } },
     {
       event: 'step_update',
       step_update: {
         state: 'DONE',
+        step_type: 'tool',
+        step_index: 1,
         tool_name: 'read_url_content',
         tool_info: {
           name: 'read_url_content',
@@ -171,41 +193,18 @@ it('does not turn failed tools, private URLs or arbitrary structured output into
     },
     {
       event: 'result',
-      result: {
-        status: 'SUCCESS',
-        structured_output: { result: { source: 'https://invented.invalid' } },
-      },
+      result: { status: 'SUCCESS', structured_output: { result: { source: 'invented' } } },
     },
   ]
     .map((event) => JSON.stringify(event))
     .join('\n')
-  expect(parseAntigravityStream(raw).nativeCalls).toEqual([])
+  const stream = parseAntigravityStream(raw)
+  expect(stream.nativeCalls).toEqual([
+    expect.objectContaining({ name: 'read_url_content', stepIndex: 1, output: undefined }),
+  ])
+  expect(successfulAndFailedTools(stream.toolCalls)).toEqual({
+    successful: [],
+    failed: ['read_url_content'],
+  })
   expect(() => parseAntigravityStream('{not json')).toThrow('Invalid Antigravity stream event')
-})
-
-it('denies native, filesystem and foreign MCP capabilities outside the task allowlist', async () => {
-  await expect(runHook({ name: 'search_web', args: { query: 'IANA' } })).resolves.toEqual({
-    decision: 'allow',
-  })
-  await expect(
-    runHook({ name: 'read_url_content', args: { Url: 'https://www.iana.org/help/' } }),
-  ).resolves.toEqual({
-    decision: 'allow',
-    permissionOverrides: ['read_url(www.iana.org)', 'read_url(iana.org)'],
-  })
-  await expect(runHook({ name: 'run_command', args: {} })).resolves.toMatchObject({
-    decision: 'deny',
-  })
-  await expect(
-    runHook({
-      name: 'call_mcp_tool',
-      args: { server_name: 'amber', name: 'searchPosts', arguments: {} },
-    }),
-  ).resolves.toEqual({ decision: 'allow' })
-  await expect(
-    runHook({
-      name: 'call_mcp_tool',
-      args: { server_name: 'global-sentinel', name: 'write', arguments: {} },
-    }),
-  ).resolves.toMatchObject({ decision: 'deny' })
 })

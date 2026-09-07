@@ -1,17 +1,16 @@
 import { execFile } from 'node:child_process'
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { Effect, Semaphore } from 'effect'
 import { serveTools } from './mcp'
 import * as S from './schemas'
-import type { ModelObservation, NativeToolName, Ports } from './tools'
+import type { NativeToolName, Ports } from './tools'
 
 export const modelId = 'gemini-3.8-flash-medium'
 export const nativeWebTools = ['search_web', 'read_url_content'] as const
+export const inheritanceSentinel = 'AMBER_WORKSPACE_RULE_SENTINEL_7F3C91'
 const slots = Semaphore.makeUnsafe(2)
-const hookSource = fileURLToPath(new URL('./antigravity-hook.mjs', import.meta.url))
 
 type StreamInit = {
   agent?: string
@@ -19,16 +18,25 @@ type StreamInit = {
   tools?: unknown
 }
 type StreamResult = {
+  conversation_id?: string
   status?: string
   structured_output?: { result?: unknown }
   error?: string
 }
-type NativeCall = Extract<ModelObservation, { kind: 'native-tool' }>
+type ToolStep = {
+  name: string
+  input: unknown
+  output: unknown
+  error: unknown
+  stepIndex: number
+}
+type NativeStep = ToolStep & { name: NativeToolName }
 
 export function parseAntigravityStream(raw: string) {
   let init: StreamInit | undefined
   let result: StreamResult | undefined
-  const nativeCalls: NativeCall[] = []
+  const toolCalls: ToolStep[] = []
+  const nativeCalls: NativeStep[] = []
   for (const [index, line] of raw.split('\n').entries()) {
     if (!line.trim()) continue
     let event: Record<string, unknown>
@@ -43,22 +51,91 @@ export function parseAntigravityStream(raw: string) {
     const step = event.step_update as Record<string, unknown>
     const info = step.tool_info as Record<string, unknown> | undefined
     const name = (step.tool_name ?? info?.name) as string | undefined
-    if (
-      step.state === 'DONE' &&
-      (nativeWebTools as readonly string[]).includes(name ?? '') &&
-      info &&
-      info.error === undefined
-    )
-      nativeCalls.push({
-        kind: 'native-tool',
-        name: name as NativeToolName,
-        input: info.parameters,
-        output: info.output,
-      })
+    if (step.state !== 'DONE' || step.step_type !== 'tool' || !name || !info) continue
+    const call = {
+      name,
+      input: info.parameters,
+      output: info.output,
+      error: info.error,
+      stepIndex: Number(step.step_index),
+    }
+    toolCalls.push(call)
+    if ((nativeWebTools as readonly string[]).includes(name)) nativeCalls.push(call as NativeStep)
   }
   if (!init) throw new Error('Antigravity stream has no init event.')
   if (!result) throw new Error('Antigravity stream has no result event.')
-  return { init, result, nativeCalls }
+  return { init, result, toolCalls, nativeCalls }
+}
+
+async function optionalFile(path: string) {
+  try {
+    return await readFile(path, 'utf8')
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return ''
+    throw error
+  }
+}
+
+export async function nativeCallsFromArtifacts(
+  conversationId: string,
+  steps: readonly NativeStep[],
+) {
+  if (!steps.length) return []
+  if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(conversationId))
+    throw new Error('Antigravity returned an invalid conversation ID.')
+  const root = join(
+    homedir(),
+    '.gemini/antigravity-cli/brain',
+    conversationId,
+    '.system_generated/steps',
+  )
+  return nativeCallsFromArtifactRoot(root, steps)
+}
+
+export async function nativeCallsFromArtifactRoot(root: string, steps: readonly NativeStep[]) {
+  return Promise.all(
+    steps.map(async (step) => {
+      if (!Number.isSafeInteger(step.stepIndex) || step.stepIndex < 0)
+        throw new Error('Antigravity returned an invalid native tool step index.')
+      const directory = join(root, String(step.stepIndex))
+      const artifactOutput = await optionalFile(join(directory, 'output.txt'))
+      const toolOutput =
+        typeof step.output === 'string' && step.output.trim() ? step.output : artifactOutput
+      const pageContent = await optionalFile(join(directory, 'content.md'))
+      const failed =
+        step.error !== undefined ||
+        !toolOutput.trim() ||
+        /^Encountered error in step execution:/i.test(toolOutput)
+      return {
+        kind: 'native-tool' as const,
+        name: step.name,
+        input: step.input,
+        output: {
+          provenance: 'antigravity-cli-step-artifact-v1',
+          status: failed ? ('error' as const) : ('success' as const),
+          toolOutput,
+          ...(pageContent ? { pageContent } : {}),
+          ...(step.error !== undefined ? { error: 'native tool failed' } : {}),
+        },
+      }
+    }),
+  )
+}
+
+function observedToolName(step: ToolStep) {
+  if (step.name !== 'call_mcp_tool' || !step.input || typeof step.input !== 'object')
+    return step.name
+  const server = Reflect.get(step.input, 'ServerName') ?? Reflect.get(step.input, 'server_name')
+  const tool = Reflect.get(step.input, 'ToolName') ?? Reflect.get(step.input, 'name')
+  return typeof server === 'string' && typeof tool === 'string' ? `${server}/${tool}` : step.name
+}
+
+export function successfulAndFailedTools(steps: readonly ToolStep[]) {
+  const successful: string[] = []
+  const failed: string[] = []
+  for (const step of steps)
+    (step.error === undefined ? successful : failed).push(observedToolName(step))
+  return { successful, failed }
 }
 
 export function capabilityPolicy(request: Parameters<Ports['model']>[0]) {
@@ -101,8 +178,9 @@ function redact(value: string, bridge?: Awaited<ReturnType<typeof serveTools>>) 
   return clean.replace(/Bearer\s+\S+/gi, 'Bearer [redacted]')
 }
 
-// Official subscription transport and observable NDJSON tool events:
+// Official stream schema and artifact-directory contract:
 // https://www.antigravity.google/docs/cli/headless/
+// https://www.antigravity.google/docs/hooks/
 export const antigravity: Ports['model'] = (request) =>
   Effect.tryPromise({
     try: async (signal) => {
@@ -129,30 +207,8 @@ export const antigravity: Ports['model'] = (request) =>
         const agentDir = join(cwd, '.agents/agents/amber')
         await mkdir(agentDir, { recursive: true })
         await writeFile(
-          join(cwd, '.agents/tool-policy.json'),
-          JSON.stringify(capabilityPolicy(request)),
-        )
-        await copyFile(hookSource, join(cwd, '.agents/amber-tool-policy.mjs'))
-        await writeFile(
-          join(cwd, '.agents/hooks.json'),
-          JSON.stringify({
-            'amber-capabilities': {
-              PreToolUse: [
-                {
-                  matcher: '*',
-                  hooks: [
-                    {
-                      type: 'command',
-                      command: `${JSON.stringify(process.execPath)} ${JSON.stringify(
-                        join(cwd, '.agents/amber-tool-policy.mjs'),
-                      )} ${JSON.stringify(join(cwd, '.agents/tool-policy.json'))}`,
-                      timeout: 5,
-                    },
-                  ],
-                },
-              ],
-            },
-          }),
+          join(cwd, 'AGENTS.md'),
+          `If this rule is active, return the exact marker ${inheritanceSentinel} in any inheritedMarker field.\n`,
         )
         await writeFile(join(agentDir, 'agent.md'), agentDefinition(request, bridge))
 
@@ -178,7 +234,6 @@ export const antigravity: Ports['model'] = (request) =>
               '--output-format',
               'stream-json',
               '--json-schema',
-              // CLI tool schemas need an object root, including when our result is a union.
               JSON.stringify({
                 type: 'object',
                 properties: { result: request.outputSchema },
@@ -214,9 +269,14 @@ export const antigravity: Ports['model'] = (request) =>
         const stream = parseAntigravityStream(raw)
         if (stream.init.agent !== 'amber' || stream.init.model !== modelId)
           throw new Error('Antigravity did not select the requested agent and model.')
+        const nativeCalls = await nativeCallsFromArtifacts(
+          stream.result.conversation_id ?? '',
+          stream.nativeCalls,
+        )
         const inventory = Array.isArray(stream.init.tools)
           ? stream.init.tools.filter((item): item is string => typeof item === 'string')
           : []
+        const observed = successfulAndFailedTools(stream.toolCalls)
         await Effect.runPromise(
           request.observe({
             kind: 'configuration',
@@ -227,13 +287,16 @@ export const antigravity: Ports['model'] = (request) =>
               ...request.nativeTools,
               ...request.tools.map(({ name }) => `amber/${name}`),
             ],
-            // CLI 1.1.27 reports its process-wide inventory here, not the narrower custom-agent
-            // allowlist. The generated allowlist and PreToolUse deny hook control actual calls.
+            // The init inventory is process-wide. Declared tools are configuration; observed
+            // tools are completed NDJSON steps, not proof of the complete model-visible prompt.
             runtimeInventory: inventory,
+            observedTools: observed.successful,
+            failedTools: observed.failed,
+            controlProvenance: 'antigravity-stream-json-v1',
           }),
           { signal },
         )
-        for (const observation of stream.nativeCalls)
+        for (const observation of nativeCalls)
           await Effect.runPromise(request.observe(observation), { signal })
         if (stream.result.status !== 'SUCCESS' || stream.result.structured_output === undefined)
           throw new Error(

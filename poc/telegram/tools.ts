@@ -33,6 +33,9 @@ export type ModelObservation =
       model: string
       declaredTools: readonly string[]
       runtimeInventory: readonly string[]
+      observedTools: readonly string[]
+      failedTools: readonly string[]
+      controlProvenance: 'antigravity-stream-json-v1'
     }
   | {
       kind: 'native-tool'
@@ -48,8 +51,8 @@ type Handler<A extends { payloadSchema: { Type: unknown }; successSchema: { Type
 
 export type Ports = {
   // Fresh subscription-backed model call with an explicit custom-agent allowlist. The adapter
-  // disables inherited user customizations and adds a PreToolUse deny hook. Antigravity still
-  // supplies provider/runtime instructions which the application cannot inspect or replace.
+  // requests disabled inherited customizations. Antigravity still supplies provider/runtime
+  // instructions which the application cannot inspect or replace.
   // https://www.antigravity.google/docs/subagents/
   // Bound task duration/output and model concurrency (initially two globally). Cancel
   // the CLI process when its Effect scope ends. Provider/model ID is configuration.
