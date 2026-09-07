@@ -15,7 +15,6 @@ const glyphs = {
   arrow: <path d="M6 18 18 6M7 6h11v11" />,
   chevron: <path d="m10 6 6 6-6 6" />,
   chevronDown: <path d="m6 9 6 6 6-6" />,
-  sort: <path d="M8 4v16m-4-4 4 4 4-4M16 20V4m-4 4 4-4 4 4" />,
   back: <path d="m10 5-7 7 7 7M3 12h17" />,
   more: (
     <>

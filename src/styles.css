@@ -374,128 +374,7 @@ main {
   color: var(--ink);
 }
 
-.feed-controls {
-  margin-left: auto;
-  padding-right: calc(var(--search-width) + 4px);
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.sort-control {
-  position: relative;
-  display: block;
-}
-
-.sort-control select {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--secondary);
-  font-size: 12px;
-  padding: 8px 25px 8px 10px;
-  min-height: 36px;
-  width: 80px;
-  cursor: pointer;
-}
-
-.sort-control select:hover {
-  background: var(--soft);
-}
-
-.sort-control svg {
-  position: absolute;
-  right: 8px;
-  top: 12px;
-  width: 12px;
-  height: 12px;
-  pointer-events: none;
-  color: var(--quiet);
-}
-
-.feed-search {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: var(--search-width);
-  z-index: 6;
-}
-
-.feed-search:focus-within {
-  width: 100%;
-}
-
-.feed-search input {
-  appearance: none;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: var(--paper);
-  height: 34px;
-  width: 100%;
-  padding: 0 9px 0 29px;
-  font-size: 12px;
-  color: var(--ink);
-  text-overflow: ellipsis;
-}
-
-.feed-search input::placeholder {
-  color: var(--quiet);
-}
-
-.feed-search input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-}
-
-.feed-search:focus-within input {
-  outline: none;
-  border-color: #cececa;
-  box-shadow: 0 0 0 3px var(--soft);
-  padding-right: 36px;
-}
-
-.feed-search .search-icon {
-  position: absolute;
-  left: 9px;
-  top: 10px;
-  width: 14px;
-  height: 14px;
-  color: var(--quiet);
-  pointer-events: none;
-}
-
-.search-clear {
-  position: absolute;
-  right: 3px;
-  top: 3px;
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border-radius: 5px;
-  color: var(--quiet);
-  visibility: hidden;
-  opacity: 0;
-}
-
-.feed-search:focus-within .search-clear {
-  visibility: visible;
-  opacity: 1;
-}
-
-.search-clear:hover {
-  background: var(--soft);
-  color: var(--ink);
-}
-
-.search-clear svg {
-  width: 13px;
-  height: 13px;
-}
-
-/* Composable feed filters */
+/* Stationary feed toolbar */
 .feed-header.feed-discovery {
   padding: 22px 0 18px;
 }
@@ -506,31 +385,144 @@ main {
   padding: 0;
   margin: 0;
   min-width: 0;
-  display: flex;
+}
+
+.feed-toolbar {
+  position: relative;
+  display: grid;
+  grid-template-areas: "group author bookmarks sort search";
+  grid-template-columns: auto auto auto minmax(100px, 1fr) 200px;
   align-items: center;
   gap: 8px;
 }
 
-.feed-toolbar {
-  --search-width: 112px;
-  position: relative;
+.filter-dropdown[data-kind="group"] {
+  grid-area: group;
+}
+.filter-dropdown[data-kind="author"] {
+  grid-area: author;
 }
 
-:where(.feed-toolbar:has(.feed-search:focus-within)) > .filter-combobox,
-:where(.feed-toolbar:has(.feed-search:focus-within)) > .bookmark-filter,
-:where(.feed-toolbar:has(.feed-search:focus-within)) .sort-control {
-  opacity: 0;
+.sort-control {
+  grid-area: sort;
+  justify-self: end;
+  position: relative;
+  display: block;
+  width: 100px;
+}
+
+.sort-control select {
+  appearance: none;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: transparent;
+  font-size: 12px;
+  padding: 8px 25px 8px 8px;
+  height: 36px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.sort-control option {
+  color: var(--ink);
+}
+.sort-control select:hover {
+  background: var(--soft);
+}
+
+.sort-control svg {
+  position: absolute;
+  right: 7px;
+  top: 12px;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+  color: var(--quiet);
+}
+
+.sort-label {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--secondary);
   pointer-events: none;
 }
 
+.feed-search {
+  grid-area: search;
+  position: relative;
+  min-width: 0;
+}
+
+.feed-search input {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  height: 36px;
+  width: 100%;
+  padding: 0 32px;
+  font-size: 12px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+}
+
+.feed-search input::placeholder {
+  color: var(--quiet);
+}
+.feed-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.feed-search:focus-within input {
+  outline: none;
+  border-color: #a0a09a;
+}
+
+.feed-search .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 11px;
+  width: 14px;
+  height: 14px;
+  color: var(--quiet);
+  pointer-events: none;
+}
+
+.search-clear {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  color: var(--quiet);
+}
+
+.search-clear:hover {
+  background: var(--soft);
+  color: var(--ink);
+}
+.search-clear svg {
+  width: 13px;
+  height: 13px;
+}
+
 .active-filters {
+  display: flex;
+  align-items: center;
   flex-wrap: wrap;
   margin-top: 12px;
   gap: 6px;
 }
 
 .filter-chip,
-.filter-input,
+.filter-trigger,
 .bookmark-filter {
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -549,13 +541,19 @@ main {
   background: var(--soft);
 }
 
-.filter-chip svg,
-.filter-input > svg {
+.filter-chip svg {
   width: 14px;
   height: 14px;
 }
+.filter-chip svg:last-child {
+  width: 12px;
+  height: 12px;
+  color: var(--quiet);
+}
 
 .filter-chip:hover,
+.filter-trigger:hover,
+.filter-trigger[aria-expanded="true"],
 .bookmark-filter:hover,
 .bookmark-filter.active {
   background: var(--soft);
@@ -563,82 +561,98 @@ main {
   border-color: #e2e2de;
 }
 
-.filter-chip svg:last-child {
+.bookmark-filter {
+  grid-area: bookmarks;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 10px;
+}
+
+.bookmark-filter svg {
+  width: 14px;
+  height: 14px;
+}
+.bookmark-filter.active svg {
+  fill: currentColor;
+}
+
+.filter-dropdown {
+  position: relative;
+}
+.filter-trigger {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 10px;
+}
+.filter-trigger svg {
   width: 12px;
   height: 12px;
   color: var(--quiet);
 }
 
-.bookmark-filter {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-}
-
-.bookmark-filter svg {
-  width: 15px;
-  height: 15px;
-}
-
-.bookmark-filter.active svg {
-  fill: currentColor;
-}
-
-.filter-combobox {
-  position: relative;
-  width: 112px;
-  flex-shrink: 0;
-}
-
-.filter-input {
-  position: relative;
-}
-
-.filter-input > svg {
-  position: absolute;
-  left: 9px;
-  top: 9px;
-  pointer-events: none;
-}
-
-.filter-input > svg:last-of-type {
-  left: auto;
-  right: 7px;
-  width: 12px;
-}
-
-.filter-input input {
-  width: 100%;
-  height: 32px;
-  padding: 0 23px 0 29px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--ink);
+.clear-filters {
+  margin-left: auto;
+  min-height: 30px;
+  padding: 5px 0 5px 8px;
+  color: var(--quiet);
   font-size: 12px;
 }
-
-.filter-input input::placeholder {
-  color: var(--secondary);
+.clear-filters:hover {
+  color: var(--ink);
+  text-decoration: underline;
 }
 
 .filter-popup {
   position: absolute;
   top: calc(100% + 7px);
   left: 0;
-  width: 228px;
+  width: 260px;
   max-width: calc(100vw - 40px);
-  max-height: 292px;
-  overflow-y: auto;
   padding: 5px;
   z-index: 5;
   border: 1px solid #e5e5e1;
   border-radius: 10px;
   background: var(--paper);
   box-shadow: 0 8px 24px #0000000d;
+}
+
+.filter-query {
+  position: relative;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 5px;
+}
+.filter-query input {
+  width: 100%;
+  height: 40px;
+  border: 0;
+  border-radius: 5px;
+  padding: 0 8px 0 30px;
+  font-size: 12px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.filter-query input:focus-visible {
+  outline: none;
+}
+.filter-query:focus-within {
+  border-color: #a0a09a;
+}
+.filter-query > svg {
+  position: absolute;
+  left: 8px;
+  top: 13px;
+  width: 14px;
+  height: 14px;
+  color: var(--quiet);
+}
+.filter-popup [role="listbox"] {
+  max-height: 252px;
+  overflow-y: auto;
 }
 
 .filter-popup [role="option"] {
@@ -652,45 +666,41 @@ main {
   text-align: left;
   font-size: 12px;
 }
-
 .filter-popup [role="option"]:hover,
-.filter-popup [aria-selected="true"] {
+.filter-popup [data-active="true"] {
   background: var(--soft);
 }
-
 .filter-popup small {
-  margin-left: auto;
   color: var(--quiet);
   font-size: 10px;
 }
-
 .filter-option-icon {
   display: grid;
   place-items: center;
   width: 27px;
   flex-shrink: 0;
 }
-
-.filter-option-icon > svg {
-  width: 15px;
-  height: 15px;
+.filter-option-check {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-left: auto;
+  border: 1px solid #d7d7d2;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
 }
-
+.filter-popup [aria-selected="true"] .filter-option-check {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: white;
+}
+.filter-option-check svg {
+  width: 12px;
+  height: 12px;
+}
 .filter-no-results {
   padding: 14px 8px;
-}
-
-.sort-control[data-sort="comments"] select {
-  width: 142px;
-}
-
-.sort-control[data-sort="bookmarks"] select {
-  width: 150px;
-}
-
-.compact-sort-label,
-.compact-sort-icon {
-  display: none;
 }
 
 /* Private questions */
@@ -1725,11 +1735,6 @@ dialog::backdrop {
     font-size: 12px;
   }
 
-  .feed-controls {
-    margin-left: auto;
-    gap: 0;
-  }
-
   .sort-control select {
     font-size: 11px;
     padding-left: 6px;
@@ -1972,84 +1977,80 @@ dialog::backdrop {
   white-space: pre-wrap;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .feed-header.feed-discovery {
     padding: 18px 0 16px;
   }
-
   .feed-toolbar {
-    --search-width: 80px;
-    gap: 5px;
+    grid-template-areas: "search search search search" "group author bookmarks sort";
+    grid-template-columns: auto auto auto minmax(86px, 1fr);
+    gap: 10px 6px;
   }
-
-  .filter-combobox {
+  .filter-dropdown {
     position: static;
-    width: 66px;
   }
-
-  .filter-input input {
-    font-size: 11px;
-    padding-left: 9px;
-    padding-right: 21px;
+  .filter-dropdown[data-kind="author"] .filter-popup {
+    left: clamp(0px, 76px, calc(100% - 260px));
   }
-
-  .filter-input > svg:first-child {
-    display: none;
+  .filter-trigger {
+    padding: 0 8px;
+    gap: 5px;
+    height: 44px;
   }
-
-  .filter-combobox[data-kind="author"] .filter-popup {
-    left: clamp(0px, 71px, calc(100% - 228px));
-  }
-
   .bookmark-filter {
-    width: 28px;
+    height: 44px;
+    padding: 0 8px;
   }
-
-  .feed-toolbar .sort-control select {
+  .sort-control {
     width: 86px;
-    color: transparent;
   }
-
-  .feed-toolbar .sort-control option {
-    color: var(--ink);
+  .sort-control select {
+    height: 44px;
   }
-
-  .compact-sort-label {
-    display: block;
-    position: absolute;
+  .sort-control svg {
+    top: 16px;
+  }
+  .sort-label {
+    font-size: 11px;
     left: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 11px;
-    color: var(--secondary);
-    pointer-events: none;
   }
-
   .feed-search input {
-    font-size: 11px;
-    padding-left: 26px;
-    padding-right: 6px;
+    height: 44px;
+    font-size: 16px;
+    padding-left: 36px;
+    padding-right: 40px;
+  }
+  .feed-search .search-icon {
+    top: 14px;
+    width: 16px;
+    height: 16px;
+  }
+  .search-clear {
+    width: 36px;
+    height: 36px;
+  }
+  .filter-query input {
+    font-size: 16px;
+    height: 44px;
+  }
+  .filter-query > svg {
+    top: 15px;
+  }
+  .filter-popup [role="option"] {
+    min-height: 44px;
+  }
+  .filter-chip,
+  .clear-filters {
+    min-height: 36px;
   }
 }
 
-@media (max-width: 384px) {
-  .feed-toolbar {
-    gap: 3px;
+@media (max-width: 380px) {
+  .bookmark-filter {
+    width: 44px;
+    padding: 0;
   }
-
-  .feed-toolbar .sort-control select {
-    width: 32px;
-  }
-
-  .compact-sort-label,
-  .sort-chevron {
+  .bookmark-filter > span {
     display: none;
-  }
-
-  .sort-control .compact-sort-icon {
-    display: block;
-    top: 10px;
-    width: 16px;
-    height: 16px;
   }
 }

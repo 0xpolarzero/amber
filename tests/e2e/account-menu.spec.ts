@@ -87,9 +87,7 @@ test('account dropdown supports keyboard navigation without trapping focus', asy
   await expect(menu.getByRole('menuitem', { name: 'Sign out' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(menu).toBeHidden()
-  await expect(
-    page.getByRole('combobox', { name: 'Filter by group' }),
-  ).toBeFocused()
+  await expect(page.getByRole('searchbox')).toBeFocused()
   await trigger.focus()
   await trigger.press('Space')
   await page.keyboard.press('Shift+Tab')

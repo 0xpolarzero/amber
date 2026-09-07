@@ -2,21 +2,23 @@ import { type ReactNode, useRef } from 'react'
 import { type FeedSearch, selectFilterOptions } from '../domain/feed'
 import { usePreview } from '../preview/provider'
 import { Avatar } from './avatar'
-import { FilterCombobox } from './filter-combobox'
+import { FilterDropdown } from './filter-dropdown'
 import { Icon, type IconName } from './icon'
 
 export function FeedFilters({
   search,
   update,
-  controls,
+  searchControl,
+  sortControl,
 }: {
   search: FeedSearch
   update: (search: FeedSearch) => void
-  controls: ReactNode
+  searchControl: ReactNode
+  sortControl: ReactNode
 }) {
   const { state, user } = usePreview()
-  const groupInput = useRef<HTMLInputElement>(null)
-  const authorInput = useRef<HTMLInputElement>(null)
+  const groupTrigger = useRef<HTMLButtonElement>(null)
+  const authorTrigger = useRef<HTMLButtonElement>(null)
   const bookmark = useRef<HTMLButtonElement>(null)
   const groups = search.groups ?? []
   const authors = search.authors ?? []
@@ -29,7 +31,7 @@ export function FeedFilters({
       label: `Remove group filter ${state.groups[id]?.name ?? id}`,
       remove: () => {
         update({ ...search, groups: groups.filter((group) => group !== id) })
-        groupInput.current?.focus()
+        groupTrigger.current?.focus()
       },
     })),
     ...authors.map((id) => ({
@@ -42,7 +44,7 @@ export function FeedFilters({
           ...search,
           authors: authors.filter((author) => author !== id),
         })
-        authorInput.current?.focus()
+        authorTrigger.current?.focus()
       },
     })),
     ...(search.bookmarked
@@ -64,42 +66,55 @@ export function FeedFilters({
     <>
       <fieldset className="feed-toolbar">
         <legend className="visually-hidden">Feed filters</legend>
-        <FilterCombobox
+        {searchControl}
+        <FilterDropdown
           label="Group"
-          icon="group"
-          inputRef={groupInput}
-          options={options.groups
-            .filter((id) => !groups.includes(id))
-            .map((id) => ({ id, name: state.groups[id].name }))}
-          onSelect={(id) => update({ ...search, groups: [...groups, id] })}
+          triggerRef={groupTrigger}
+          options={options.groups.map((id) => ({
+            id,
+            name: state.groups[id].name,
+            selected: groups.includes(id),
+          }))}
+          onToggle={(id) =>
+            update({
+              ...search,
+              groups: groups.includes(id)
+                ? groups.filter((group) => group !== id)
+                : [...groups, id],
+            })
+          }
         />
-        <FilterCombobox
+        <FilterDropdown
           label="Author"
-          icon="user"
-          inputRef={authorInput}
-          options={options.authors
-            .filter(
-              (id) =>
-                !authors.includes(id) &&
-                !(id === 'me' && user && authors.includes(user)),
-            )
-            .map((id) => {
-              const personId = id === 'me' ? user : id
-              return {
-                id,
-                name: id === 'me' ? 'Me' : state.people[id].name,
-                hint:
-                  id === 'me'
-                    ? user
-                      ? state.people[user].name
-                      : 'Sign in'
-                    : undefined,
-                leading: personId ? (
-                  <Avatar personId={personId} size="tiny" />
-                ) : undefined,
-              }
-            })}
-          onSelect={(id) => update({ ...search, authors: [...authors, id] })}
+          triggerRef={authorTrigger}
+          options={options.authors.map((id) => {
+            const personId = id === 'me' ? user : id
+            return {
+              id,
+              selected:
+                authors.includes(id) ||
+                Boolean(id === 'me' && user && authors.includes(user)),
+              name: id === 'me' ? 'Me' : state.people[id].name,
+              hint:
+                id === 'me'
+                  ? user
+                    ? state.people[user].name
+                    : 'Sign in'
+                  : undefined,
+              leading: personId ? (
+                <Avatar personId={personId} size="tiny" />
+              ) : undefined,
+            }
+          })}
+          onToggle={(id) => {
+            const aliases = id === 'me' && user ? ['me', user] : [id]
+            update({
+              ...search,
+              authors: authors.some((author) => aliases.includes(author))
+                ? authors.filter((author) => !aliases.includes(author))
+                : [...authors, id],
+            })
+          }}
         />
         <button
           type="button"
@@ -116,8 +131,9 @@ export function FeedFilters({
           }
         >
           <Icon name="bookmark" />
+          <span>Bookmarks</span>
         </button>
-        <div className="feed-controls">{controls}</div>
+        {sortControl}
       </fieldset>
       {chips.length > 0 && (
         <fieldset className="active-filters">
@@ -135,6 +151,21 @@ export function FeedFilters({
               <Icon name="close" />
             </button>
           ))}
+          <button
+            type="button"
+            className="clear-filters"
+            onClick={() => {
+              update({
+                ...search,
+                groups: undefined,
+                authors: undefined,
+                bookmarked: undefined,
+              })
+              groupTrigger.current?.focus()
+            }}
+          >
+            Clear filters
+          </button>
         </fieldset>
       )}
     </>

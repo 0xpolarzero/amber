@@ -50,69 +50,68 @@ export function FeedPage({ search }: { search: FeedSearch }) {
         <FeedFilters
           search={search}
           update={update}
-          controls={
-            <>
-              <label className="sort-control" data-sort={search.sort}>
-                <span className="visually-hidden">Sort posts</span>
-                <select
-                  value={search.sort}
-                  onChange={(event) =>
-                    update(
-                      parseFeedSearch({ ...search, sort: event.target.value }),
-                    )
-                  }
-                >
-                  <option value="latest">Newest</option>
-                  <option value="comments">Most commented</option>
-                  <option value="bookmarks">Most bookmarked</option>
-                </select>
-                <span className="compact-sort-label" aria-hidden="true">
-                  {search.sort === 'latest'
-                    ? 'Newest'
-                    : search.sort === 'comments'
-                      ? 'Comments'
-                      : 'Bookmarks'}
-                </span>
-                <Icon name="chevronDown" className="sort-chevron" />
-                <Icon name="sort" className="compact-sort-icon" />
-              </label>
-              <search
-                className="feed-search"
-                aria-label="Search projects"
-                onKeyDown={(event) => {
-                  if (event.key !== 'Escape') return
-                  event.preventDefault()
-                  if (event.target instanceof HTMLElement) event.target.blur()
-                }}
+          sortControl={
+            <label className="sort-control">
+              <span className="visually-hidden">Sort posts</span>
+              <select
+                value={search.sort}
+                onChange={(event) =>
+                  update(
+                    parseFeedSearch({ ...search, sort: event.target.value }),
+                  )
+                }
               >
-                <Icon name="search" className="search-icon" />
-                <input
-                  ref={input}
-                  type="search"
-                  aria-label="Search projects or people"
-                  autoComplete="off"
-                  placeholder="Search"
-                  value={search.q}
-                  maxLength={200}
-                  onChange={(event) =>
-                    update({ ...search, q: event.target.value })
-                  }
-                />
-                {search.q && (
-                  <button
-                    type="button"
-                    className="search-clear"
-                    aria-label="Clear search"
-                    onClick={() => {
-                      update({ ...search, q: '' })
-                      input.current?.focus()
-                    }}
-                  >
-                    <Icon name="close" />
-                  </button>
-                )}
-              </search>
-            </>
+                <option value="latest">Newest</option>
+                <option value="comments">Most commented</option>
+                <option value="bookmarks">Most bookmarked</option>
+              </select>
+              <span className="sort-label" aria-hidden="true">
+                {search.sort === 'latest'
+                  ? 'Newest'
+                  : search.sort === 'comments'
+                    ? 'Comments'
+                    : 'Bookmarks'}
+              </span>
+              <Icon name="chevronDown" />
+            </label>
+          }
+          searchControl={
+            <search
+              className="feed-search"
+              aria-label="Search projects"
+              onKeyDown={(event) => {
+                if (event.key !== 'Escape') return
+                event.preventDefault()
+                if (event.target instanceof HTMLElement) event.target.blur()
+              }}
+            >
+              <Icon name="search" className="search-icon" />
+              <input
+                ref={input}
+                type="search"
+                aria-label="Search projects or people"
+                autoComplete="off"
+                placeholder="Search projects…"
+                value={search.q}
+                maxLength={200}
+                onChange={(event) =>
+                  update({ ...search, q: event.target.value })
+                }
+              />
+              {search.q && (
+                <button
+                  type="button"
+                  className="search-clear"
+                  aria-label="Clear search"
+                  onClick={() => {
+                    update({ ...search, q: '' })
+                    input.current?.focus()
+                  }}
+                >
+                  <Icon name="close" />
+                </button>
+              )}
+            </search>
           }
         />
       </header>

@@ -53,7 +53,7 @@
     </div>
     <section class="section" id="product">
       <div class="section-heading"><span class="section-number">01</span><h2>What you’ll see</h2></div>
-      <p class="intro">Five screens, one simple loop: discover → discuss → improve. <a href="feed-prototype.html">Open the original feed prototype ↗</a> as a design reference; the reviewed UI now lives in the React app. Feed and Messages are the main navigation. Group, Author and Bookmarks share one row with sort and search; removable filters appear below. Group and author choices narrow each other. The sketches below show the screen outline.</p>
+      <p class="intro">Five screens, one simple loop: discover → discuss → improve. <a href="feed-prototype.html">Open the original feed prototype ↗</a> as a design reference; the reviewed UI now lives in the React app. Feed and Messages are the main navigation. Group, Author, Bookmarks, sort and search stay in place; search has its own row on mobile. Removable chips and Clear filters appear below. Group and author choices narrow each other. The sketches below show the screen outline.</p>
       <div class="preview">
         <div class="tabs" role="tablist" aria-label="Screen sketches">
           <button type="button" class="tab" id="tab-feed" role="tab" aria-selected="true" aria-controls="screen-feed" data-screen="feed">Feed</button>
@@ -83,7 +83,7 @@
         <div class="mock" id="screen-admin" role="tabpanel" aria-labelledby="tab-admin" tabindex="0" hidden>
           <div class="mock-head"><span class="mock-brand">ADMIN</span><span class="mock-tag">SAMPLE CONTENT · ADMIN ONLY</span></div><h3>Review what needs attention.</h3><div class="stat-grid"><div class="stat"><strong>3</strong>Submissions to review</div><div class="stat"><strong>1</strong>Reported comment</div><div class="stat"><strong>1 min</strong>Since last collection</div></div><div class="mock-row"><span>Unclear project ownership</span><span class="pill">Review evidence</span></div><div class="mock-row"><span>Model job interrupted</span><span class="pill">Inspect / replay</span></div>
         </div>
-        <p class="mock-caption" id="screen-caption">Feed / · One row of group, author, bookmark, sort and search controls; active filters below.</p>
+        <p class="mock-caption" id="screen-caption">Feed / · Stationary controls, mobile search on its own row, and removable filters below.</p>
       </div>
       <div class="defaults"><div class="default"><strong>Anyone can browse</strong>Login with Telegram or X to comment.</div><div class="default"><strong>Publish clear original work</strong>Uncertain submissions go to admin review.</div><div class="default"><strong>Authors stay in control</strong>Edit, remove and review suggested changes.</div><div class="default"><strong>Text and links first</strong>Media previews are a later addition.</div><div class="default"><strong>Questions stay on the site</strong>Up to three, visible only to the owner.</div><div class="default"><strong>One group to start</strong>Import a week, then collect every minute.</div></div>
       <p class="later">Defaults to discuss. Direct messages, follows and likes can come later.</p>
@@ -208,7 +208,7 @@
   // Keep an open task in place while its feedback is being edited; re-filter on close.
   document.querySelectorAll('.task').forEach(task => task.addEventListener('toggle', () => {if (!task.open) applyFilters();}));
   const captions = {
-    feed:'Feed / · One row of group, author, bookmark, sort and search controls; active filters below.',
+    feed:'Feed / · Stationary controls, mobile search on its own row, and removable filters below.',
     post:'Post /posts/:id · Summary, source links and comments. Owners can edit, remove and answer private questions.',
     author:'Author /people/:id · A stable creator page exists before signup. Telegram login proves who can edit it.',
     messages:'Messages /messages · Private bot questions, unread count and revisions you can accept or dismiss.',

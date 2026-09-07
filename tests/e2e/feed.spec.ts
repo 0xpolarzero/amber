@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   })
   await page.goto('/')
   await expect(
-    page.getByRole('combobox', { name: 'Filter by group' }),
+    page.getByRole('button', { name: 'Filter by group' }),
   ).toBeVisible()
 })
 
@@ -136,8 +136,9 @@ test('lets the author edit and review an answer before adding it to the post', a
   await page
     .getByRole('combobox', { name: 'Preview account' })
     .selectOption('author')
-  await page.getByRole('combobox', { name: 'Filter by author' }).click()
+  await page.getByRole('button', { name: 'Filter by author' }).click()
   await page.getByRole('option', { name: /Me Alex Chen/ }).click()
+  await page.getByRole('combobox', { name: 'Search authors' }).press('Escape')
   await page.getByRole('button', { name: 'Edit post', exact: true }).click()
   await page
     .getByRole('textbox', { name: 'Title', exact: true })
@@ -199,17 +200,18 @@ test('combines removable author chips with bookmarks and preserves filters on re
       exact: true,
     })
     .click()
-  const author = page.getByRole('combobox', { name: 'Filter by author' })
+  const trigger = page.getByRole('button', { name: 'Filter by author' })
+  const author = page.getByRole('combobox', { name: 'Search authors' })
+  await trigger.click()
   await author.fill('Maya')
   await author.press('ArrowDown')
   await author.press('Enter')
   await expect(
     page.getByRole('button', { name: 'Remove author filter Maya Laurent' }),
   ).toBeVisible()
-  await author.click()
-  await expect(page.getByRole('option', { name: 'Maya Laurent' })).toHaveCount(
-    0,
-  )
+  await expect(
+    page.getByRole('option', { name: 'Maya Laurent' }),
+  ).toHaveAttribute('aria-selected', 'true')
   await author.fill('Alex')
   await page.getByRole('option', { name: 'Alex Chen' }).click()
   const posts = page.locator('#feed-list > article')
@@ -243,11 +245,12 @@ test('combines removable author chips with bookmarks and preserves filters on re
     .getByRole('button', { name: 'Remove author filter Alex Chen' })
     .click()
   await expect(posts).toHaveCount(1)
+  await trigger.click()
   await author.fill('no such person')
   await expect(page.getByText('No matching authors.')).toBeVisible()
   await author.press('Escape')
-  await expect(author).toBeFocused()
-  await expect(author).toHaveAttribute('aria-expanded', 'false')
+  await expect(trigger).toBeFocused()
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
   await page.reload()
   await expect(
     page.getByRole('button', { name: 'Remove author filter Maya Laurent' }),
@@ -258,7 +261,7 @@ test('combines removable author chips with bookmarks and preserves filters on re
 test('resolves Me for the current account and handles signed-out filters', async ({
   page,
 }) => {
-  const author = page.getByRole('combobox', { name: 'Filter by author' })
+  const author = page.getByRole('button', { name: 'Filter by author' })
   await author.click()
   await page.getByRole('option', { name: /^Me / }).click()
   await expect(
@@ -341,7 +344,7 @@ test('shows private questions and an unread count only for their recipient', asy
 test('keeps the author popup within the viewport and supports keyboard dismissal', async ({
   page,
 }) => {
-  const author = page.getByRole('combobox', { name: 'Filter by author' })
+  const author = page.getByRole('button', { name: 'Filter by author' })
   await author.click()
   await expect(page.getByRole('listbox', { name: 'Authors' })).toBeVisible()
   const bounds = await page
@@ -352,11 +355,13 @@ test('keeps the author popup within the viewport and supports keyboard dismissal
   expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(
     page.viewportSize()?.width ?? 0,
   )
-  await author.press('ArrowDown')
-  await author.press('Escape')
+  await page
+    .getByRole('combobox', { name: 'Search authors' })
+    .press('ArrowDown')
+  await page.keyboard.press('Escape')
   await expect(author).toBeFocused()
   await expect(page.getByRole('listbox', { name: 'Authors' })).toBeHidden()
   await author.press('ArrowDown')
-  await author.press('Tab')
+  await page.keyboard.press('Tab')
   await expect(author).toHaveAttribute('aria-expanded', 'false')
 })
