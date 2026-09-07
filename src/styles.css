@@ -297,15 +297,6 @@ textarea {
   box-shadow: 0 8px 24px #0000000d;
 }
 
-.account-menu-name {
-  padding: 9px 10px 12px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid var(--line);
-  font-size: 12px;
-  font-weight: 550;
-  overflow-wrap: anywhere;
-}
-
 .account-dropdown [role="menuitem"] {
   display: flex;
   align-items: center;

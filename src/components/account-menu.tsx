@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect, useId, useRef, useState } from 'react'
-import { usePreview } from '../preview/provider'
 import { Avatar } from './avatar'
 import { Icon } from './icon'
 
@@ -11,7 +10,6 @@ export function AccountMenu({
   user: string
   onSignOut: () => void
 }) {
-  const { state } = usePreview()
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
@@ -67,7 +65,6 @@ export function AccountMenu({
       </button>
       {open && (
         <div className="account-dropdown">
-          <p className="account-menu-name">{state.people[user].name}</p>
           <div
             ref={menu}
             id={id}
