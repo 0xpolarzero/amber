@@ -40,7 +40,6 @@ test('sorts and searches the feed, retaining filters when returning from a post'
   await expect(posts.first()).toHaveAccessibleName(
     'Voice notes, finally searchable.',
   )
-  await page.getByRole('button', { name: 'Search posts', exact: true }).click()
   await page.getByRole('searchbox').fill('Maya')
   await expect(posts).toHaveCount(1)
   await expect(page).toHaveURL(/q=Maya/)

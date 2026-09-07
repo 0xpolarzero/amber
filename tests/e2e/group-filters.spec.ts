@@ -128,7 +128,7 @@ test('keeps controls on one line and places all active filters below it', async 
   const author = page.getByRole('combobox', { name: 'Filter by author' })
   const bookmarks = page.getByRole('button', { name: 'Bookmarks', exact: true })
   const sort = page.getByRole('combobox', { name: 'Sort posts' })
-  const search = page.getByRole('button', { name: 'Search posts', exact: true })
+  const search = page.getByRole('searchbox')
   for (const value of ['latest', 'comments', 'bookmarks']) {
     await sort.selectOption(value)
     const bounds = await Promise.all(

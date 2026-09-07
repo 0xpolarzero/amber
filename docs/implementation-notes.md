@@ -22,6 +22,8 @@ Feed filters compose in the URL: `groups` and `authors` each match any selected 
 
 The group and author pickers share the WAI combobox behavior: arrow keys move the active option, Enter adds its filter chip, Escape dismisses the popup, and focus stays in the input. Active chips sit below the single control row. [WAI combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/)
 
+Search stays visible as a compact input. CSS focus-within expands it across the toolbar in 300ms and fades the other controls without shifting chips or posts. Blur and Escape collapse it without clearing the URL query; the clear action keeps input focus. The existing reduced-motion rule disables these transitions. On narrow phones the sort control uses an icon to leave room for the search field.
+
 Messages currently reuses each sample post’s private question. Opening a question marks it read for its recipient; accepting an answer removes the pending question. Read state is temporary preview state, like bookmarks and edits. Persistent conversations and server authorization remain future work. Old `/saved` and `/dashboard` links redirect to the corresponding feed filters.
 
 The account dropdown follows the WAI menu-button pattern without adding a dependency. Opening it focuses an item; arrows, Home and End move within the menu; Escape restores avatar focus; Tab exits normally. It exposes only the working profile and sign-out actions. [WAI menu button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), [WAI menu keyboard behavior](https://www.w3.org/WAI/ARIA/apg/patterns/menubar/)

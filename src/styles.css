@@ -376,9 +376,9 @@ main {
 
 .feed-controls {
   margin-left: auto;
+  padding-right: calc(var(--search-width) + 4px);
   display: flex;
   align-items: center;
-  gap: 4px;
   flex-shrink: 0;
 }
 
@@ -415,33 +415,89 @@ main {
   color: var(--quiet);
 }
 
-.search-box {
-  margin-top: 16px;
-  position: relative;
+.feed-search {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--search-width);
+  z-index: 6;
+  transition: width 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.search-box input {
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  background: var(--paper);
-  height: 43px;
+.feed-search:focus-within {
   width: 100%;
-  padding: 0 42px 0 13px;
-  font-size: 13px;
+}
+
+.feed-search input {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  height: 34px;
+  width: 100%;
+  padding: 0 9px 0 29px;
+  font-size: 12px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  transition:
+    border-color 180ms,
+    box-shadow 180ms;
+}
+
+.feed-search input::placeholder {
+  color: var(--quiet);
+}
+
+.feed-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.feed-search:focus-within input {
+  outline: none;
+  border-color: #cececa;
+  box-shadow: 0 0 0 3px var(--soft);
+  padding-right: 36px;
+}
+
+.feed-search .search-icon {
+  position: absolute;
+  left: 9px;
+  top: 10px;
+  width: 14px;
+  height: 14px;
+  color: var(--quiet);
+  pointer-events: none;
+}
+
+.search-clear {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  color: var(--quiet);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms;
+}
+
+.feed-search:focus-within .search-clear {
+  visibility: visible;
+  opacity: 1;
+}
+
+.search-clear:hover {
+  background: var(--soft);
   color: var(--ink);
 }
 
-.search-box .icon-button {
-  position: absolute;
-  right: 5px;
-  top: 4px;
-  width: 34px;
-  height: 34px;
-}
-
-.search-box svg {
-  width: 16px;
-  height: 16px;
+.search-clear svg {
+  width: 13px;
+  height: 13px;
 }
 
 /* Composable feed filters */
@@ -461,7 +517,21 @@ main {
 }
 
 .feed-toolbar {
+  --search-width: 112px;
   position: relative;
+}
+
+:where(.feed-toolbar) > .filter-combobox,
+:where(.feed-toolbar) > .bookmark-filter,
+:where(.feed-toolbar) .sort-control {
+  transition: opacity 180ms;
+}
+
+:where(.feed-toolbar:has(.feed-search:focus-within)) > .filter-combobox,
+:where(.feed-toolbar:has(.feed-search:focus-within)) > .bookmark-filter,
+:where(.feed-toolbar:has(.feed-search:focus-within)) .sort-control {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .active-filters {
@@ -629,7 +699,8 @@ main {
   width: 150px;
 }
 
-.compact-sort-label {
+.compact-sort-label,
+.compact-sort-icon {
   display: none;
 }
 
@@ -1912,18 +1983,19 @@ dialog::backdrop {
   white-space: pre-wrap;
 }
 
-@media (max-width: 500px) {
+@media (max-width: 600px) {
   .feed-header.feed-discovery {
     padding: 18px 0 16px;
   }
 
   .feed-toolbar {
+    --search-width: 80px;
     gap: 5px;
   }
 
   .filter-combobox {
     position: static;
-    width: 82px;
+    width: 66px;
   }
 
   .filter-input input {
@@ -1937,11 +2009,11 @@ dialog::backdrop {
   }
 
   .filter-combobox[data-kind="author"] .filter-popup {
-    left: clamp(0px, 87px, calc(100% - 228px));
+    left: clamp(0px, 71px, calc(100% - 228px));
   }
 
   .bookmark-filter {
-    width: 32px;
+    width: 28px;
   }
 
   .feed-toolbar .sort-control select {
@@ -1964,26 +2036,31 @@ dialog::backdrop {
     pointer-events: none;
   }
 
-  .feed-toolbar .icon-button {
-    width: 32px;
+  .feed-search input {
+    font-size: 11px;
+    padding-left: 26px;
+    padding-right: 6px;
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 384px) {
   .feed-toolbar {
     gap: 3px;
   }
 
-  .filter-combobox {
-    width: 66px;
-  }
-
   .feed-toolbar .sort-control select {
-    width: 80px;
+    width: 32px;
   }
 
-  .feed-toolbar .icon-button,
-  .bookmark-filter {
-    width: 28px;
+  .compact-sort-label,
+  .sort-chevron {
+    display: none;
+  }
+
+  .sort-control .compact-sort-icon {
+    display: block;
+    top: 10px;
+    width: 16px;
+    height: 16px;
   }
 }
