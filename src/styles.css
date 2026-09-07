@@ -407,19 +407,20 @@ main {
   grid-area: sort;
   justify-self: end;
   position: relative;
-  display: block;
-  width: 100px;
+  display: inline-flex;
 }
 
 .sort-control select {
+  position: absolute;
+  inset: 0;
   appearance: none;
   border: 0;
   border-radius: 7px;
   background: transparent;
   color: transparent;
   font-size: 12px;
-  padding: 8px 25px 8px 8px;
-  height: 36px;
+  padding: 0;
+  height: 100%;
   width: 100%;
   cursor: pointer;
 }
@@ -442,10 +443,9 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: relative;
+  height: 36px;
+  padding: 0 8px;
   font-size: 12px;
   color: var(--secondary);
   pointer-events: none;
@@ -2001,15 +2001,10 @@ dialog::backdrop {
     height: 44px;
     padding: 0 8px;
   }
-  .sort-control {
-    width: 86px;
-  }
-  .sort-control select {
-    height: 44px;
-  }
   .sort-label {
+    height: 44px;
+    padding: 0 6px;
     font-size: 11px;
-    left: 6px;
   }
   .feed-search input {
     height: 44px;
