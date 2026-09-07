@@ -27,3 +27,11 @@ Search stays visible as a compact input. CSS focus-within switches it instantly 
 Messages currently reuses each sample post’s private question. Opening a question marks it read for its recipient; accepting an answer removes the pending question. Read state is temporary preview state, like bookmarks and edits. Persistent conversations and server authorization remain future work. Old `/saved` and `/dashboard` links redirect to the corresponding feed filters.
 
 The account dropdown follows the WAI menu-button pattern without adding a dependency. Opening it focuses an item; arrows, Home and End move within the menu; Escape restores avatar focus; Tab exits normally. It exposes only the working profile and sign-out actions. [WAI menu button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), [WAI menu keyboard behavior](https://www.w3.org/WAI/ARIA/apg/patterns/menubar/)
+
+## Search and toolbar recommendation, 7 September 2026
+
+Under review; this recommendation has not changed the app. Keep desktop controls stationary: Group, Author, Bookmarks, then sort and a search field approximately 180–220px wide. Search focus changes only its focus indicator. Group and Author open searchable multiselect popovers; selected values remain removable chips below, with Clear filters. Preserve reciprocal group/author filtering and the query while using other controls. On mobile, put search on its own row above the filter and sort controls instead of shrinking labels or replacing controls.
+
+NN/g's intranet research found that exposed search fields improve discoverability and avoid the extra interactions of hidden search. Baymard's ecommerce research supports visible, removable applied-filter overviews, including below horizontal toolbars. These findings support the principles; their application to Amber and the proposed dimensions are design judgments, not evidence of a universally best layout. [NN/g: Intranet-Search Essentials](https://www.nngroup.com/articles/intranet-search/), [Baymard: Applied Filters](https://baymard.com/blog/how-to-design-applied-filters)
+
+Validate the next prototype by asking three group members to find a remembered project, narrow it by author/group, and return to the full feed without guidance. Record completion, mistaken actions and whether they can identify the active constraints.
