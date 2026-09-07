@@ -1,0 +1,28 @@
+{
+  "mode": "live-native-web",
+  "cli": "agy 1.1.27",
+  "model": "gemini-3.8-flash-medium",
+  "configuredTools": ["finish", "search_web", "read_url_content"],
+  "calls": [
+    {
+      "name": "search_web",
+      "input": {
+        "query": "IANA example domains reserved documentation"
+      },
+      "sourceUrls": [],
+      "outputPreview": "undefined"
+    },
+    {
+      "name": "read_url_content",
+      "input": {
+        "Url": "https://www.iana.org/help/example-domains"
+      },
+      "sourceUrls": ["https://www.iana.org/help/example-domains"],
+      "outputPreview": "undefined"
+    }
+  ],
+  "result": {
+    "fact": "Example domains are reserved for use in documentation, illustrative examples, and testing.",
+    "sourceUrl": "https://www.iana.org/help/example-domains"
+  }
+}

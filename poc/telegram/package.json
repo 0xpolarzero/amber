@@ -5,7 +5,8 @@
   "packageManager": "pnpm@11.1.3",
   "scripts": {
     "test": "vitest run testing",
-    "test:live": "vitest run workflow.test.ts",
+    "test:live": "vitest run workflow.test.ts native-web.test.ts --maxWorkers=1",
+    "test:native": "vitest run native-web.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

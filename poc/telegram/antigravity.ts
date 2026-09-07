@@ -116,10 +116,16 @@ export const antigravity: Ports['model'] = (request) =>
         throw new Error('Use Google OAuth and set useG1Credits=false in Antigravity settings.')
       if (request.tools.length && !settings.permissions?.allow?.includes('mcp(amber/*)'))
         throw new Error('Allow mcp(amber/*) in Antigravity settings for the PoC read tools.')
+      if (
+        request.nativeTools.includes('read_url_content') &&
+        !settings.permissions?.allow?.includes('read_url(*)')
+      )
+        throw new Error('Allow read_url(*) in Antigravity settings for native public page reads.')
 
       const cwd = await mkdtemp(join(tmpdir(), 'amber-task-'))
-      const bridge = request.tools.length ? await serveTools(request, signal) : undefined
+      let bridge: Awaited<ReturnType<typeof serveTools>> | undefined
       try {
+        bridge = request.tools.length ? await serveTools(request, signal) : undefined
         const agentDir = join(cwd, '.agents/agents/amber')
         await mkdir(agentDir, { recursive: true })
         await writeFile(
@@ -221,8 +227,8 @@ export const antigravity: Ports['model'] = (request) =>
               ...request.nativeTools,
               ...request.tools.map(({ name }) => `amber/${name}`),
             ],
-            // The CLI reports its public process-wide inventory here, not the custom-agent
-            // allowlist. The generated allowlist and deny hook are the effective controls.
+            // CLI 1.1.27 reports its process-wide inventory here, not the narrower custom-agent
+            // allowlist. The generated allowlist and PreToolUse deny hook control actual calls.
             runtimeInventory: inventory,
           }),
           { signal },

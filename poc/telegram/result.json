@@ -10,24 +10,24 @@
       "id": "batch-1:0",
       "authorId": "alex",
       "version": 1,
-      "title": "Noted",
-      "summary": "Noted is a free Mac app that records voice notes and transcribes them locally and offline using on-device Whisper.",
-      "detail": "Noted is a free Mac app that records voice notes and transcribes audio locally using Whisper. The app runs on-device and works offline without requiring an internet connection.\n\nNoted is available at https://noted.example."
+      "title": "Noted: Local voice note transcription on Mac",
+      "summary": "Noted is a free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+      "detail": "Noted is a Mac application that transcribes voice notes locally using on-device Whisper. It runs offline, is free to use, and is available at https://noted.example."
     },
     {
       "id": "tab-tidy",
       "authorId": "bea",
       "version": 3,
       "title": "Tab tidy",
-      "summary": "A Chrome extension that groups tabs by project rather than just domain.",
-      "detail": "Tab tidy now organizes tabs by project rather than solely by domain, allowing related tabs such as GitHub repositories, documentation, and issue trackers to stay grouped together."
+      "summary": "A Chrome extension that groups tabs by project, keeping related pages such as GitHub, documentation, and issues together.",
+      "detail": "Tab tidy is a Chrome extension for organizing browser tabs. In addition to grouping tabs by domain, it now groups tabs by project so that related pages across different domains—such as GitHub repositories, documentation, and issue trackers—can stay together in the same group."
     }
   ],
   "questions": [
     {
       "authorId": "alex",
       "postId": "batch-1:0",
-      "text": "Which languages does Noted support?",
+      "text": "Does Noted support transcription in languages other than English, such as Mandarin?",
       "needsReply": true
     }
   ],
@@ -47,15 +47,15 @@
         "authorId": "bea",
         "version": 3,
         "title": "Tab tidy",
-        "summary": "A Chrome extension that groups tabs by project rather than just domain.",
-        "detail": "Tab tidy now organizes tabs by project rather than solely by domain, allowing related tabs such as GitHub repositories, documentation, and issue trackers to stay grouped together."
+        "summary": "A Chrome extension that groups tabs by project, keeping related pages such as GitHub, documentation, and issues together.",
+        "detail": "Tab tidy is a Chrome extension for organizing browser tabs. In addition to grouping tabs by domain, it now groups tabs by project so that related pages across different domains—such as GitHub repositories, documentation, and issue trackers—can stay together in the same group."
       }
     }
   ],
   "ignored": [
     {
       "messageId": "101",
-      "reason": "General reaction to AI news announcement rather than personal project work"
+      "reason": "Reaction to general AI news rather than firsthand work or a project update"
     }
   ],
   "sources": {
@@ -69,8 +69,8 @@
         "messageId": "104"
       },
       {
-        "kind": "web",
-        "url": "https://noted.example"
+        "kind": "telegram",
+        "messageId": "105"
       }
     ],
     "tab-tidy": [
@@ -160,64 +160,9 @@
         "ignored": [
           {
             "messageId": "101",
-            "reason": "General reaction to AI news announcement rather than personal project work"
+            "reason": "Reaction to general AI news rather than firsthand work or a project update"
           }
         ]
-      }
-    },
-    {
-      "task": "post",
-      "input": {
-        "work": {
-          "batchId": "batch-1",
-          "groupId": "ai-builders",
-          "candidateId": "batch-1:1",
-          "revision": 0,
-          "candidate": {
-            "authorId": "bea",
-            "project": "Tab tidy",
-            "messageIds": [
-              "103"
-            ]
-          }
-        },
-        "messages": [
-          {
-            "id": "103",
-            "authorId": "bea",
-            "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
-            "replyToId": null,
-            "albumId": null
-          }
-        ],
-        "clarifications": [],
-        "posts": [
-          {
-            "id": "tab-tidy",
-            "authorId": "bea",
-            "version": 2,
-            "title": "Tab tidy",
-            "summary": "A Chrome extension that groups tabs by domain.",
-            "detail": "Related tabs share a group based on their domain."
-          }
-        ],
-        "memories": [],
-        "unaddressed": []
-      },
-      "output": {
-        "detail": "Tab tidy now organizes tabs by project rather than solely by domain, allowing related tabs such as GitHub repositories, documentation, and issue trackers to stay grouped together.",
-        "existingPostId": "tab-tidy",
-        "expectedVersion": 2,
-        "kind": "post",
-        "question": null,
-        "sources": [
-          {
-            "kind": "telegram",
-            "messageId": "103"
-          }
-        ],
-        "summary": "A Chrome extension that groups tabs by project rather than just domain.",
-        "title": "Tab tidy"
       }
     },
     {
@@ -272,11 +217,11 @@
         "unaddressed": []
       },
       "output": {
-        "detail": "Noted is a free Mac app that records voice notes and transcribes audio locally using Whisper. The app runs on-device and works offline without requiring an internet connection.\n\nNoted is available at https://noted.example.",
+        "detail": "Noted is a Mac application that transcribes voice notes locally using on-device Whisper. It runs offline, is free to use, and is available at https://noted.example.",
         "existingPostId": null,
         "expectedVersion": null,
         "kind": "post",
-        "question": "Which languages does Noted support?",
+        "question": "Does Noted support transcription in languages other than English, such as Mandarin?",
         "sources": [
           {
             "kind": "telegram",
@@ -287,28 +232,71 @@
             "messageId": "104"
           },
           {
-            "kind": "web",
-            "url": "https://noted.example"
+            "kind": "telegram",
+            "messageId": "105"
           }
         ],
-        "summary": "Noted is a free Mac app that records voice notes and transcribes them locally and offline using on-device Whisper.",
-        "title": "Noted"
+        "summary": "Noted is a free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+        "title": "Noted: Local voice note transcription on Mac"
+      }
+    },
+    {
+      "task": "post",
+      "input": {
+        "work": {
+          "batchId": "batch-1",
+          "groupId": "ai-builders",
+          "candidateId": "batch-1:1",
+          "revision": 0,
+          "candidate": {
+            "authorId": "bea",
+            "project": "Tab tidy",
+            "messageIds": [
+              "103"
+            ]
+          }
+        },
+        "messages": [
+          {
+            "id": "103",
+            "authorId": "bea",
+            "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+            "replyToId": null,
+            "albumId": null
+          }
+        ],
+        "clarifications": [],
+        "posts": [
+          {
+            "id": "tab-tidy",
+            "authorId": "bea",
+            "version": 2,
+            "title": "Tab tidy",
+            "summary": "A Chrome extension that groups tabs by domain.",
+            "detail": "Related tabs share a group based on their domain."
+          }
+        ],
+        "memories": [],
+        "unaddressed": []
+      },
+      "output": {
+        "detail": "Tab tidy is a Chrome extension for organizing browser tabs. In addition to grouping tabs by domain, it now groups tabs by project so that related pages across different domains—such as GitHub repositories, documentation, and issue trackers—can stay together in the same group.",
+        "existingPostId": "tab-tidy",
+        "expectedVersion": 2,
+        "kind": "post",
+        "question": null,
+        "sources": [
+          {
+            "kind": "telegram",
+            "messageId": "103"
+          }
+        ],
+        "summary": "A Chrome extension that groups tabs by project, keeping related pages such as GitHub, documentation, and issues together.",
+        "title": "Tab tidy"
       }
     }
   ],
   "research": [
-    {
-      "task": "post",
-      "tool": "readPage",
-      "input": {
-        "url": "https://noted.example"
-      },
-      "output": {
-        "url": "https://noted.example",
-        "title": "Noted",
-        "text": "Noted is a free Mac app. It records voice notes and transcribes them locally with Whisper. No internet connection is required. Language support is not documented yet."
-      }
-    },
     {
       "task": "post",
       "tool": "searchPosts",
@@ -316,29 +304,6 @@
         "query": "Noted"
       },
       "output": []
-    },
-    {
-      "task": "post",
-      "tool": "searchMessages",
-      "input": {
-        "query": "Noted"
-      },
-      "output": [
-        {
-          "id": "102",
-          "authorId": "alex",
-          "text": "I built Noted: voice notes transcribed locally on a Mac. https://noted.example",
-          "replyToId": null,
-          "albumId": null
-        },
-        {
-          "id": "105",
-          "authorId": "carl",
-          "text": "Does Noted understand Mandarin?",
-          "replyToId": "102",
-          "albumId": null
-        }
-      ]
     },
     {
       "task": "post",
@@ -371,6 +336,345 @@
           "replyToId": null,
           "albumId": null
         }
+      ]
+    },
+    {
+      "task": "post",
+      "tool": "searchMessages",
+      "input": {
+        "query": "tab"
+      },
+      "output": [
+        {
+          "id": "103",
+          "authorId": "bea",
+          "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+          "replyToId": null,
+          "albumId": null
+        }
+      ]
+    },
+    {
+      "task": "post",
+      "tool": "searchMessages",
+      "input": {
+        "query": "Noted"
+      },
+      "output": [
+        {
+          "id": "102",
+          "authorId": "alex",
+          "text": "I built Noted: voice notes transcribed locally on a Mac. https://noted.example",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "105",
+          "authorId": "carl",
+          "text": "Does Noted understand Mandarin?",
+          "replyToId": "102",
+          "albumId": null
+        }
+      ]
+    },
+    {
+      "task": "post",
+      "tool": "readMessages",
+      "input": {
+        "ids": [
+          "103"
+        ]
+      },
+      "output": [
+        {
+          "id": "103",
+          "authorId": "bea",
+          "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+          "replyToId": null,
+          "albumId": null
+        }
+      ]
+    },
+    {
+      "task": "post",
+      "tool": "readMessages",
+      "input": {
+        "ids": [
+          "101",
+          "102",
+          "104",
+          "105"
+        ]
+      },
+      "output": [
+        {
+          "id": "101",
+          "authorId": "carl",
+          "text": "The new Gemini announcement looks impressive!",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "102",
+          "authorId": "alex",
+          "text": "I built Noted: voice notes transcribed locally on a Mac. https://noted.example",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "104",
+          "authorId": "alex",
+          "text": "It uses Whisper on the device. It is free and works offline.",
+          "replyToId": "102",
+          "albumId": null
+        },
+        {
+          "id": "105",
+          "authorId": "carl",
+          "text": "Does Noted understand Mandarin?",
+          "replyToId": "102",
+          "albumId": null
+        }
+      ]
+    },
+    {
+      "task": "post",
+      "tool": "searchMessages",
+      "input": {
+        "query": "tidy"
+      },
+      "output": [
+        {
+          "id": "103",
+          "authorId": "bea",
+          "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+          "replyToId": null,
+          "albumId": null
+        }
+      ]
+    },
+    {
+      "task": "post",
+      "tool": "searchPosts",
+      "input": {
+        "query": "bea"
+      },
+      "output": []
+    }
+  ],
+  "configurations": [
+    {
+      "task": "selection",
+      "kind": "configuration",
+      "agent": "amber",
+      "model": "gemini-3.8-flash-medium",
+      "declaredTools": [
+        "finish"
+      ],
+      "runtimeInventory": [
+        "ask_custom_permission",
+        "ask_permission",
+        "ask_question",
+        "browser_click_element",
+        "browser_drag_pixel_to_pixel",
+        "browser_get_dom",
+        "browser_get_network_request",
+        "browser_input",
+        "browser_list_network_requests",
+        "browser_mouse_down",
+        "browser_mouse_up",
+        "browser_move_mouse",
+        "browser_press_key",
+        "browser_refresh_page",
+        "browser_resize_window",
+        "browser_scroll",
+        "browser_scroll_dom",
+        "browser_select_option",
+        "browser_subagent",
+        "call_mcp_tool",
+        "capture_browser_console_logs",
+        "capture_browser_screenshot",
+        "click_browser_pixel",
+        "command_status",
+        "define_subagent",
+        "delete_knowledge",
+        "execute_browser_javascript",
+        "find_by_name",
+        "finish",
+        "generate_image",
+        "grep_search",
+        "invoke_subagent",
+        "list_browser_pages",
+        "list_dir",
+        "list_permissions",
+        "list_resources",
+        "manage_inbox",
+        "manage_subagents",
+        "manage_task",
+        "multi_replace_file_content",
+        "notebook_edit",
+        "notebook_execution",
+        "open_browser_url",
+        "read_browser_page",
+        "read_resource",
+        "read_url_content",
+        "replace_file_content",
+        "run_command",
+        "schedule",
+        "search_web",
+        "sed_file",
+        "send_command_input",
+        "send_message",
+        "view_file",
+        "wait",
+        "wait_5_seconds",
+        "write_to_file"
+      ]
+    },
+    {
+      "task": "post",
+      "kind": "configuration",
+      "agent": "amber",
+      "model": "gemini-3.8-flash-medium",
+      "declaredTools": [
+        "finish",
+        "search_web",
+        "read_url_content",
+        "amber/searchMessages",
+        "amber/readMessages",
+        "amber/searchPosts"
+      ],
+      "runtimeInventory": [
+        "ask_custom_permission",
+        "ask_permission",
+        "ask_question",
+        "browser_click_element",
+        "browser_drag_pixel_to_pixel",
+        "browser_get_dom",
+        "browser_get_network_request",
+        "browser_input",
+        "browser_list_network_requests",
+        "browser_mouse_down",
+        "browser_mouse_up",
+        "browser_move_mouse",
+        "browser_press_key",
+        "browser_refresh_page",
+        "browser_resize_window",
+        "browser_scroll",
+        "browser_scroll_dom",
+        "browser_select_option",
+        "browser_subagent",
+        "call_mcp_tool",
+        "capture_browser_console_logs",
+        "capture_browser_screenshot",
+        "click_browser_pixel",
+        "command_status",
+        "define_subagent",
+        "delete_knowledge",
+        "execute_browser_javascript",
+        "find_by_name",
+        "finish",
+        "generate_image",
+        "grep_search",
+        "invoke_subagent",
+        "list_browser_pages",
+        "list_dir",
+        "list_permissions",
+        "list_resources",
+        "manage_inbox",
+        "manage_subagents",
+        "manage_task",
+        "multi_replace_file_content",
+        "notebook_edit",
+        "notebook_execution",
+        "open_browser_url",
+        "read_browser_page",
+        "read_resource",
+        "read_url_content",
+        "replace_file_content",
+        "run_command",
+        "schedule",
+        "search_web",
+        "sed_file",
+        "send_command_input",
+        "send_message",
+        "view_file",
+        "wait",
+        "wait_5_seconds",
+        "write_to_file"
+      ]
+    },
+    {
+      "task": "post",
+      "kind": "configuration",
+      "agent": "amber",
+      "model": "gemini-3.8-flash-medium",
+      "declaredTools": [
+        "finish",
+        "search_web",
+        "read_url_content",
+        "amber/searchMessages",
+        "amber/readMessages",
+        "amber/searchPosts"
+      ],
+      "runtimeInventory": [
+        "ask_custom_permission",
+        "ask_permission",
+        "ask_question",
+        "browser_click_element",
+        "browser_drag_pixel_to_pixel",
+        "browser_get_dom",
+        "browser_get_network_request",
+        "browser_input",
+        "browser_list_network_requests",
+        "browser_mouse_down",
+        "browser_mouse_up",
+        "browser_move_mouse",
+        "browser_press_key",
+        "browser_refresh_page",
+        "browser_resize_window",
+        "browser_scroll",
+        "browser_scroll_dom",
+        "browser_select_option",
+        "browser_subagent",
+        "call_mcp_tool",
+        "capture_browser_console_logs",
+        "capture_browser_screenshot",
+        "click_browser_pixel",
+        "command_status",
+        "define_subagent",
+        "delete_knowledge",
+        "execute_browser_javascript",
+        "find_by_name",
+        "finish",
+        "generate_image",
+        "grep_search",
+        "invoke_subagent",
+        "list_browser_pages",
+        "list_dir",
+        "list_permissions",
+        "list_resources",
+        "manage_inbox",
+        "manage_subagents",
+        "manage_task",
+        "multi_replace_file_content",
+        "notebook_edit",
+        "notebook_execution",
+        "open_browser_url",
+        "read_browser_page",
+        "read_resource",
+        "read_url_content",
+        "replace_file_content",
+        "run_command",
+        "schedule",
+        "search_web",
+        "sed_file",
+        "send_command_input",
+        "send_message",
+        "view_file",
+        "wait",
+        "wait_5_seconds",
+        "write_to_file"
       ]
     }
   ],
@@ -412,7 +716,7 @@
     {
       "task": "post",
       "scope": {
-        "userId": "bea",
+        "userId": "alex",
         "groupId": "ai-builders",
         "batchId": "batch-1"
       },
@@ -421,7 +725,7 @@
     {
       "task": "post",
       "scope": {
-        "userId": "alex",
+        "userId": "bea",
         "groupId": "ai-builders",
         "batchId": "batch-1"
       },

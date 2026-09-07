@@ -15,6 +15,11 @@ it('uses Gemini to create Alex’s post, update Bea’s post and ignore unrelate
   const store = telegramStore(batch, initialPosts)
   const answers: { task: string; input: unknown; output: unknown }[] = []
   const research: { task: string; tool: string; input: unknown; output: unknown }[] = []
+  const configurations: {
+    task: string
+    declaredTools: readonly string[]
+    runtimeInventory: readonly string[]
+  }[] = []
   const model: Ports['model'] = (request) =>
     antigravity({
       ...request,
@@ -38,6 +43,7 @@ it('uses Gemini to create Alex’s post, update Bea’s post and ignore unrelate
                   input: observation.input,
                   output: observation.output,
                 })
+              else configurations.push({ task: request.task, ...observation })
             }),
           ),
         ),
@@ -79,6 +85,7 @@ it('uses Gemini to create Alex’s post, update Bea’s post and ignore unrelate
         ...store.result(),
         answers,
         research,
+        configurations,
         progress: store.progress,
       },
       null,
@@ -94,9 +101,17 @@ it('uses Gemini to create Alex’s post, update Bea’s post and ignore unrelate
   expect(store.posts[1]).toMatchObject({ id: 'tab-tidy', version: 3 })
   expect(store.diffs).toHaveLength(1)
   expect(store.ignored.map((item) => item.messageId)).toContain('101')
-  expect(research.some((call) => call.tool === 'read_url_content')).toBe(true)
-  expect(research.some((call) => call.tool === 'search_web')).toBe(true)
   expect(research.some((call) => call.tool === 'searchPosts')).toBe(true)
+  expect(configurations.find(({ task }) => task === 'selection')?.declaredTools).toEqual(['finish'])
+  expect(configurations.filter(({ task }) => task === 'post')).toHaveLength(2)
+  expect(configurations.find(({ task }) => task === 'post')?.declaredTools).toEqual([
+    'finish',
+    'search_web',
+    'read_url_content',
+    'amber/searchMessages',
+    'amber/readMessages',
+    'amber/searchPosts',
+  ])
   // The open language-support question belongs to the maker, never the person who asked it.
   expect(store.questions).toEqual([expect.objectContaining({ authorId: 'alex', needsReply: true })])
 }, 330_000)

@@ -143,6 +143,18 @@ it('does not turn failed tools, private URLs or arbitrary structured output into
       'http://127.0.0.1/secret and https://public.example/source',
     ),
   ).toEqual([expect.objectContaining({ url: 'https://public.example/source' })])
+  expect(
+    pagesFromNativeTool(
+      'read_url_content',
+      { Url: 'https://www.iana.org/help/example-domains' },
+      undefined,
+    ),
+  ).toEqual([
+    expect.objectContaining({
+      url: 'https://www.iana.org/help/example-domains',
+      text: expect.stringContaining('omitted its page body'),
+    }),
+  ])
   const raw = [
     { event: 'init', init: { agent: 'amber', model: modelId, tools: [] } },
     {
@@ -174,6 +186,12 @@ it('does not turn failed tools, private URLs or arbitrary structured output into
 it('denies native, filesystem and foreign MCP capabilities outside the task allowlist', async () => {
   await expect(runHook({ name: 'search_web', args: { query: 'IANA' } })).resolves.toEqual({
     decision: 'allow',
+  })
+  await expect(
+    runHook({ name: 'read_url_content', args: { Url: 'https://www.iana.org/help/' } }),
+  ).resolves.toEqual({
+    decision: 'allow',
+    permissionOverrides: ['read_url(www.iana.org)', 'read_url(iana.org)'],
   })
   await expect(runHook({ name: 'run_command', args: {} })).resolves.toMatchObject({
     decision: 'deny',

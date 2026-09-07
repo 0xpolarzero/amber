@@ -54,8 +54,7 @@ function resultUrls(value: unknown, found = new Set<string>()): Set<string> {
 }
 
 export function pagesFromNativeTool(name: NativeToolName, input: unknown, output: unknown) {
-  const text = outputText(output)
-  if (!text.trim()) return []
+  let text = outputText(output)
   const urls = resultUrls(output)
   if (name === 'read_url_content' && input && typeof input === 'object') {
     const raw = Reflect.get(input, 'Url')
@@ -64,6 +63,11 @@ export function pagesFromNativeTool(name: NativeToolName, input: unknown, output
       if (url) urls.add(url)
     }
   }
+  // CLI 1.1.27 exposes the successful tool name and parameters but no native web body in NDJSON.
+  // A fetched URL is evidence only because parseAntigravityStream observed its completed call.
+  if (!text.trim() && name === 'read_url_content' && urls.size)
+    text = 'Antigravity completed read_url_content; CLI 1.1.27 omitted its page body from NDJSON.'
+  if (!text.trim()) return []
   return [...urls].slice(0, 5).map((url) => ({
     url,
     title: new URL(url).hostname,

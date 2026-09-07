@@ -16,11 +16,17 @@ const lazyMcp =
   call.name === 'call_mcp_tool' &&
   (call.args?.server_name ?? call.args?.serverName) === 'amber' &&
   policy.mcpTools.includes(call.args?.name)
+const readUrlPermission = (() => {
+  if (call.name !== 'read_url_content' || typeof call.args?.Url !== 'string') return undefined
+  const hostname = new URL(call.args.Url).hostname
+  const permissionHost = hostname.startsWith('www.') ? hostname.slice(4) : hostname
+  return [`read_url(${hostname})`, `read_url(${permissionHost})`]
+})()
 
 process.stdout.write(
   JSON.stringify(
     direct || directMcp || lazyMcp
-      ? { decision: 'allow' }
+      ? { decision: 'allow', permissionOverrides: readUrlPermission }
       : { decision: 'deny', reason: 'This capability is not enabled for the Amber task.' },
   ),
 )
