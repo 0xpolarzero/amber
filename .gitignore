@@ -14,5 +14,7 @@ test-results/
 *.log
 .DS_Store
 .gemini/
+.smithers/
+smithers.db*
 *.session
 *.session-journal

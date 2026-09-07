@@ -19,7 +19,10 @@
   "overrides": [
     { "includes": ["poc/**"], "formatter": { "lineWidth": 100 } },
     {
-      "includes": ["poc/telegram/result.json"],
+      "includes": [
+        "poc/telegram/result.json",
+        "poc/telegram/native-web-result.json"
+      ],
       "formatter": { "enabled": false }
     }
   ]
