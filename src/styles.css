@@ -3250,3 +3250,12 @@ main.guide-active ~ .toast {
     font-size: 16px;
   }
 }
+
+.reply-workflow-trace[data-pending-answer] > summary,
+.reply-workflow-trace[data-pending-answer] > summary:hover {
+  cursor: default;
+  background: transparent;
+}
+.reply-workflow-trace[data-pending-answer] > summary .workflow-trace-caret {
+  visibility: hidden;
+}

@@ -83,9 +83,20 @@ export function AgentProgress({
   return (
     <details
       className="workflow-trace reply-workflow-trace agent-progress"
-      open={expanded || run.status === 'running' || needsAttention}
+      data-pending-answer={!run.published || undefined}
+      open={
+        !run.published || expanded || run.status === 'running' || needsAttention
+      }
     >
-      <summary aria-label="Reply workflow">
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: Native summary activation is disabled until publication. */}
+      <summary
+        aria-label="Reply workflow"
+        aria-disabled={!run.published || undefined}
+        tabIndex={run.published ? undefined : -1}
+        onClick={(event) => {
+          if (!run.published) event.preventDefault()
+        }}
+      >
         <span className="workflow-trace-toggle-icons">
           <Icon name="workflow" />
           <Icon name="chevronDown" className="workflow-trace-caret" />

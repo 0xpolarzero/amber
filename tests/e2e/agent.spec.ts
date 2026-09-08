@@ -187,6 +187,12 @@ test('replays progress and request retry without changing the recorded output', 
   const history = page.getByRole('log', { name: 'Conversation history' })
   const slot = history.getByRole('article', { name: 'Amber reply' })
   const trace = slot.locator('details.reply-workflow-trace')
+  const traceToggle = trace.locator(':scope > summary')
+  await traceToggle.click({ force: true })
+  await expect(trace).toHaveAttribute('open', '')
+  await traceToggle.focus()
+  await page.keyboard.press('Enter')
+  await expect(trace).toHaveAttribute('open', '')
   await expect(slot).toHaveCount(1)
   await expect(slot).not.toHaveClass(/unaddressed/)
   await expect(slot.getByText('Unanswered', { exact: true })).toHaveCount(0)
@@ -252,6 +258,10 @@ test('replays progress and request retry without changing the recorded output', 
 
   await step.click()
   await expect(slot.locator(':scope > .chat-bubble')).toBeVisible()
+  await expect(traceToggle).not.toHaveAttribute('aria-disabled', 'true')
+  await traceToggle.click()
+  await expect(trace).not.toHaveAttribute('open', '')
+  await traceToggle.click()
   await expect(slot.locator(':scope > .chat-bubble')).toHaveText(
     preview.messaging.assistant.text,
   )
