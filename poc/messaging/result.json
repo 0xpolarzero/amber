@@ -1,0 +1,5119 @@
+{
+  "mode": "live-model",
+  "provenance": {
+    "model": "gemini-3.8-flash-medium",
+    "provider": "Google subscription through Antigravity CLI",
+    "storage": "invented in-memory fixture; not deployed durability",
+    "scripted": false
+  },
+  "inputs": [
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference."
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise."
+    }
+  ],
+  "receipts": [
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "status": "completed",
+      "assistantMessageId": "live-turn-1:assistant",
+      "diffs": [
+        {
+          "postId": "noted",
+          "before": {
+            "id": "noted",
+            "authorId": "user-amber",
+            "version": 2,
+            "title": "Noted",
+            "summary": "Offline voice transcription for macOS.",
+            "detail": "Noted transcribes English voice notes on device.",
+            "published": true
+          },
+          "after": {
+            "id": "noted",
+            "authorId": "user-amber",
+            "version": 3,
+            "title": "Noted",
+            "summary": "Offline voice transcription for macOS.",
+            "detail": "Noted transcribes English and Mandarin voice notes on device.",
+            "published": true
+          }
+        }
+      ],
+      "candidatePublications": [
+        {
+          "candidateId": "candidate-clipwise",
+          "postId": "post:candidate-clipwise"
+        }
+      ],
+      "background": [
+        {
+          "task": "memory",
+          "status": "done",
+          "reason": null
+        },
+        {
+          "task": "addressing",
+          "status": "done",
+          "reason": null
+        }
+      ]
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "status": "completed",
+      "assistantMessageId": "live-turn-2:assistant",
+      "diffs": [
+        {
+          "postId": "atlas",
+          "before": {
+            "id": "atlas",
+            "authorId": "user-amber",
+            "version": 4,
+            "title": "Atlas",
+            "summary": "A visual workspace for research.",
+            "detail": "Atlas connects notes and sources.",
+            "published": true
+          },
+          "after": {
+            "id": "atlas",
+            "authorId": "user-amber",
+            "version": 5,
+            "title": "Atlas",
+            "summary": "An offline visual workspace for research.",
+            "detail": "Atlas connects notes and sources and works offline.",
+            "published": true
+          }
+        },
+        {
+          "postId": "noted",
+          "before": {
+            "id": "noted",
+            "authorId": "user-amber",
+            "version": 3,
+            "title": "Noted",
+            "summary": "Offline voice transcription for macOS.",
+            "detail": "Noted transcribes English and Mandarin voice notes on device.",
+            "published": true
+          },
+          "after": {
+            "id": "noted",
+            "authorId": "user-amber",
+            "version": 4,
+            "title": "Noted",
+            "summary": "On-device voice transcription for macOS.",
+            "detail": "Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.",
+            "published": true
+          }
+        },
+        {
+          "postId": "aurora",
+          "before": {
+            "id": "aurora",
+            "authorId": "user-amber",
+            "version": 1,
+            "title": "Aurora",
+            "summary": "A collaborative planning tool in public beta.",
+            "detail": "Aurora helps teams plan launches. Public beta access is available.",
+            "published": true
+          },
+          "after": {
+            "id": "aurora",
+            "authorId": "user-amber",
+            "version": 2,
+            "title": "Aurora",
+            "summary": "An invite-only collaborative planning tool.",
+            "detail": "Aurora helps teams plan launches. Access is invite-only.",
+            "published": true
+          }
+        }
+      ],
+      "candidatePublications": [],
+      "background": [
+        {
+          "task": "memory",
+          "status": "done",
+          "reason": null
+        },
+        {
+          "task": "addressing",
+          "status": "done",
+          "reason": null
+        }
+      ]
+    }
+  ],
+  "calls": [
+    {
+      "task": "query-planner",
+      "input": {
+        "turn": {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+          "userMessageId": "live-turn-1:user",
+          "cutoffSequence": 15
+        },
+        "recentExchanges": [
+          {
+            "turnId": "history-3",
+            "userMessage": {
+              "id": "history-3:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Atlas works offline now.",
+              "sequence": 5,
+              "turnId": "history-3",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "history-3:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Atlas post can reflect that.",
+              "sequence": 6,
+              "turnId": "history-3",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            }
+          },
+          {
+            "turnId": "history-4",
+            "userMessage": {
+              "id": "history-4:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Use sentence case in titles.",
+              "sequence": 7,
+              "turnId": "history-4",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "history-4:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "I will preserve sentence case.",
+              "sequence": 8,
+              "turnId": "history-4",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            }
+          },
+          {
+            "turnId": "history-5",
+            "userMessage": {
+              "id": "history-5:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Keep release details factual.",
+              "sequence": 9,
+              "turnId": "history-5",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "history-5:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "I will keep release details factual.",
+              "sequence": 10,
+              "turnId": "history-5",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            }
+          }
+        ],
+        "pendingRequests": [
+          {
+            "id": "live-request-license",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which license will Clipwise use?",
+            "sequence": 11,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": null,
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": false
+          },
+          {
+            "id": "live-request-language",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Does Noted support Mandarin?",
+            "sequence": 12,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-request-team",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Should Atlas support team workspaces?",
+            "sequence": 13,
+            "turnId": null,
+            "intent": "suggestion",
+            "linkedPostId": "atlas",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          }
+        ]
+      },
+      "output": {
+        "queries": [
+          {
+            "limit": 5,
+            "resource": "posts",
+            "terms": ["Clipwise"]
+          },
+          {
+            "limit": 5,
+            "resource": "user_messages",
+            "terms": ["macOS"]
+          }
+        ]
+      }
+    },
+    {
+      "task": "responder",
+      "input": {
+        "turn": {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+          "userMessageId": "live-turn-1:user",
+          "cutoffSequence": 15
+        },
+        "recentExchanges": [
+          {
+            "turnId": "history-3",
+            "userMessage": {
+              "id": "history-3:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Atlas works offline now.",
+              "sequence": 5,
+              "turnId": "history-3",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "history-3:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Atlas post can reflect that.",
+              "sequence": 6,
+              "turnId": "history-3",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            }
+          },
+          {
+            "turnId": "history-4",
+            "userMessage": {
+              "id": "history-4:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Use sentence case in titles.",
+              "sequence": 7,
+              "turnId": "history-4",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "history-4:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "I will preserve sentence case.",
+              "sequence": 8,
+              "turnId": "history-4",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            }
+          },
+          {
+            "turnId": "history-5",
+            "userMessage": {
+              "id": "history-5:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Keep release details factual.",
+              "sequence": 9,
+              "turnId": "history-5",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "history-5:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "I will keep release details factual.",
+              "sequence": 10,
+              "turnId": "history-5",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            }
+          }
+        ],
+        "pendingRequests": [
+          {
+            "id": "live-request-license",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which license will Clipwise use?",
+            "sequence": 11,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": null,
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": false
+          },
+          {
+            "id": "live-request-language",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Does Noted support Mandarin?",
+            "sequence": 12,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-request-team",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Should Atlas support team workspaces?",
+            "sequence": 13,
+            "turnId": null,
+            "intent": "suggestion",
+            "linkedPostId": "atlas",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          }
+        ],
+        "queryResults": {
+          "posts": [
+            {
+              "id": "noted",
+              "authorId": "user-amber",
+              "version": 2,
+              "title": "Noted",
+              "summary": "Offline voice transcription for macOS.",
+              "detail": "Noted transcribes English voice notes on device.",
+              "published": true
+            },
+            {
+              "id": "atlas",
+              "authorId": "user-amber",
+              "version": 4,
+              "title": "Atlas",
+              "summary": "A visual workspace for research.",
+              "detail": "Atlas connects notes and sources.",
+              "published": true
+            }
+          ],
+          "userMessages": [],
+          "assistantMessages": [],
+          "linkedRequestPostIds": ["noted", "atlas"]
+        },
+        "memories": [
+          {
+            "id": "style",
+            "userId": "user-amber",
+            "text": "Keep posts short.",
+            "version": 1
+          },
+          {
+            "id": "platform",
+            "userId": "user-amber",
+            "text": "Only mention macOS releases.",
+            "version": 3
+          }
+        ],
+        "unaddressed": [
+          {
+            "id": "live-request-license",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which license will Clipwise use?",
+            "sequence": 11,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": null,
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": false
+          },
+          {
+            "id": "live-request-language",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Does Noted support Mandarin?",
+            "sequence": 12,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-request-team",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Should Atlas support team workspaces?",
+            "sequence": 13,
+            "turnId": null,
+            "intent": "suggestion",
+            "linkedPostId": "atlas",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          }
+        ],
+        "candidates": [
+          {
+            "id": "candidate-clipwise",
+            "userId": "user-amber",
+            "version": 1,
+            "title": "Clipwise",
+            "summary": "A clipboard organizer.",
+            "detail": "License was not supplied.",
+            "status": "pending"
+          }
+        ]
+      },
+      "output": {
+        "classification": "answer",
+        "intent": "informational",
+        "pendingOutcome": {
+          "candidateId": "candidate-clipwise",
+          "detail": "Clipwise is a free clipboard organizer licensed under the MIT license.",
+          "evidence": [
+            {
+              "id": "candidate-clipwise",
+              "kind": "candidate",
+              "version": 1
+            },
+            {
+              "id": "live-turn-1:user",
+              "kind": "user_message"
+            },
+            {
+              "id": "live-request-license",
+              "kind": "request"
+            }
+          ],
+          "expectedVersion": 1,
+          "kind": "publish",
+          "summary": "A clipboard organizer.",
+          "title": "Clipwise"
+        },
+        "postChanges": [
+          {
+            "detail": "Noted transcribes English and Mandarin voice notes on device.",
+            "evidence": [
+              {
+                "id": "noted",
+                "kind": "post",
+                "version": 2
+              },
+              {
+                "id": "live-turn-1:user",
+                "kind": "user_message"
+              },
+              {
+                "id": "live-request-language",
+                "kind": "request"
+              }
+            ],
+            "expectedVersion": 2,
+            "postId": "noted",
+            "published": true,
+            "summary": "Offline voice transcription for macOS.",
+            "title": "Noted"
+          }
+        ],
+        "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference."
+      }
+    },
+    {
+      "task": "memory",
+      "input": {
+        "userMessage": {
+          "id": "live-turn-1:user",
+          "userId": "user-amber",
+          "conversationId": "conversation:user-amber",
+          "role": "user",
+          "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+          "sequence": 15,
+          "turnId": "live-turn-1",
+          "intent": "request",
+          "linkedPostId": null,
+          "pendingCandidateId": null,
+          "addressed": true
+        },
+        "assistantAnswer": {
+          "id": "live-turn-1:assistant",
+          "userId": "user-amber",
+          "conversationId": "conversation:user-amber",
+          "role": "assistant",
+          "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+          "sequence": 16,
+          "turnId": "live-turn-1",
+          "intent": "informational",
+          "linkedPostId": "noted",
+          "pendingCandidateId": "candidate-clipwise",
+          "addressed": true
+        },
+        "memories": [
+          {
+            "id": "style",
+            "userId": "user-amber",
+            "text": "Keep posts short.",
+            "version": 1
+          },
+          {
+            "id": "platform",
+            "userId": "user-amber",
+            "text": "Only mention macOS releases.",
+            "version": 3
+          }
+        ]
+      },
+      "output": {
+        "operations": [
+          {
+            "expectedVersion": 1,
+            "id": "style",
+            "kind": "update",
+            "text": "Prefer detailed factual posts."
+          },
+          {
+            "expectedVersion": 3,
+            "id": "platform",
+            "kind": "delete"
+          }
+        ]
+      }
+    },
+    {
+      "task": "addressing",
+      "input": {
+        "userMessage": {
+          "id": "live-turn-1:user",
+          "userId": "user-amber",
+          "conversationId": "conversation:user-amber",
+          "role": "user",
+          "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+          "sequence": 15,
+          "turnId": "live-turn-1",
+          "intent": "request",
+          "linkedPostId": null,
+          "pendingCandidateId": null,
+          "addressed": true
+        },
+        "assistantAnswer": {
+          "id": "live-turn-1:assistant",
+          "userId": "user-amber",
+          "conversationId": "conversation:user-amber",
+          "role": "assistant",
+          "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+          "sequence": 16,
+          "turnId": "live-turn-1",
+          "intent": "informational",
+          "linkedPostId": "noted",
+          "pendingCandidateId": "candidate-clipwise",
+          "addressed": true
+        },
+        "unaddressedSnapshot": [
+          {
+            "id": "live-request-license",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which license will Clipwise use?",
+            "sequence": 11,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": null,
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": false
+          },
+          {
+            "id": "live-request-language",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Does Noted support Mandarin?",
+            "sequence": 12,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-request-team",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Should Atlas support team workspaces?",
+            "sequence": 13,
+            "turnId": null,
+            "intent": "suggestion",
+            "linkedPostId": "atlas",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          }
+        ]
+      },
+      "output": {
+        "resolutions": [
+          {
+            "outcome": "answered",
+            "reason": "The user stated Clipwise uses the MIT license and the assistant confirmed publishing it with the MIT license.",
+            "requestMessageId": "live-request-license"
+          },
+          {
+            "outcome": "answered",
+            "reason": "The user confirmed that Noted supports Mandarin and the assistant acknowledged updating it.",
+            "requestMessageId": "live-request-language"
+          },
+          {
+            "outcome": "ignored",
+            "reason": "The user explicitly instructed to ignore the Atlas team-workspace suggestion.",
+            "requestMessageId": "live-request-team"
+          }
+        ]
+      }
+    },
+    {
+      "task": "query-planner",
+      "input": {
+        "turn": {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+          "userMessageId": "live-turn-2:user",
+          "cutoffSequence": 17
+        },
+        "recentExchanges": [
+          {
+            "turnId": "history-4",
+            "userMessage": {
+              "id": "history-4:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Use sentence case in titles.",
+              "sequence": 7,
+              "turnId": "history-4",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "history-4:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "I will preserve sentence case.",
+              "sequence": 8,
+              "turnId": "history-4",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            }
+          },
+          {
+            "turnId": "history-5",
+            "userMessage": {
+              "id": "history-5:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Keep release details factual.",
+              "sequence": 9,
+              "turnId": "history-5",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "history-5:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "I will keep release details factual.",
+              "sequence": 10,
+              "turnId": "history-5",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            }
+          },
+          {
+            "turnId": "live-turn-1",
+            "userMessage": {
+              "id": "live-turn-1:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+              "sequence": 15,
+              "turnId": "live-turn-1",
+              "intent": "request",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "live-turn-1:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+              "sequence": 16,
+              "turnId": "live-turn-1",
+              "intent": "informational",
+              "linkedPostId": "noted",
+              "pendingCandidateId": "candidate-clipwise",
+              "addressed": true
+            }
+          }
+        ],
+        "pendingRequests": [
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          }
+        ]
+      },
+      "output": {
+        "queries": [
+          {
+            "limit": 5,
+            "resource": "posts",
+            "terms": ["Atlas"]
+          },
+          {
+            "limit": 5,
+            "resource": "posts",
+            "terms": ["Aurora"]
+          },
+          {
+            "limit": 5,
+            "resource": "user_messages",
+            "terms": ["Aurora", "invite-only"]
+          }
+        ]
+      }
+    },
+    {
+      "task": "responder",
+      "input": {
+        "turn": {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+          "userMessageId": "live-turn-2:user",
+          "cutoffSequence": 17
+        },
+        "recentExchanges": [
+          {
+            "turnId": "history-4",
+            "userMessage": {
+              "id": "history-4:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Use sentence case in titles.",
+              "sequence": 7,
+              "turnId": "history-4",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "history-4:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "I will preserve sentence case.",
+              "sequence": 8,
+              "turnId": "history-4",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            }
+          },
+          {
+            "turnId": "history-5",
+            "userMessage": {
+              "id": "history-5:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Keep release details factual.",
+              "sequence": 9,
+              "turnId": "history-5",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "history-5:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "I will keep release details factual.",
+              "sequence": 10,
+              "turnId": "history-5",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            }
+          },
+          {
+            "turnId": "live-turn-1",
+            "userMessage": {
+              "id": "live-turn-1:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+              "sequence": 15,
+              "turnId": "live-turn-1",
+              "intent": "request",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "live-turn-1:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+              "sequence": 16,
+              "turnId": "live-turn-1",
+              "intent": "informational",
+              "linkedPostId": "noted",
+              "pendingCandidateId": "candidate-clipwise",
+              "addressed": true
+            }
+          }
+        ],
+        "pendingRequests": [
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          }
+        ],
+        "queryResults": {
+          "posts": [
+            {
+              "id": "noted",
+              "authorId": "user-amber",
+              "version": 3,
+              "title": "Noted",
+              "summary": "Offline voice transcription for macOS.",
+              "detail": "Noted transcribes English and Mandarin voice notes on device.",
+              "published": true
+            },
+            {
+              "id": "atlas",
+              "authorId": "user-amber",
+              "version": 4,
+              "title": "Atlas",
+              "summary": "A visual workspace for research.",
+              "detail": "Atlas connects notes and sources.",
+              "published": true
+            },
+            {
+              "id": "aurora",
+              "authorId": "user-amber",
+              "version": 1,
+              "title": "Aurora",
+              "summary": "A collaborative planning tool in public beta.",
+              "detail": "Aurora helps teams plan launches. Public beta access is available.",
+              "published": true
+            }
+          ],
+          "userMessages": [
+            {
+              "id": "history-1:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Aurora should remain invite-only.",
+              "sequence": 1,
+              "turnId": "history-1",
+              "intent": "informational",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            }
+          ],
+          "assistantMessages": [],
+          "linkedRequestPostIds": ["noted"]
+        },
+        "memories": [
+          {
+            "id": "style",
+            "userId": "user-amber",
+            "text": "Prefer detailed factual posts.",
+            "version": 2
+          }
+        ],
+        "unaddressed": [
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          }
+        ],
+        "candidates": []
+      },
+      "output": {
+        "classification": "answer",
+        "intent": "informational",
+        "pendingOutcome": {
+          "kind": "none"
+        },
+        "postChanges": [
+          {
+            "detail": "Atlas connects notes and sources and works offline.",
+            "evidence": [
+              {
+                "id": "atlas",
+                "kind": "post",
+                "version": 4
+              },
+              {
+                "id": "live-turn-2:user",
+                "kind": "user_message"
+              }
+            ],
+            "expectedVersion": 4,
+            "postId": "atlas",
+            "published": true,
+            "summary": "An offline visual workspace for research.",
+            "title": "Atlas"
+          },
+          {
+            "detail": "Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.",
+            "evidence": [
+              {
+                "id": "noted",
+                "kind": "post",
+                "version": 3
+              },
+              {
+                "id": "live-turn-2:user",
+                "kind": "user_message"
+              },
+              {
+                "id": "live-request-exports",
+                "kind": "request"
+              }
+            ],
+            "expectedVersion": 3,
+            "postId": "noted",
+            "published": true,
+            "summary": "On-device voice transcription for macOS.",
+            "title": "Noted"
+          },
+          {
+            "detail": "Aurora helps teams plan launches. Access is invite-only.",
+            "evidence": [
+              {
+                "id": "aurora",
+                "kind": "post",
+                "version": 1
+              },
+              {
+                "id": "live-turn-2:user",
+                "kind": "user_message"
+              },
+              {
+                "id": "history-1:user",
+                "kind": "user_message"
+              }
+            ],
+            "expectedVersion": 1,
+            "postId": "aurora",
+            "published": true,
+            "summary": "An invite-only collaborative planning tool.",
+            "title": "Aurora"
+          }
+        ],
+        "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts."
+      }
+    },
+    {
+      "task": "memory",
+      "input": {
+        "userMessage": {
+          "id": "live-turn-2:user",
+          "userId": "user-amber",
+          "conversationId": "conversation:user-amber",
+          "role": "user",
+          "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+          "sequence": 17,
+          "turnId": "live-turn-2",
+          "intent": "request",
+          "linkedPostId": null,
+          "pendingCandidateId": null,
+          "addressed": true
+        },
+        "assistantAnswer": {
+          "id": "live-turn-2:assistant",
+          "userId": "user-amber",
+          "conversationId": "conversation:user-amber",
+          "role": "assistant",
+          "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts.",
+          "sequence": 18,
+          "turnId": "live-turn-2",
+          "intent": "informational",
+          "linkedPostId": "atlas",
+          "pendingCandidateId": null,
+          "addressed": true
+        },
+        "memories": [
+          {
+            "id": "style",
+            "userId": "user-amber",
+            "text": "Prefer detailed factual posts.",
+            "version": 2
+          }
+        ]
+      },
+      "output": {
+        "operations": [
+          {
+            "expectedVersion": 2,
+            "id": "style",
+            "kind": "update",
+            "text": "Prefer concise posts."
+          }
+        ]
+      }
+    },
+    {
+      "task": "addressing",
+      "input": {
+        "userMessage": {
+          "id": "live-turn-2:user",
+          "userId": "user-amber",
+          "conversationId": "conversation:user-amber",
+          "role": "user",
+          "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+          "sequence": 17,
+          "turnId": "live-turn-2",
+          "intent": "request",
+          "linkedPostId": null,
+          "pendingCandidateId": null,
+          "addressed": true
+        },
+        "assistantAnswer": {
+          "id": "live-turn-2:assistant",
+          "userId": "user-amber",
+          "conversationId": "conversation:user-amber",
+          "role": "assistant",
+          "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts.",
+          "sequence": 18,
+          "turnId": "live-turn-2",
+          "intent": "informational",
+          "linkedPostId": "atlas",
+          "pendingCandidateId": null,
+          "addressed": true
+        },
+        "unaddressedSnapshot": [
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          }
+        ]
+      },
+      "output": {
+        "resolutions": []
+      }
+    }
+  ],
+  "turns": [
+    {
+      "input": {
+        "turnId": "live-turn-1",
+        "userId": "user-amber",
+        "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference."
+      },
+      "receipt": {
+        "turnId": "live-turn-1",
+        "userId": "user-amber",
+        "status": "completed",
+        "assistantMessageId": "live-turn-1:assistant",
+        "diffs": [
+          {
+            "postId": "noted",
+            "before": {
+              "id": "noted",
+              "authorId": "user-amber",
+              "version": 2,
+              "title": "Noted",
+              "summary": "Offline voice transcription for macOS.",
+              "detail": "Noted transcribes English voice notes on device.",
+              "published": true
+            },
+            "after": {
+              "id": "noted",
+              "authorId": "user-amber",
+              "version": 3,
+              "title": "Noted",
+              "summary": "Offline voice transcription for macOS.",
+              "detail": "Noted transcribes English and Mandarin voice notes on device.",
+              "published": true
+            }
+          }
+        ],
+        "candidatePublications": [
+          {
+            "candidateId": "candidate-clipwise",
+            "postId": "post:candidate-clipwise"
+          }
+        ],
+        "background": [
+          {
+            "task": "memory",
+            "status": "done",
+            "reason": null
+          },
+          {
+            "task": "addressing",
+            "status": "done",
+            "reason": null
+          }
+        ]
+      },
+      "calls": [
+        {
+          "task": "query-planner",
+          "input": {
+            "turn": {
+              "turnId": "live-turn-1",
+              "userId": "user-amber",
+              "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+              "userMessageId": "live-turn-1:user",
+              "cutoffSequence": 15
+            },
+            "recentExchanges": [
+              {
+                "turnId": "history-3",
+                "userMessage": {
+                  "id": "history-3:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Atlas works offline now.",
+                  "sequence": 5,
+                  "turnId": "history-3",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "history-3:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "Atlas post can reflect that.",
+                  "sequence": 6,
+                  "turnId": "history-3",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                }
+              },
+              {
+                "turnId": "history-4",
+                "userMessage": {
+                  "id": "history-4:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Use sentence case in titles.",
+                  "sequence": 7,
+                  "turnId": "history-4",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "history-4:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "I will preserve sentence case.",
+                  "sequence": 8,
+                  "turnId": "history-4",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                }
+              },
+              {
+                "turnId": "history-5",
+                "userMessage": {
+                  "id": "history-5:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Keep release details factual.",
+                  "sequence": 9,
+                  "turnId": "history-5",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "history-5:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "I will keep release details factual.",
+                  "sequence": 10,
+                  "turnId": "history-5",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                }
+              }
+            ],
+            "pendingRequests": [
+              {
+                "id": "live-request-license",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which license will Clipwise use?",
+                "sequence": 11,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": null,
+                "pendingCandidateId": "candidate-clipwise",
+                "addressed": false
+              },
+              {
+                "id": "live-request-language",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Does Noted support Mandarin?",
+                "sequence": 12,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              },
+              {
+                "id": "live-request-team",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Should Atlas support team workspaces?",
+                "sequence": 13,
+                "turnId": null,
+                "intent": "suggestion",
+                "linkedPostId": "atlas",
+                "pendingCandidateId": null,
+                "addressed": false
+              },
+              {
+                "id": "live-request-exports",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which three export formats will Noted support?",
+                "sequence": 14,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              }
+            ]
+          },
+          "output": {
+            "queries": [
+              {
+                "limit": 5,
+                "resource": "posts",
+                "terms": ["Clipwise"]
+              },
+              {
+                "limit": 5,
+                "resource": "user_messages",
+                "terms": ["macOS"]
+              }
+            ]
+          }
+        },
+        {
+          "task": "responder",
+          "input": {
+            "turn": {
+              "turnId": "live-turn-1",
+              "userId": "user-amber",
+              "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+              "userMessageId": "live-turn-1:user",
+              "cutoffSequence": 15
+            },
+            "recentExchanges": [
+              {
+                "turnId": "history-3",
+                "userMessage": {
+                  "id": "history-3:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Atlas works offline now.",
+                  "sequence": 5,
+                  "turnId": "history-3",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "history-3:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "Atlas post can reflect that.",
+                  "sequence": 6,
+                  "turnId": "history-3",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                }
+              },
+              {
+                "turnId": "history-4",
+                "userMessage": {
+                  "id": "history-4:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Use sentence case in titles.",
+                  "sequence": 7,
+                  "turnId": "history-4",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "history-4:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "I will preserve sentence case.",
+                  "sequence": 8,
+                  "turnId": "history-4",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                }
+              },
+              {
+                "turnId": "history-5",
+                "userMessage": {
+                  "id": "history-5:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Keep release details factual.",
+                  "sequence": 9,
+                  "turnId": "history-5",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "history-5:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "I will keep release details factual.",
+                  "sequence": 10,
+                  "turnId": "history-5",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                }
+              }
+            ],
+            "pendingRequests": [
+              {
+                "id": "live-request-license",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which license will Clipwise use?",
+                "sequence": 11,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": null,
+                "pendingCandidateId": "candidate-clipwise",
+                "addressed": false
+              },
+              {
+                "id": "live-request-language",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Does Noted support Mandarin?",
+                "sequence": 12,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              },
+              {
+                "id": "live-request-team",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Should Atlas support team workspaces?",
+                "sequence": 13,
+                "turnId": null,
+                "intent": "suggestion",
+                "linkedPostId": "atlas",
+                "pendingCandidateId": null,
+                "addressed": false
+              },
+              {
+                "id": "live-request-exports",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which three export formats will Noted support?",
+                "sequence": 14,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              }
+            ],
+            "queryResults": {
+              "posts": [
+                {
+                  "id": "noted",
+                  "authorId": "user-amber",
+                  "version": 2,
+                  "title": "Noted",
+                  "summary": "Offline voice transcription for macOS.",
+                  "detail": "Noted transcribes English voice notes on device.",
+                  "published": true
+                },
+                {
+                  "id": "atlas",
+                  "authorId": "user-amber",
+                  "version": 4,
+                  "title": "Atlas",
+                  "summary": "A visual workspace for research.",
+                  "detail": "Atlas connects notes and sources.",
+                  "published": true
+                }
+              ],
+              "userMessages": [],
+              "assistantMessages": [],
+              "linkedRequestPostIds": ["noted", "atlas"]
+            },
+            "memories": [
+              {
+                "id": "style",
+                "userId": "user-amber",
+                "text": "Keep posts short.",
+                "version": 1
+              },
+              {
+                "id": "platform",
+                "userId": "user-amber",
+                "text": "Only mention macOS releases.",
+                "version": 3
+              }
+            ],
+            "unaddressed": [
+              {
+                "id": "live-request-license",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which license will Clipwise use?",
+                "sequence": 11,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": null,
+                "pendingCandidateId": "candidate-clipwise",
+                "addressed": false
+              },
+              {
+                "id": "live-request-language",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Does Noted support Mandarin?",
+                "sequence": 12,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              },
+              {
+                "id": "live-request-team",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Should Atlas support team workspaces?",
+                "sequence": 13,
+                "turnId": null,
+                "intent": "suggestion",
+                "linkedPostId": "atlas",
+                "pendingCandidateId": null,
+                "addressed": false
+              },
+              {
+                "id": "live-request-exports",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which three export formats will Noted support?",
+                "sequence": 14,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              }
+            ],
+            "candidates": [
+              {
+                "id": "candidate-clipwise",
+                "userId": "user-amber",
+                "version": 1,
+                "title": "Clipwise",
+                "summary": "A clipboard organizer.",
+                "detail": "License was not supplied.",
+                "status": "pending"
+              }
+            ]
+          },
+          "output": {
+            "classification": "answer",
+            "intent": "informational",
+            "pendingOutcome": {
+              "candidateId": "candidate-clipwise",
+              "detail": "Clipwise is a free clipboard organizer licensed under the MIT license.",
+              "evidence": [
+                {
+                  "id": "candidate-clipwise",
+                  "kind": "candidate",
+                  "version": 1
+                },
+                {
+                  "id": "live-turn-1:user",
+                  "kind": "user_message"
+                },
+                {
+                  "id": "live-request-license",
+                  "kind": "request"
+                }
+              ],
+              "expectedVersion": 1,
+              "kind": "publish",
+              "summary": "A clipboard organizer.",
+              "title": "Clipwise"
+            },
+            "postChanges": [
+              {
+                "detail": "Noted transcribes English and Mandarin voice notes on device.",
+                "evidence": [
+                  {
+                    "id": "noted",
+                    "kind": "post",
+                    "version": 2
+                  },
+                  {
+                    "id": "live-turn-1:user",
+                    "kind": "user_message"
+                  },
+                  {
+                    "id": "live-request-language",
+                    "kind": "request"
+                  }
+                ],
+                "expectedVersion": 2,
+                "postId": "noted",
+                "published": true,
+                "summary": "Offline voice transcription for macOS.",
+                "title": "Noted"
+              }
+            ],
+            "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference."
+          }
+        },
+        {
+          "task": "memory",
+          "input": {
+            "userMessage": {
+              "id": "live-turn-1:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+              "sequence": 15,
+              "turnId": "live-turn-1",
+              "intent": "request",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantAnswer": {
+              "id": "live-turn-1:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+              "sequence": 16,
+              "turnId": "live-turn-1",
+              "intent": "informational",
+              "linkedPostId": "noted",
+              "pendingCandidateId": "candidate-clipwise",
+              "addressed": true
+            },
+            "memories": [
+              {
+                "id": "style",
+                "userId": "user-amber",
+                "text": "Keep posts short.",
+                "version": 1
+              },
+              {
+                "id": "platform",
+                "userId": "user-amber",
+                "text": "Only mention macOS releases.",
+                "version": 3
+              }
+            ]
+          },
+          "output": {
+            "operations": [
+              {
+                "expectedVersion": 1,
+                "id": "style",
+                "kind": "update",
+                "text": "Prefer detailed factual posts."
+              },
+              {
+                "expectedVersion": 3,
+                "id": "platform",
+                "kind": "delete"
+              }
+            ]
+          }
+        },
+        {
+          "task": "addressing",
+          "input": {
+            "userMessage": {
+              "id": "live-turn-1:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+              "sequence": 15,
+              "turnId": "live-turn-1",
+              "intent": "request",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantAnswer": {
+              "id": "live-turn-1:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+              "sequence": 16,
+              "turnId": "live-turn-1",
+              "intent": "informational",
+              "linkedPostId": "noted",
+              "pendingCandidateId": "candidate-clipwise",
+              "addressed": true
+            },
+            "unaddressedSnapshot": [
+              {
+                "id": "live-request-license",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which license will Clipwise use?",
+                "sequence": 11,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": null,
+                "pendingCandidateId": "candidate-clipwise",
+                "addressed": false
+              },
+              {
+                "id": "live-request-language",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Does Noted support Mandarin?",
+                "sequence": 12,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              },
+              {
+                "id": "live-request-team",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Should Atlas support team workspaces?",
+                "sequence": 13,
+                "turnId": null,
+                "intent": "suggestion",
+                "linkedPostId": "atlas",
+                "pendingCandidateId": null,
+                "addressed": false
+              },
+              {
+                "id": "live-request-exports",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which three export formats will Noted support?",
+                "sequence": 14,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              }
+            ]
+          },
+          "output": {
+            "resolutions": [
+              {
+                "outcome": "answered",
+                "reason": "The user stated Clipwise uses the MIT license and the assistant confirmed publishing it with the MIT license.",
+                "requestMessageId": "live-request-license"
+              },
+              {
+                "outcome": "answered",
+                "reason": "The user confirmed that Noted supports Mandarin and the assistant acknowledged updating it.",
+                "requestMessageId": "live-request-language"
+              },
+              {
+                "outcome": "ignored",
+                "reason": "The user explicitly instructed to ignore the Atlas team-workspace suggestion.",
+                "requestMessageId": "live-request-team"
+              }
+            ]
+          }
+        }
+      ],
+      "progress": [
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "admission",
+          "status": "running",
+          "at": 1788867180929
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "admission",
+          "status": "done",
+          "at": 1788867180931
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "planner",
+          "status": "running",
+          "at": 1788867180937
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "planner",
+          "status": "done",
+          "at": 1788867204191
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "query_execution",
+          "status": "running",
+          "at": 1788867204191
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "query_execution",
+          "status": "done",
+          "at": 1788867204192
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "responder",
+          "status": "running",
+          "at": 1788867204192
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "responder",
+          "status": "done",
+          "at": 1788867217629
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "publication",
+          "status": "running",
+          "at": 1788867217630
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "publication",
+          "status": "done",
+          "at": 1788867217631
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "memory",
+          "status": "running",
+          "at": 1788867217648
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "addressing",
+          "status": "running",
+          "at": 1788867217653
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "memory",
+          "status": "done",
+          "at": 1788867227625
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "addressing",
+          "status": "done",
+          "at": 1788867228005
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "finalize",
+          "status": "running",
+          "at": 1788867228006
+        },
+        {
+          "turnId": "live-turn-1",
+          "userId": "user-amber",
+          "task": "finalize",
+          "status": "done",
+          "at": 1788867228006
+        }
+      ],
+      "before": {
+        "posts": [
+          {
+            "id": "atlas",
+            "authorId": "user-amber",
+            "version": 4,
+            "title": "Atlas",
+            "summary": "A visual workspace for research.",
+            "detail": "Atlas connects notes and sources.",
+            "published": true
+          },
+          {
+            "id": "aurora",
+            "authorId": "user-amber",
+            "version": 1,
+            "title": "Aurora",
+            "summary": "A collaborative planning tool in public beta.",
+            "detail": "Aurora helps teams plan launches. Public beta access is available.",
+            "published": true
+          },
+          {
+            "id": "foreign-post",
+            "authorId": "user-sable",
+            "version": 7,
+            "title": "Foreign",
+            "summary": "Another user’s private project.",
+            "detail": "Never visible to Amber user queries.",
+            "published": true
+          },
+          {
+            "id": "noted",
+            "authorId": "user-amber",
+            "version": 2,
+            "title": "Noted",
+            "summary": "Offline voice transcription for macOS.",
+            "detail": "Noted transcribes English voice notes on device.",
+            "published": true
+          }
+        ],
+        "memories": [
+          {
+            "id": "foreign-memory",
+            "userId": "user-sable",
+            "text": "Private preference.",
+            "version": 1
+          },
+          {
+            "id": "platform",
+            "userId": "user-amber",
+            "text": "Only mention macOS releases.",
+            "version": 3
+          },
+          {
+            "id": "style",
+            "userId": "user-amber",
+            "text": "Keep posts short.",
+            "version": 1
+          }
+        ],
+        "candidates": [
+          {
+            "id": "candidate-clipwise",
+            "userId": "user-amber",
+            "version": 1,
+            "title": "Clipwise",
+            "summary": "A clipboard organizer.",
+            "detail": "License was not supplied.",
+            "status": "pending"
+          }
+        ],
+        "requests": [
+          {
+            "id": "live-request-license",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which license will Clipwise use?",
+            "sequence": 11,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": null,
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": false
+          },
+          {
+            "id": "live-request-language",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Does Noted support Mandarin?",
+            "sequence": 12,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-request-team",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Should Atlas support team workspaces?",
+            "sequence": 13,
+            "turnId": null,
+            "intent": "suggestion",
+            "linkedPostId": "atlas",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          }
+        ],
+        "addressing": {}
+      },
+      "after": {
+        "posts": [
+          {
+            "id": "atlas",
+            "authorId": "user-amber",
+            "version": 4,
+            "title": "Atlas",
+            "summary": "A visual workspace for research.",
+            "detail": "Atlas connects notes and sources.",
+            "published": true
+          },
+          {
+            "id": "aurora",
+            "authorId": "user-amber",
+            "version": 1,
+            "title": "Aurora",
+            "summary": "A collaborative planning tool in public beta.",
+            "detail": "Aurora helps teams plan launches. Public beta access is available.",
+            "published": true
+          },
+          {
+            "id": "foreign-post",
+            "authorId": "user-sable",
+            "version": 7,
+            "title": "Foreign",
+            "summary": "Another user’s private project.",
+            "detail": "Never visible to Amber user queries.",
+            "published": true
+          },
+          {
+            "id": "noted",
+            "authorId": "user-amber",
+            "version": 3,
+            "title": "Noted",
+            "summary": "Offline voice transcription for macOS.",
+            "detail": "Noted transcribes English and Mandarin voice notes on device.",
+            "published": true
+          },
+          {
+            "id": "post:candidate-clipwise",
+            "authorId": "user-amber",
+            "version": 1,
+            "title": "Clipwise",
+            "summary": "A clipboard organizer.",
+            "detail": "Clipwise is a free clipboard organizer licensed under the MIT license.",
+            "published": true
+          }
+        ],
+        "memories": [
+          {
+            "id": "foreign-memory",
+            "userId": "user-sable",
+            "text": "Private preference.",
+            "version": 1
+          },
+          {
+            "id": "style",
+            "userId": "user-amber",
+            "text": "Prefer detailed factual posts.",
+            "version": 2
+          }
+        ],
+        "candidates": [
+          {
+            "id": "candidate-clipwise",
+            "userId": "user-amber",
+            "version": 2,
+            "title": "Clipwise",
+            "summary": "A clipboard organizer.",
+            "detail": "License was not supplied.",
+            "status": "published"
+          }
+        ],
+        "requests": [
+          {
+            "id": "live-request-license",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which license will Clipwise use?",
+            "sequence": 11,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": null,
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": true
+          },
+          {
+            "id": "live-request-language",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Does Noted support Mandarin?",
+            "sequence": 12,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          {
+            "id": "live-request-team",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Should Atlas support team workspaces?",
+            "sequence": 13,
+            "turnId": null,
+            "intent": "suggestion",
+            "linkedPostId": "atlas",
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-turn-1:user",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "user",
+            "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+            "sequence": 15,
+            "turnId": "live-turn-1",
+            "intent": "request",
+            "linkedPostId": null,
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          {
+            "id": "live-turn-1:assistant",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+            "sequence": 16,
+            "turnId": "live-turn-1",
+            "intent": "informational",
+            "linkedPostId": "noted",
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": true
+          }
+        ],
+        "addressing": {
+          "live-request-license": {
+            "outcome": "answered",
+            "reason": "The user stated Clipwise uses the MIT license and the assistant confirmed publishing it with the MIT license."
+          },
+          "live-request-language": {
+            "outcome": "answered",
+            "reason": "The user confirmed that Noted supports Mandarin and the assistant acknowledged updating it."
+          },
+          "live-request-team": {
+            "outcome": "ignored",
+            "reason": "The user explicitly instructed to ignore the Atlas team-workspace suggestion."
+          }
+        }
+      }
+    },
+    {
+      "input": {
+        "turnId": "live-turn-2",
+        "userId": "user-amber",
+        "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise."
+      },
+      "receipt": {
+        "turnId": "live-turn-2",
+        "userId": "user-amber",
+        "status": "completed",
+        "assistantMessageId": "live-turn-2:assistant",
+        "diffs": [
+          {
+            "postId": "atlas",
+            "before": {
+              "id": "atlas",
+              "authorId": "user-amber",
+              "version": 4,
+              "title": "Atlas",
+              "summary": "A visual workspace for research.",
+              "detail": "Atlas connects notes and sources.",
+              "published": true
+            },
+            "after": {
+              "id": "atlas",
+              "authorId": "user-amber",
+              "version": 5,
+              "title": "Atlas",
+              "summary": "An offline visual workspace for research.",
+              "detail": "Atlas connects notes and sources and works offline.",
+              "published": true
+            }
+          },
+          {
+            "postId": "noted",
+            "before": {
+              "id": "noted",
+              "authorId": "user-amber",
+              "version": 3,
+              "title": "Noted",
+              "summary": "Offline voice transcription for macOS.",
+              "detail": "Noted transcribes English and Mandarin voice notes on device.",
+              "published": true
+            },
+            "after": {
+              "id": "noted",
+              "authorId": "user-amber",
+              "version": 4,
+              "title": "Noted",
+              "summary": "On-device voice transcription for macOS.",
+              "detail": "Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.",
+              "published": true
+            }
+          },
+          {
+            "postId": "aurora",
+            "before": {
+              "id": "aurora",
+              "authorId": "user-amber",
+              "version": 1,
+              "title": "Aurora",
+              "summary": "A collaborative planning tool in public beta.",
+              "detail": "Aurora helps teams plan launches. Public beta access is available.",
+              "published": true
+            },
+            "after": {
+              "id": "aurora",
+              "authorId": "user-amber",
+              "version": 2,
+              "title": "Aurora",
+              "summary": "An invite-only collaborative planning tool.",
+              "detail": "Aurora helps teams plan launches. Access is invite-only.",
+              "published": true
+            }
+          }
+        ],
+        "candidatePublications": [],
+        "background": [
+          {
+            "task": "memory",
+            "status": "done",
+            "reason": null
+          },
+          {
+            "task": "addressing",
+            "status": "done",
+            "reason": null
+          }
+        ]
+      },
+      "calls": [
+        {
+          "task": "query-planner",
+          "input": {
+            "turn": {
+              "turnId": "live-turn-2",
+              "userId": "user-amber",
+              "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+              "userMessageId": "live-turn-2:user",
+              "cutoffSequence": 17
+            },
+            "recentExchanges": [
+              {
+                "turnId": "history-4",
+                "userMessage": {
+                  "id": "history-4:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Use sentence case in titles.",
+                  "sequence": 7,
+                  "turnId": "history-4",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "history-4:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "I will preserve sentence case.",
+                  "sequence": 8,
+                  "turnId": "history-4",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                }
+              },
+              {
+                "turnId": "history-5",
+                "userMessage": {
+                  "id": "history-5:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Keep release details factual.",
+                  "sequence": 9,
+                  "turnId": "history-5",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "history-5:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "I will keep release details factual.",
+                  "sequence": 10,
+                  "turnId": "history-5",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                }
+              },
+              {
+                "turnId": "live-turn-1",
+                "userMessage": {
+                  "id": "live-turn-1:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+                  "sequence": 15,
+                  "turnId": "live-turn-1",
+                  "intent": "request",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "live-turn-1:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+                  "sequence": 16,
+                  "turnId": "live-turn-1",
+                  "intent": "informational",
+                  "linkedPostId": "noted",
+                  "pendingCandidateId": "candidate-clipwise",
+                  "addressed": true
+                }
+              }
+            ],
+            "pendingRequests": [
+              {
+                "id": "live-request-exports",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which three export formats will Noted support?",
+                "sequence": 14,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              }
+            ]
+          },
+          "output": {
+            "queries": [
+              {
+                "limit": 5,
+                "resource": "posts",
+                "terms": ["Atlas"]
+              },
+              {
+                "limit": 5,
+                "resource": "posts",
+                "terms": ["Aurora"]
+              },
+              {
+                "limit": 5,
+                "resource": "user_messages",
+                "terms": ["Aurora", "invite-only"]
+              }
+            ]
+          }
+        },
+        {
+          "task": "responder",
+          "input": {
+            "turn": {
+              "turnId": "live-turn-2",
+              "userId": "user-amber",
+              "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+              "userMessageId": "live-turn-2:user",
+              "cutoffSequence": 17
+            },
+            "recentExchanges": [
+              {
+                "turnId": "history-4",
+                "userMessage": {
+                  "id": "history-4:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Use sentence case in titles.",
+                  "sequence": 7,
+                  "turnId": "history-4",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "history-4:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "I will preserve sentence case.",
+                  "sequence": 8,
+                  "turnId": "history-4",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                }
+              },
+              {
+                "turnId": "history-5",
+                "userMessage": {
+                  "id": "history-5:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Keep release details factual.",
+                  "sequence": 9,
+                  "turnId": "history-5",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "history-5:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "I will keep release details factual.",
+                  "sequence": 10,
+                  "turnId": "history-5",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                }
+              },
+              {
+                "turnId": "live-turn-1",
+                "userMessage": {
+                  "id": "live-turn-1:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+                  "sequence": 15,
+                  "turnId": "live-turn-1",
+                  "intent": "request",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                },
+                "assistantMessage": {
+                  "id": "live-turn-1:assistant",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "assistant",
+                  "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+                  "sequence": 16,
+                  "turnId": "live-turn-1",
+                  "intent": "informational",
+                  "linkedPostId": "noted",
+                  "pendingCandidateId": "candidate-clipwise",
+                  "addressed": true
+                }
+              }
+            ],
+            "pendingRequests": [
+              {
+                "id": "live-request-exports",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which three export formats will Noted support?",
+                "sequence": 14,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              }
+            ],
+            "queryResults": {
+              "posts": [
+                {
+                  "id": "noted",
+                  "authorId": "user-amber",
+                  "version": 3,
+                  "title": "Noted",
+                  "summary": "Offline voice transcription for macOS.",
+                  "detail": "Noted transcribes English and Mandarin voice notes on device.",
+                  "published": true
+                },
+                {
+                  "id": "atlas",
+                  "authorId": "user-amber",
+                  "version": 4,
+                  "title": "Atlas",
+                  "summary": "A visual workspace for research.",
+                  "detail": "Atlas connects notes and sources.",
+                  "published": true
+                },
+                {
+                  "id": "aurora",
+                  "authorId": "user-amber",
+                  "version": 1,
+                  "title": "Aurora",
+                  "summary": "A collaborative planning tool in public beta.",
+                  "detail": "Aurora helps teams plan launches. Public beta access is available.",
+                  "published": true
+                }
+              ],
+              "userMessages": [
+                {
+                  "id": "history-1:user",
+                  "userId": "user-amber",
+                  "conversationId": "conversation:user-amber",
+                  "role": "user",
+                  "text": "Aurora should remain invite-only.",
+                  "sequence": 1,
+                  "turnId": "history-1",
+                  "intent": "informational",
+                  "linkedPostId": null,
+                  "pendingCandidateId": null,
+                  "addressed": true
+                }
+              ],
+              "assistantMessages": [],
+              "linkedRequestPostIds": ["noted"]
+            },
+            "memories": [
+              {
+                "id": "style",
+                "userId": "user-amber",
+                "text": "Prefer detailed factual posts.",
+                "version": 2
+              }
+            ],
+            "unaddressed": [
+              {
+                "id": "live-request-exports",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which three export formats will Noted support?",
+                "sequence": 14,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              }
+            ],
+            "candidates": []
+          },
+          "output": {
+            "classification": "answer",
+            "intent": "informational",
+            "pendingOutcome": {
+              "kind": "none"
+            },
+            "postChanges": [
+              {
+                "detail": "Atlas connects notes and sources and works offline.",
+                "evidence": [
+                  {
+                    "id": "atlas",
+                    "kind": "post",
+                    "version": 4
+                  },
+                  {
+                    "id": "live-turn-2:user",
+                    "kind": "user_message"
+                  }
+                ],
+                "expectedVersion": 4,
+                "postId": "atlas",
+                "published": true,
+                "summary": "An offline visual workspace for research.",
+                "title": "Atlas"
+              },
+              {
+                "detail": "Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.",
+                "evidence": [
+                  {
+                    "id": "noted",
+                    "kind": "post",
+                    "version": 3
+                  },
+                  {
+                    "id": "live-turn-2:user",
+                    "kind": "user_message"
+                  },
+                  {
+                    "id": "live-request-exports",
+                    "kind": "request"
+                  }
+                ],
+                "expectedVersion": 3,
+                "postId": "noted",
+                "published": true,
+                "summary": "On-device voice transcription for macOS.",
+                "title": "Noted"
+              },
+              {
+                "detail": "Aurora helps teams plan launches. Access is invite-only.",
+                "evidence": [
+                  {
+                    "id": "aurora",
+                    "kind": "post",
+                    "version": 1
+                  },
+                  {
+                    "id": "live-turn-2:user",
+                    "kind": "user_message"
+                  },
+                  {
+                    "id": "history-1:user",
+                    "kind": "user_message"
+                  }
+                ],
+                "expectedVersion": 1,
+                "postId": "aurora",
+                "published": true,
+                "summary": "An invite-only collaborative planning tool.",
+                "title": "Aurora"
+              }
+            ],
+            "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts."
+          }
+        },
+        {
+          "task": "memory",
+          "input": {
+            "userMessage": {
+              "id": "live-turn-2:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+              "sequence": 17,
+              "turnId": "live-turn-2",
+              "intent": "request",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantAnswer": {
+              "id": "live-turn-2:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts.",
+              "sequence": 18,
+              "turnId": "live-turn-2",
+              "intent": "informational",
+              "linkedPostId": "atlas",
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "memories": [
+              {
+                "id": "style",
+                "userId": "user-amber",
+                "text": "Prefer detailed factual posts.",
+                "version": 2
+              }
+            ]
+          },
+          "output": {
+            "operations": [
+              {
+                "expectedVersion": 2,
+                "id": "style",
+                "kind": "update",
+                "text": "Prefer concise posts."
+              }
+            ]
+          }
+        },
+        {
+          "task": "addressing",
+          "input": {
+            "userMessage": {
+              "id": "live-turn-2:user",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "user",
+              "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+              "sequence": 17,
+              "turnId": "live-turn-2",
+              "intent": "request",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantAnswer": {
+              "id": "live-turn-2:assistant",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts.",
+              "sequence": 18,
+              "turnId": "live-turn-2",
+              "intent": "informational",
+              "linkedPostId": "atlas",
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "unaddressedSnapshot": [
+              {
+                "id": "live-request-exports",
+                "userId": "user-amber",
+                "conversationId": "conversation:user-amber",
+                "role": "assistant",
+                "text": "Which three export formats will Noted support?",
+                "sequence": 14,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "noted",
+                "pendingCandidateId": null,
+                "addressed": false
+              }
+            ]
+          },
+          "output": {
+            "resolutions": []
+          }
+        }
+      ],
+      "progress": [
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "admission",
+          "status": "running",
+          "at": 1788867228012
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "admission",
+          "status": "done",
+          "at": 1788867228013
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "planner",
+          "status": "running",
+          "at": 1788867228017
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "planner",
+          "status": "done",
+          "at": 1788867255619
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "query_execution",
+          "status": "running",
+          "at": 1788867255619
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "query_execution",
+          "status": "done",
+          "at": 1788867255620
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "responder",
+          "status": "running",
+          "at": 1788867255620
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "responder",
+          "status": "done",
+          "at": 1788867268419
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "publication",
+          "status": "running",
+          "at": 1788867268419
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "publication",
+          "status": "done",
+          "at": 1788867268420
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "memory",
+          "status": "running",
+          "at": 1788867268428
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "addressing",
+          "status": "running",
+          "at": 1788867268434
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "memory",
+          "status": "done",
+          "at": 1788867273972
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "addressing",
+          "status": "done",
+          "at": 1788867284840
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "finalize",
+          "status": "running",
+          "at": 1788867284841
+        },
+        {
+          "turnId": "live-turn-2",
+          "userId": "user-amber",
+          "task": "finalize",
+          "status": "done",
+          "at": 1788867284841
+        }
+      ],
+      "before": {
+        "posts": [
+          {
+            "id": "atlas",
+            "authorId": "user-amber",
+            "version": 4,
+            "title": "Atlas",
+            "summary": "A visual workspace for research.",
+            "detail": "Atlas connects notes and sources.",
+            "published": true
+          },
+          {
+            "id": "aurora",
+            "authorId": "user-amber",
+            "version": 1,
+            "title": "Aurora",
+            "summary": "A collaborative planning tool in public beta.",
+            "detail": "Aurora helps teams plan launches. Public beta access is available.",
+            "published": true
+          },
+          {
+            "id": "foreign-post",
+            "authorId": "user-sable",
+            "version": 7,
+            "title": "Foreign",
+            "summary": "Another user’s private project.",
+            "detail": "Never visible to Amber user queries.",
+            "published": true
+          },
+          {
+            "id": "noted",
+            "authorId": "user-amber",
+            "version": 3,
+            "title": "Noted",
+            "summary": "Offline voice transcription for macOS.",
+            "detail": "Noted transcribes English and Mandarin voice notes on device.",
+            "published": true
+          },
+          {
+            "id": "post:candidate-clipwise",
+            "authorId": "user-amber",
+            "version": 1,
+            "title": "Clipwise",
+            "summary": "A clipboard organizer.",
+            "detail": "Clipwise is a free clipboard organizer licensed under the MIT license.",
+            "published": true
+          }
+        ],
+        "memories": [
+          {
+            "id": "foreign-memory",
+            "userId": "user-sable",
+            "text": "Private preference.",
+            "version": 1
+          },
+          {
+            "id": "style",
+            "userId": "user-amber",
+            "text": "Prefer detailed factual posts.",
+            "version": 2
+          }
+        ],
+        "candidates": [
+          {
+            "id": "candidate-clipwise",
+            "userId": "user-amber",
+            "version": 2,
+            "title": "Clipwise",
+            "summary": "A clipboard organizer.",
+            "detail": "License was not supplied.",
+            "status": "published"
+          }
+        ],
+        "requests": [
+          {
+            "id": "live-request-license",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which license will Clipwise use?",
+            "sequence": 11,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": null,
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": true
+          },
+          {
+            "id": "live-request-language",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Does Noted support Mandarin?",
+            "sequence": 12,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          {
+            "id": "live-request-team",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Should Atlas support team workspaces?",
+            "sequence": 13,
+            "turnId": null,
+            "intent": "suggestion",
+            "linkedPostId": "atlas",
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-turn-1:user",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "user",
+            "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+            "sequence": 15,
+            "turnId": "live-turn-1",
+            "intent": "request",
+            "linkedPostId": null,
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          {
+            "id": "live-turn-1:assistant",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+            "sequence": 16,
+            "turnId": "live-turn-1",
+            "intent": "informational",
+            "linkedPostId": "noted",
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": true
+          }
+        ],
+        "addressing": {
+          "live-request-license": {
+            "outcome": "answered",
+            "reason": "The user stated Clipwise uses the MIT license and the assistant confirmed publishing it with the MIT license."
+          },
+          "live-request-language": {
+            "outcome": "answered",
+            "reason": "The user confirmed that Noted supports Mandarin and the assistant acknowledged updating it."
+          },
+          "live-request-team": {
+            "outcome": "ignored",
+            "reason": "The user explicitly instructed to ignore the Atlas team-workspace suggestion."
+          }
+        }
+      },
+      "after": {
+        "posts": [
+          {
+            "id": "atlas",
+            "authorId": "user-amber",
+            "version": 5,
+            "title": "Atlas",
+            "summary": "An offline visual workspace for research.",
+            "detail": "Atlas connects notes and sources and works offline.",
+            "published": true
+          },
+          {
+            "id": "aurora",
+            "authorId": "user-amber",
+            "version": 2,
+            "title": "Aurora",
+            "summary": "An invite-only collaborative planning tool.",
+            "detail": "Aurora helps teams plan launches. Access is invite-only.",
+            "published": true
+          },
+          {
+            "id": "foreign-post",
+            "authorId": "user-sable",
+            "version": 7,
+            "title": "Foreign",
+            "summary": "Another user’s private project.",
+            "detail": "Never visible to Amber user queries.",
+            "published": true
+          },
+          {
+            "id": "noted",
+            "authorId": "user-amber",
+            "version": 4,
+            "title": "Noted",
+            "summary": "On-device voice transcription for macOS.",
+            "detail": "Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.",
+            "published": true
+          },
+          {
+            "id": "post:candidate-clipwise",
+            "authorId": "user-amber",
+            "version": 1,
+            "title": "Clipwise",
+            "summary": "A clipboard organizer.",
+            "detail": "Clipwise is a free clipboard organizer licensed under the MIT license.",
+            "published": true
+          }
+        ],
+        "memories": [
+          {
+            "id": "foreign-memory",
+            "userId": "user-sable",
+            "text": "Private preference.",
+            "version": 1
+          },
+          {
+            "id": "style",
+            "userId": "user-amber",
+            "text": "Prefer concise posts.",
+            "version": 3
+          }
+        ],
+        "candidates": [
+          {
+            "id": "candidate-clipwise",
+            "userId": "user-amber",
+            "version": 2,
+            "title": "Clipwise",
+            "summary": "A clipboard organizer.",
+            "detail": "License was not supplied.",
+            "status": "published"
+          }
+        ],
+        "requests": [
+          {
+            "id": "live-request-license",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which license will Clipwise use?",
+            "sequence": 11,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": null,
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": true
+          },
+          {
+            "id": "live-request-language",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Does Noted support Mandarin?",
+            "sequence": 12,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          {
+            "id": "live-request-team",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Should Atlas support team workspaces?",
+            "sequence": 13,
+            "turnId": null,
+            "intent": "suggestion",
+            "linkedPostId": "atlas",
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          {
+            "id": "live-request-exports",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Which three export formats will Noted support?",
+            "sequence": 14,
+            "turnId": null,
+            "intent": "question",
+            "linkedPostId": "noted",
+            "pendingCandidateId": null,
+            "addressed": false
+          },
+          {
+            "id": "live-turn-1:user",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "user",
+            "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+            "sequence": 15,
+            "turnId": "live-turn-1",
+            "intent": "request",
+            "linkedPostId": null,
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          {
+            "id": "live-turn-1:assistant",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+            "sequence": 16,
+            "turnId": "live-turn-1",
+            "intent": "informational",
+            "linkedPostId": "noted",
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": true
+          },
+          {
+            "id": "live-turn-2:user",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "user",
+            "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+            "sequence": 17,
+            "turnId": "live-turn-2",
+            "intent": "request",
+            "linkedPostId": null,
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          {
+            "id": "live-turn-2:assistant",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts.",
+            "sequence": 18,
+            "turnId": "live-turn-2",
+            "intent": "informational",
+            "linkedPostId": "atlas",
+            "pendingCandidateId": null,
+            "addressed": true
+          }
+        ],
+        "addressing": {
+          "live-request-license": {
+            "outcome": "answered",
+            "reason": "The user stated Clipwise uses the MIT license and the assistant confirmed publishing it with the MIT license."
+          },
+          "live-request-language": {
+            "outcome": "answered",
+            "reason": "The user confirmed that Noted supports Mandarin and the assistant acknowledged updating it."
+          },
+          "live-request-team": {
+            "outcome": "ignored",
+            "reason": "The user explicitly instructed to ignore the Atlas team-workspace suggestion."
+          }
+        }
+      }
+    }
+  ],
+  "progress": [
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "admission",
+      "status": "running",
+      "at": 1788867180929
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "admission",
+      "status": "done",
+      "at": 1788867180931
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "planner",
+      "status": "running",
+      "at": 1788867180937
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "planner",
+      "status": "done",
+      "at": 1788867204191
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "query_execution",
+      "status": "running",
+      "at": 1788867204191
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "query_execution",
+      "status": "done",
+      "at": 1788867204192
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "responder",
+      "status": "running",
+      "at": 1788867204192
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "responder",
+      "status": "done",
+      "at": 1788867217629
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "publication",
+      "status": "running",
+      "at": 1788867217630
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "publication",
+      "status": "done",
+      "at": 1788867217631
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "memory",
+      "status": "running",
+      "at": 1788867217648
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "addressing",
+      "status": "running",
+      "at": 1788867217653
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "memory",
+      "status": "done",
+      "at": 1788867227625
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "addressing",
+      "status": "done",
+      "at": 1788867228005
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "finalize",
+      "status": "running",
+      "at": 1788867228006
+    },
+    {
+      "turnId": "live-turn-1",
+      "userId": "user-amber",
+      "task": "finalize",
+      "status": "done",
+      "at": 1788867228006
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "admission",
+      "status": "running",
+      "at": 1788867228012
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "admission",
+      "status": "done",
+      "at": 1788867228013
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "planner",
+      "status": "running",
+      "at": 1788867228017
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "planner",
+      "status": "done",
+      "at": 1788867255619
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "query_execution",
+      "status": "running",
+      "at": 1788867255619
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "query_execution",
+      "status": "done",
+      "at": 1788867255620
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "responder",
+      "status": "running",
+      "at": 1788867255620
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "responder",
+      "status": "done",
+      "at": 1788867268419
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "publication",
+      "status": "running",
+      "at": 1788867268419
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "publication",
+      "status": "done",
+      "at": 1788867268420
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "memory",
+      "status": "running",
+      "at": 1788867268428
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "addressing",
+      "status": "running",
+      "at": 1788867268434
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "memory",
+      "status": "done",
+      "at": 1788867273972
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "addressing",
+      "status": "done",
+      "at": 1788867284840
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "finalize",
+      "status": "running",
+      "at": 1788867284841
+    },
+    {
+      "turnId": "live-turn-2",
+      "userId": "user-amber",
+      "task": "finalize",
+      "status": "done",
+      "at": 1788867284841
+    }
+  ],
+  "observations": [
+    {
+      "task": "query-planner",
+      "observation": {
+        "kind": "configuration",
+        "agent": "amber",
+        "model": "gemini-3.8-flash-medium",
+        "declaredTools": ["finish"],
+        "runtimeInventory": [
+          "ask_custom_permission",
+          "ask_permission",
+          "ask_question",
+          "browser_click_element",
+          "browser_drag_pixel_to_pixel",
+          "browser_get_dom",
+          "browser_get_network_request",
+          "browser_input",
+          "browser_list_network_requests",
+          "browser_mouse_down",
+          "browser_mouse_up",
+          "browser_move_mouse",
+          "browser_press_key",
+          "browser_refresh_page",
+          "browser_resize_window",
+          "browser_scroll",
+          "browser_scroll_dom",
+          "browser_select_option",
+          "browser_subagent",
+          "call_mcp_tool",
+          "capture_browser_console_logs",
+          "capture_browser_screenshot",
+          "click_browser_pixel",
+          "command_status",
+          "define_subagent",
+          "delete_knowledge",
+          "execute_browser_javascript",
+          "find_by_name",
+          "finish",
+          "generate_image",
+          "grep_search",
+          "invoke_subagent",
+          "list_browser_pages",
+          "list_dir",
+          "list_permissions",
+          "list_resources",
+          "manage_inbox",
+          "manage_subagents",
+          "manage_task",
+          "multi_replace_file_content",
+          "notebook_edit",
+          "notebook_execution",
+          "open_browser_url",
+          "read_browser_page",
+          "read_resource",
+          "read_url_content",
+          "replace_file_content",
+          "run_command",
+          "schedule",
+          "search_web",
+          "sed_file",
+          "send_command_input",
+          "send_message",
+          "view_file",
+          "wait",
+          "wait_5_seconds",
+          "write_to_file"
+        ],
+        "observedTools": [],
+        "failedTools": [],
+        "controlProvenance": "antigravity-stream-json-v1"
+      }
+    },
+    {
+      "task": "responder",
+      "observation": {
+        "kind": "configuration",
+        "agent": "amber",
+        "model": "gemini-3.8-flash-medium",
+        "declaredTools": ["finish", "search_web", "read_url_content", "amber/readFetchedPage"],
+        "runtimeInventory": [
+          "ask_custom_permission",
+          "ask_permission",
+          "ask_question",
+          "browser_click_element",
+          "browser_drag_pixel_to_pixel",
+          "browser_get_dom",
+          "browser_get_network_request",
+          "browser_input",
+          "browser_list_network_requests",
+          "browser_mouse_down",
+          "browser_mouse_up",
+          "browser_move_mouse",
+          "browser_press_key",
+          "browser_refresh_page",
+          "browser_resize_window",
+          "browser_scroll",
+          "browser_scroll_dom",
+          "browser_select_option",
+          "browser_subagent",
+          "call_mcp_tool",
+          "capture_browser_console_logs",
+          "capture_browser_screenshot",
+          "click_browser_pixel",
+          "command_status",
+          "define_subagent",
+          "delete_knowledge",
+          "execute_browser_javascript",
+          "find_by_name",
+          "finish",
+          "generate_image",
+          "grep_search",
+          "invoke_subagent",
+          "list_browser_pages",
+          "list_dir",
+          "list_permissions",
+          "list_resources",
+          "manage_inbox",
+          "manage_subagents",
+          "manage_task",
+          "multi_replace_file_content",
+          "notebook_edit",
+          "notebook_execution",
+          "open_browser_url",
+          "read_browser_page",
+          "read_resource",
+          "read_url_content",
+          "replace_file_content",
+          "run_command",
+          "schedule",
+          "search_web",
+          "sed_file",
+          "send_command_input",
+          "send_message",
+          "view_file",
+          "wait",
+          "wait_5_seconds",
+          "write_to_file"
+        ],
+        "observedTools": [],
+        "failedTools": [],
+        "controlProvenance": "antigravity-stream-json-v1"
+      }
+    },
+    {
+      "task": "memory",
+      "observation": {
+        "kind": "configuration",
+        "agent": "amber",
+        "model": "gemini-3.8-flash-medium",
+        "declaredTools": ["finish"],
+        "runtimeInventory": [
+          "ask_custom_permission",
+          "ask_permission",
+          "ask_question",
+          "browser_click_element",
+          "browser_drag_pixel_to_pixel",
+          "browser_get_dom",
+          "browser_get_network_request",
+          "browser_input",
+          "browser_list_network_requests",
+          "browser_mouse_down",
+          "browser_mouse_up",
+          "browser_move_mouse",
+          "browser_press_key",
+          "browser_refresh_page",
+          "browser_resize_window",
+          "browser_scroll",
+          "browser_scroll_dom",
+          "browser_select_option",
+          "browser_subagent",
+          "call_mcp_tool",
+          "capture_browser_console_logs",
+          "capture_browser_screenshot",
+          "click_browser_pixel",
+          "command_status",
+          "define_subagent",
+          "delete_knowledge",
+          "execute_browser_javascript",
+          "find_by_name",
+          "finish",
+          "generate_image",
+          "grep_search",
+          "invoke_subagent",
+          "list_browser_pages",
+          "list_dir",
+          "list_permissions",
+          "list_resources",
+          "manage_inbox",
+          "manage_subagents",
+          "manage_task",
+          "multi_replace_file_content",
+          "notebook_edit",
+          "notebook_execution",
+          "open_browser_url",
+          "read_browser_page",
+          "read_resource",
+          "read_url_content",
+          "replace_file_content",
+          "run_command",
+          "schedule",
+          "search_web",
+          "sed_file",
+          "send_command_input",
+          "send_message",
+          "view_file",
+          "wait",
+          "wait_5_seconds",
+          "write_to_file"
+        ],
+        "observedTools": [],
+        "failedTools": [],
+        "controlProvenance": "antigravity-stream-json-v1"
+      }
+    },
+    {
+      "task": "addressing",
+      "observation": {
+        "kind": "configuration",
+        "agent": "amber",
+        "model": "gemini-3.8-flash-medium",
+        "declaredTools": ["finish"],
+        "runtimeInventory": [
+          "ask_custom_permission",
+          "ask_permission",
+          "ask_question",
+          "browser_click_element",
+          "browser_drag_pixel_to_pixel",
+          "browser_get_dom",
+          "browser_get_network_request",
+          "browser_input",
+          "browser_list_network_requests",
+          "browser_mouse_down",
+          "browser_mouse_up",
+          "browser_move_mouse",
+          "browser_press_key",
+          "browser_refresh_page",
+          "browser_resize_window",
+          "browser_scroll",
+          "browser_scroll_dom",
+          "browser_select_option",
+          "browser_subagent",
+          "call_mcp_tool",
+          "capture_browser_console_logs",
+          "capture_browser_screenshot",
+          "click_browser_pixel",
+          "command_status",
+          "define_subagent",
+          "delete_knowledge",
+          "execute_browser_javascript",
+          "find_by_name",
+          "finish",
+          "generate_image",
+          "grep_search",
+          "invoke_subagent",
+          "list_browser_pages",
+          "list_dir",
+          "list_permissions",
+          "list_resources",
+          "manage_inbox",
+          "manage_subagents",
+          "manage_task",
+          "multi_replace_file_content",
+          "notebook_edit",
+          "notebook_execution",
+          "open_browser_url",
+          "read_browser_page",
+          "read_resource",
+          "read_url_content",
+          "replace_file_content",
+          "run_command",
+          "schedule",
+          "search_web",
+          "sed_file",
+          "send_command_input",
+          "send_message",
+          "view_file",
+          "wait",
+          "wait_5_seconds",
+          "write_to_file"
+        ],
+        "observedTools": [],
+        "failedTools": [],
+        "controlProvenance": "antigravity-stream-json-v1"
+      }
+    },
+    {
+      "task": "query-planner",
+      "observation": {
+        "kind": "configuration",
+        "agent": "amber",
+        "model": "gemini-3.8-flash-medium",
+        "declaredTools": ["finish"],
+        "runtimeInventory": [
+          "ask_custom_permission",
+          "ask_permission",
+          "ask_question",
+          "browser_click_element",
+          "browser_drag_pixel_to_pixel",
+          "browser_get_dom",
+          "browser_get_network_request",
+          "browser_input",
+          "browser_list_network_requests",
+          "browser_mouse_down",
+          "browser_mouse_up",
+          "browser_move_mouse",
+          "browser_press_key",
+          "browser_refresh_page",
+          "browser_resize_window",
+          "browser_scroll",
+          "browser_scroll_dom",
+          "browser_select_option",
+          "browser_subagent",
+          "call_mcp_tool",
+          "capture_browser_console_logs",
+          "capture_browser_screenshot",
+          "click_browser_pixel",
+          "command_status",
+          "define_subagent",
+          "delete_knowledge",
+          "execute_browser_javascript",
+          "find_by_name",
+          "finish",
+          "generate_image",
+          "grep_search",
+          "invoke_subagent",
+          "list_browser_pages",
+          "list_dir",
+          "list_permissions",
+          "list_resources",
+          "manage_inbox",
+          "manage_subagents",
+          "manage_task",
+          "multi_replace_file_content",
+          "notebook_edit",
+          "notebook_execution",
+          "open_browser_url",
+          "read_browser_page",
+          "read_resource",
+          "read_url_content",
+          "replace_file_content",
+          "run_command",
+          "schedule",
+          "search_web",
+          "sed_file",
+          "send_command_input",
+          "send_message",
+          "view_file",
+          "wait",
+          "wait_5_seconds",
+          "write_to_file"
+        ],
+        "observedTools": [],
+        "failedTools": [],
+        "controlProvenance": "antigravity-stream-json-v1"
+      }
+    },
+    {
+      "task": "responder",
+      "observation": {
+        "kind": "configuration",
+        "agent": "amber",
+        "model": "gemini-3.8-flash-medium",
+        "declaredTools": ["finish", "search_web", "read_url_content", "amber/readFetchedPage"],
+        "runtimeInventory": [
+          "ask_custom_permission",
+          "ask_permission",
+          "ask_question",
+          "browser_click_element",
+          "browser_drag_pixel_to_pixel",
+          "browser_get_dom",
+          "browser_get_network_request",
+          "browser_input",
+          "browser_list_network_requests",
+          "browser_mouse_down",
+          "browser_mouse_up",
+          "browser_move_mouse",
+          "browser_press_key",
+          "browser_refresh_page",
+          "browser_resize_window",
+          "browser_scroll",
+          "browser_scroll_dom",
+          "browser_select_option",
+          "browser_subagent",
+          "call_mcp_tool",
+          "capture_browser_console_logs",
+          "capture_browser_screenshot",
+          "click_browser_pixel",
+          "command_status",
+          "define_subagent",
+          "delete_knowledge",
+          "execute_browser_javascript",
+          "find_by_name",
+          "finish",
+          "generate_image",
+          "grep_search",
+          "invoke_subagent",
+          "list_browser_pages",
+          "list_dir",
+          "list_permissions",
+          "list_resources",
+          "manage_inbox",
+          "manage_subagents",
+          "manage_task",
+          "multi_replace_file_content",
+          "notebook_edit",
+          "notebook_execution",
+          "open_browser_url",
+          "read_browser_page",
+          "read_resource",
+          "read_url_content",
+          "replace_file_content",
+          "run_command",
+          "schedule",
+          "search_web",
+          "sed_file",
+          "send_command_input",
+          "send_message",
+          "view_file",
+          "wait",
+          "wait_5_seconds",
+          "write_to_file"
+        ],
+        "observedTools": [],
+        "failedTools": [],
+        "controlProvenance": "antigravity-stream-json-v1"
+      }
+    },
+    {
+      "task": "memory",
+      "observation": {
+        "kind": "configuration",
+        "agent": "amber",
+        "model": "gemini-3.8-flash-medium",
+        "declaredTools": ["finish"],
+        "runtimeInventory": [
+          "ask_custom_permission",
+          "ask_permission",
+          "ask_question",
+          "browser_click_element",
+          "browser_drag_pixel_to_pixel",
+          "browser_get_dom",
+          "browser_get_network_request",
+          "browser_input",
+          "browser_list_network_requests",
+          "browser_mouse_down",
+          "browser_mouse_up",
+          "browser_move_mouse",
+          "browser_press_key",
+          "browser_refresh_page",
+          "browser_resize_window",
+          "browser_scroll",
+          "browser_scroll_dom",
+          "browser_select_option",
+          "browser_subagent",
+          "call_mcp_tool",
+          "capture_browser_console_logs",
+          "capture_browser_screenshot",
+          "click_browser_pixel",
+          "command_status",
+          "define_subagent",
+          "delete_knowledge",
+          "execute_browser_javascript",
+          "find_by_name",
+          "finish",
+          "generate_image",
+          "grep_search",
+          "invoke_subagent",
+          "list_browser_pages",
+          "list_dir",
+          "list_permissions",
+          "list_resources",
+          "manage_inbox",
+          "manage_subagents",
+          "manage_task",
+          "multi_replace_file_content",
+          "notebook_edit",
+          "notebook_execution",
+          "open_browser_url",
+          "read_browser_page",
+          "read_resource",
+          "read_url_content",
+          "replace_file_content",
+          "run_command",
+          "schedule",
+          "search_web",
+          "sed_file",
+          "send_command_input",
+          "send_message",
+          "view_file",
+          "wait",
+          "wait_5_seconds",
+          "write_to_file"
+        ],
+        "observedTools": [],
+        "failedTools": [],
+        "controlProvenance": "antigravity-stream-json-v1"
+      }
+    },
+    {
+      "task": "addressing",
+      "observation": {
+        "kind": "configuration",
+        "agent": "amber",
+        "model": "gemini-3.8-flash-medium",
+        "declaredTools": ["finish"],
+        "runtimeInventory": [
+          "ask_custom_permission",
+          "ask_permission",
+          "ask_question",
+          "browser_click_element",
+          "browser_drag_pixel_to_pixel",
+          "browser_get_dom",
+          "browser_get_network_request",
+          "browser_input",
+          "browser_list_network_requests",
+          "browser_mouse_down",
+          "browser_mouse_up",
+          "browser_move_mouse",
+          "browser_press_key",
+          "browser_refresh_page",
+          "browser_resize_window",
+          "browser_scroll",
+          "browser_scroll_dom",
+          "browser_select_option",
+          "browser_subagent",
+          "call_mcp_tool",
+          "capture_browser_console_logs",
+          "capture_browser_screenshot",
+          "click_browser_pixel",
+          "command_status",
+          "define_subagent",
+          "delete_knowledge",
+          "execute_browser_javascript",
+          "find_by_name",
+          "finish",
+          "generate_image",
+          "grep_search",
+          "invoke_subagent",
+          "list_browser_pages",
+          "list_dir",
+          "list_permissions",
+          "list_resources",
+          "manage_inbox",
+          "manage_subagents",
+          "manage_task",
+          "multi_replace_file_content",
+          "notebook_edit",
+          "notebook_execution",
+          "open_browser_url",
+          "read_browser_page",
+          "read_resource",
+          "read_url_content",
+          "replace_file_content",
+          "run_command",
+          "schedule",
+          "search_web",
+          "sed_file",
+          "send_command_input",
+          "send_message",
+          "view_file",
+          "wait",
+          "wait_5_seconds",
+          "write_to_file"
+        ],
+        "observedTools": [],
+        "failedTools": [],
+        "controlProvenance": "antigravity-stream-json-v1"
+      }
+    }
+  ],
+  "final": {
+    "posts": [
+      {
+        "id": "atlas",
+        "authorId": "user-amber",
+        "version": 5,
+        "title": "Atlas",
+        "summary": "An offline visual workspace for research.",
+        "detail": "Atlas connects notes and sources and works offline.",
+        "published": true
+      },
+      {
+        "id": "aurora",
+        "authorId": "user-amber",
+        "version": 2,
+        "title": "Aurora",
+        "summary": "An invite-only collaborative planning tool.",
+        "detail": "Aurora helps teams plan launches. Access is invite-only.",
+        "published": true
+      },
+      {
+        "id": "foreign-post",
+        "authorId": "user-sable",
+        "version": 7,
+        "title": "Foreign",
+        "summary": "Another user’s private project.",
+        "detail": "Never visible to Amber user queries.",
+        "published": true
+      },
+      {
+        "id": "noted",
+        "authorId": "user-amber",
+        "version": 4,
+        "title": "Noted",
+        "summary": "On-device voice transcription for macOS.",
+        "detail": "Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.",
+        "published": true
+      },
+      {
+        "id": "post:candidate-clipwise",
+        "authorId": "user-amber",
+        "version": 1,
+        "title": "Clipwise",
+        "summary": "A clipboard organizer.",
+        "detail": "Clipwise is a free clipboard organizer licensed under the MIT license.",
+        "published": true
+      }
+    ],
+    "memories": [
+      {
+        "id": "foreign-memory",
+        "userId": "user-sable",
+        "text": "Private preference.",
+        "version": 1
+      },
+      {
+        "id": "style",
+        "userId": "user-amber",
+        "text": "Prefer concise posts.",
+        "version": 3
+      }
+    ],
+    "messages": [
+      {
+        "id": "history-1:user",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "user",
+        "text": "Aurora should remain invite-only.",
+        "sequence": 1,
+        "turnId": "history-1",
+        "intent": "informational",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "history-1:assistant",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "assistant",
+        "text": "Recorded for Aurora.",
+        "sequence": 2,
+        "turnId": "history-1",
+        "intent": "informational",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "history-2:user",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "user",
+        "text": "The Noted icon is final.",
+        "sequence": 3,
+        "turnId": "history-2",
+        "intent": "informational",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "history-2:assistant",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "assistant",
+        "text": "Noted icon noted.",
+        "sequence": 4,
+        "turnId": "history-2",
+        "intent": "informational",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "history-3:user",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "user",
+        "text": "Atlas works offline now.",
+        "sequence": 5,
+        "turnId": "history-3",
+        "intent": "informational",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "history-3:assistant",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "assistant",
+        "text": "Atlas post can reflect that.",
+        "sequence": 6,
+        "turnId": "history-3",
+        "intent": "informational",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "history-4:user",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "user",
+        "text": "Use sentence case in titles.",
+        "sequence": 7,
+        "turnId": "history-4",
+        "intent": "informational",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "history-4:assistant",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "assistant",
+        "text": "I will preserve sentence case.",
+        "sequence": 8,
+        "turnId": "history-4",
+        "intent": "informational",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "history-5:user",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "user",
+        "text": "Keep release details factual.",
+        "sequence": 9,
+        "turnId": "history-5",
+        "intent": "informational",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "history-5:assistant",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "assistant",
+        "text": "I will keep release details factual.",
+        "sequence": 10,
+        "turnId": "history-5",
+        "intent": "informational",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "live-request-license",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "assistant",
+        "text": "Which license will Clipwise use?",
+        "sequence": 11,
+        "turnId": null,
+        "intent": "question",
+        "linkedPostId": null,
+        "pendingCandidateId": "candidate-clipwise",
+        "addressed": true
+      },
+      {
+        "id": "live-request-language",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "assistant",
+        "text": "Does Noted support Mandarin?",
+        "sequence": 12,
+        "turnId": null,
+        "intent": "question",
+        "linkedPostId": "noted",
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "live-request-team",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "assistant",
+        "text": "Should Atlas support team workspaces?",
+        "sequence": 13,
+        "turnId": null,
+        "intent": "suggestion",
+        "linkedPostId": "atlas",
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "live-request-exports",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "assistant",
+        "text": "Which three export formats will Noted support?",
+        "sequence": 14,
+        "turnId": null,
+        "intent": "question",
+        "linkedPostId": "noted",
+        "pendingCandidateId": null,
+        "addressed": false
+      },
+      {
+        "id": "live-turn-1:user",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "user",
+        "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+        "sequence": 15,
+        "turnId": "live-turn-1",
+        "intent": "request",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "live-turn-1:assistant",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "assistant",
+        "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+        "sequence": 16,
+        "turnId": "live-turn-1",
+        "intent": "informational",
+        "linkedPostId": "noted",
+        "pendingCandidateId": "candidate-clipwise",
+        "addressed": true
+      },
+      {
+        "id": "live-turn-2:user",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "user",
+        "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+        "sequence": 17,
+        "turnId": "live-turn-2",
+        "intent": "request",
+        "linkedPostId": null,
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      {
+        "id": "live-turn-2:assistant",
+        "userId": "user-amber",
+        "conversationId": "conversation:user-amber",
+        "role": "assistant",
+        "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts.",
+        "sequence": 18,
+        "turnId": "live-turn-2",
+        "intent": "informational",
+        "linkedPostId": "atlas",
+        "pendingCandidateId": null,
+        "addressed": true
+      }
+    ],
+    "candidates": [
+      {
+        "id": "candidate-clipwise",
+        "userId": "user-amber",
+        "version": 2,
+        "title": "Clipwise",
+        "summary": "A clipboard organizer.",
+        "detail": "License was not supplied.",
+        "status": "published"
+      }
+    ],
+    "addressing": {
+      "live-request-license": {
+        "outcome": "answered",
+        "reason": "The user stated Clipwise uses the MIT license and the assistant confirmed publishing it with the MIT license."
+      },
+      "live-request-language": {
+        "outcome": "answered",
+        "reason": "The user confirmed that Noted supports Mandarin and the assistant acknowledged updating it."
+      },
+      "live-request-team": {
+        "outcome": "ignored",
+        "reason": "The user explicitly instructed to ignore the Atlas team-workspace suggestion."
+      }
+    },
+    "turns": {
+      "history-1": {
+        "status": "completed",
+        "attempts": {},
+        "jobs": {
+          "memory": {
+            "task": "memory",
+            "status": "done",
+            "reason": null
+          },
+          "addressing": {
+            "task": "addressing",
+            "status": "done",
+            "reason": null
+          }
+        }
+      },
+      "history-2": {
+        "status": "completed",
+        "attempts": {},
+        "jobs": {
+          "memory": {
+            "task": "memory",
+            "status": "done",
+            "reason": null
+          },
+          "addressing": {
+            "task": "addressing",
+            "status": "done",
+            "reason": null
+          }
+        }
+      },
+      "history-3": {
+        "status": "completed",
+        "attempts": {},
+        "jobs": {
+          "memory": {
+            "task": "memory",
+            "status": "done",
+            "reason": null
+          },
+          "addressing": {
+            "task": "addressing",
+            "status": "done",
+            "reason": null
+          }
+        }
+      },
+      "history-4": {
+        "status": "completed",
+        "attempts": {},
+        "jobs": {
+          "memory": {
+            "task": "memory",
+            "status": "done",
+            "reason": null
+          },
+          "addressing": {
+            "task": "addressing",
+            "status": "done",
+            "reason": null
+          }
+        }
+      },
+      "history-5": {
+        "status": "completed",
+        "attempts": {},
+        "jobs": {
+          "memory": {
+            "task": "memory",
+            "status": "done",
+            "reason": null
+          },
+          "addressing": {
+            "task": "addressing",
+            "status": "done",
+            "reason": null
+          }
+        }
+      },
+      "live-turn-1": {
+        "status": "completed",
+        "attempts": {
+          "memory": 1,
+          "addressing": 1
+        },
+        "jobs": {
+          "memory": {
+            "task": "memory",
+            "status": "done",
+            "reason": null
+          },
+          "addressing": {
+            "task": "addressing",
+            "status": "done",
+            "reason": null
+          }
+        },
+        "published": {
+          "turn": {
+            "turnId": "live-turn-1",
+            "userId": "user-amber",
+            "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+            "userMessageId": "live-turn-1:user",
+            "cutoffSequence": 15
+          },
+          "userMessage": {
+            "id": "live-turn-1:user",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "user",
+            "text": "Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.",
+            "sequence": 15,
+            "turnId": "live-turn-1",
+            "intent": "request",
+            "linkedPostId": null,
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          "assistantMessage": {
+            "id": "live-turn-1:assistant",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+            "sequence": 16,
+            "turnId": "live-turn-1",
+            "intent": "informational",
+            "linkedPostId": "noted",
+            "pendingCandidateId": "candidate-clipwise",
+            "addressed": true
+          },
+          "response": {
+            "text": "Noted has been updated to reflect support for Mandarin voice transcription, and Clipwise is published with the MIT license and noted as free. Understood regarding setting aside team workspaces for Atlas, preferring detailed factual posts, and setting aside the macOS-only preference.",
+            "intent": "informational",
+            "classification": "answer",
+            "postChanges": [
+              {
+                "postId": "noted",
+                "expectedVersion": 2,
+                "title": "Noted",
+                "summary": "Offline voice transcription for macOS.",
+                "detail": "Noted transcribes English and Mandarin voice notes on device.",
+                "published": true,
+                "evidence": [
+                  {
+                    "kind": "post",
+                    "id": "noted",
+                    "version": 2
+                  },
+                  {
+                    "kind": "user_message",
+                    "id": "live-turn-1:user"
+                  },
+                  {
+                    "kind": "request",
+                    "id": "live-request-language"
+                  }
+                ]
+              }
+            ],
+            "pendingOutcome": {
+              "kind": "publish",
+              "candidateId": "candidate-clipwise",
+              "expectedVersion": 1,
+              "title": "Clipwise",
+              "summary": "A clipboard organizer.",
+              "detail": "Clipwise is a free clipboard organizer licensed under the MIT license.",
+              "evidence": [
+                {
+                  "kind": "candidate",
+                  "id": "candidate-clipwise",
+                  "version": 1
+                },
+                {
+                  "kind": "user_message",
+                  "id": "live-turn-1:user"
+                },
+                {
+                  "kind": "request",
+                  "id": "live-request-license"
+                }
+              ]
+            }
+          },
+          "webEvidence": [],
+          "diffs": [
+            {
+              "postId": "noted",
+              "before": {
+                "id": "noted",
+                "authorId": "user-amber",
+                "version": 2,
+                "title": "Noted",
+                "summary": "Offline voice transcription for macOS.",
+                "detail": "Noted transcribes English voice notes on device.",
+                "published": true
+              },
+              "after": {
+                "id": "noted",
+                "authorId": "user-amber",
+                "version": 3,
+                "title": "Noted",
+                "summary": "Offline voice transcription for macOS.",
+                "detail": "Noted transcribes English and Mandarin voice notes on device.",
+                "published": true
+              }
+            }
+          ],
+          "candidatePublications": [
+            {
+              "candidateId": "candidate-clipwise",
+              "postId": "post:candidate-clipwise"
+            }
+          ],
+          "memorySnapshot": [
+            {
+              "id": "style",
+              "userId": "user-amber",
+              "text": "Keep posts short.",
+              "version": 1
+            },
+            {
+              "id": "platform",
+              "userId": "user-amber",
+              "text": "Only mention macOS releases.",
+              "version": 3
+            }
+          ],
+          "requestSnapshot": [
+            {
+              "id": "live-request-license",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Which license will Clipwise use?",
+              "sequence": 11,
+              "turnId": null,
+              "intent": "question",
+              "linkedPostId": null,
+              "pendingCandidateId": "candidate-clipwise",
+              "addressed": false
+            },
+            {
+              "id": "live-request-language",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Does Noted support Mandarin?",
+              "sequence": 12,
+              "turnId": null,
+              "intent": "question",
+              "linkedPostId": "noted",
+              "pendingCandidateId": null,
+              "addressed": false
+            },
+            {
+              "id": "live-request-team",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Should Atlas support team workspaces?",
+              "sequence": 13,
+              "turnId": null,
+              "intent": "suggestion",
+              "linkedPostId": "atlas",
+              "pendingCandidateId": null,
+              "addressed": false
+            },
+            {
+              "id": "live-request-exports",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Which three export formats will Noted support?",
+              "sequence": 14,
+              "turnId": null,
+              "intent": "question",
+              "linkedPostId": "noted",
+              "pendingCandidateId": null,
+              "addressed": false
+            }
+          ]
+        }
+      },
+      "live-turn-2": {
+        "status": "completed",
+        "attempts": {
+          "memory": 1,
+          "addressing": 1
+        },
+        "jobs": {
+          "memory": {
+            "task": "memory",
+            "status": "done",
+            "reason": null
+          },
+          "addressing": {
+            "task": "addressing",
+            "status": "done",
+            "reason": null
+          }
+        },
+        "published": {
+          "turn": {
+            "turnId": "live-turn-2",
+            "userId": "user-amber",
+            "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+            "userMessageId": "live-turn-2:user",
+            "cutoffSequence": 17
+          },
+          "userMessage": {
+            "id": "live-turn-2:user",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "user",
+            "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.",
+            "sequence": 17,
+            "turnId": "live-turn-2",
+            "intent": "request",
+            "linkedPostId": null,
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          "assistantMessage": {
+            "id": "live-turn-2:assistant",
+            "userId": "user-amber",
+            "conversationId": "conversation:user-amber",
+            "role": "assistant",
+            "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts.",
+            "sequence": 18,
+            "turnId": "live-turn-2",
+            "intent": "informational",
+            "linkedPostId": "atlas",
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          "response": {
+            "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts.",
+            "intent": "informational",
+            "classification": "answer",
+            "postChanges": [
+              {
+                "postId": "atlas",
+                "expectedVersion": 4,
+                "title": "Atlas",
+                "summary": "An offline visual workspace for research.",
+                "detail": "Atlas connects notes and sources and works offline.",
+                "published": true,
+                "evidence": [
+                  {
+                    "kind": "post",
+                    "id": "atlas",
+                    "version": 4
+                  },
+                  {
+                    "kind": "user_message",
+                    "id": "live-turn-2:user"
+                  }
+                ]
+              },
+              {
+                "postId": "noted",
+                "expectedVersion": 3,
+                "title": "Noted",
+                "summary": "On-device voice transcription for macOS.",
+                "detail": "Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.",
+                "published": true,
+                "evidence": [
+                  {
+                    "kind": "post",
+                    "id": "noted",
+                    "version": 3
+                  },
+                  {
+                    "kind": "user_message",
+                    "id": "live-turn-2:user"
+                  },
+                  {
+                    "kind": "request",
+                    "id": "live-request-exports"
+                  }
+                ]
+              },
+              {
+                "postId": "aurora",
+                "expectedVersion": 1,
+                "title": "Aurora",
+                "summary": "An invite-only collaborative planning tool.",
+                "detail": "Aurora helps teams plan launches. Access is invite-only.",
+                "published": true,
+                "evidence": [
+                  {
+                    "kind": "post",
+                    "id": "aurora",
+                    "version": 1
+                  },
+                  {
+                    "kind": "user_message",
+                    "id": "live-turn-2:user"
+                  },
+                  {
+                    "kind": "user_message",
+                    "id": "history-1:user"
+                  }
+                ]
+              }
+            ],
+            "pendingOutcome": {
+              "kind": "none"
+            }
+          },
+          "webEvidence": [],
+          "diffs": [
+            {
+              "postId": "atlas",
+              "before": {
+                "id": "atlas",
+                "authorId": "user-amber",
+                "version": 4,
+                "title": "Atlas",
+                "summary": "A visual workspace for research.",
+                "detail": "Atlas connects notes and sources.",
+                "published": true
+              },
+              "after": {
+                "id": "atlas",
+                "authorId": "user-amber",
+                "version": 5,
+                "title": "Atlas",
+                "summary": "An offline visual workspace for research.",
+                "detail": "Atlas connects notes and sources and works offline.",
+                "published": true
+              }
+            },
+            {
+              "postId": "noted",
+              "before": {
+                "id": "noted",
+                "authorId": "user-amber",
+                "version": 3,
+                "title": "Noted",
+                "summary": "Offline voice transcription for macOS.",
+                "detail": "Noted transcribes English and Mandarin voice notes on device.",
+                "published": true
+              },
+              "after": {
+                "id": "noted",
+                "authorId": "user-amber",
+                "version": 4,
+                "title": "Noted",
+                "summary": "On-device voice transcription for macOS.",
+                "detail": "Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.",
+                "published": true
+              }
+            },
+            {
+              "postId": "aurora",
+              "before": {
+                "id": "aurora",
+                "authorId": "user-amber",
+                "version": 1,
+                "title": "Aurora",
+                "summary": "A collaborative planning tool in public beta.",
+                "detail": "Aurora helps teams plan launches. Public beta access is available.",
+                "published": true
+              },
+              "after": {
+                "id": "aurora",
+                "authorId": "user-amber",
+                "version": 2,
+                "title": "Aurora",
+                "summary": "An invite-only collaborative planning tool.",
+                "detail": "Aurora helps teams plan launches. Access is invite-only.",
+                "published": true
+              }
+            }
+          ],
+          "candidatePublications": [],
+          "memorySnapshot": [
+            {
+              "id": "style",
+              "userId": "user-amber",
+              "text": "Prefer detailed factual posts.",
+              "version": 2
+            }
+          ],
+          "requestSnapshot": [
+            {
+              "id": "live-request-exports",
+              "userId": "user-amber",
+              "conversationId": "conversation:user-amber",
+              "role": "assistant",
+              "text": "Which three export formats will Noted support?",
+              "sequence": 14,
+              "turnId": null,
+              "intent": "question",
+              "linkedPostId": "noted",
+              "pendingCandidateId": null,
+              "addressed": false
+            }
+          ]
+        }
+      }
+    }
+  },
+  "sourceProvenance": {
+    "workflow.ts": "sha256:d191f7a2d492a31871a788076916d4b0b21402d35205db90d1c2d167df39d359",
+    "agents.ts": "sha256:daec6932bfce4adbfb863aad85a0be1556555bca32d0700f61ad9c4c4a8c31cb",
+    "model.ts": "sha256:0676e9d7ab6e448131902a2c95425c8b409e38a36be8742062fccfb600f178d4",
+    "schemas.ts": "sha256:726c83fd458fa7dbb7377421fc16b02f1ba4c57d1201315cf9cf69126334b86b",
+    "testing/store.ts": "sha256:7856d72c8b8cf668dd0d3d010bdf00fe5072854fda17580d5010443c1475da24",
+    "prompts/query-planner.mdx": "sha256:201b78adbe625d9298f3ad1799ed9d63b23c95f480420f78eec9d0bf3960e419",
+    "prompts/responder.mdx": "sha256:53055be68e9acd0ad15dab2f12a7a172588b9d62acbeae39726d5682708eade7",
+    "prompts/memory.mdx": "sha256:3592390702f1f0b30fc344393a5b087735e6c7149eba7f92d519676c290b8c95",
+    "prompts/addressing.mdx": "sha256:4970f43ddd11df5e800b12154ee1217e885b40a2af94bb9524af5f4804858bdb"
+  },
+  "limits": {
+    "recentCompletedExchanges": 3,
+    "plannedQueries": 6,
+    "perQueryResults": 10,
+    "linkedRequestPosts": 20,
+    "responderResearchCalls": 8,
+    "backgroundAttempts": 2,
+    "storage": "In-memory proof only; production needs transactional DB admission and a durable queue."
+  }
+}

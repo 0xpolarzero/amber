@@ -48,16 +48,15 @@ tests/
   unit/         Domain behavior
   e2e/          Browser journeys
 poc/telegram/   Executable workflow, prompts, tools and example test
-docs/           Reviewed design, implementation plan and architecture
+poc/messaging/  Private-conversation workflow, four prompts and recorded proof
+poc/shared/     Shared Antigravity subscription adapter and native-web evidence
 ```
 
 TanStack Router connects the screens, Query manages loaded data, Form manages inputs, and Effect supplies validation and application logic. Nitro builds the Node server. The future collector and queue will be added as separate pieces once their behavior is reviewed.
 
-See the [implementation plan](docs/implementation-plan.md), [design direction](docs/design-direction.md), [planned architecture](docs/architecture.md) and [implementation notes](docs/implementation-notes.md). The original [HTML prototype](docs/feed-prototype.html) remains as a design reference.
+Start with the [Telegram PoC walkthrough](poc/telegram/walkthrough.html) and [messaging PoC walkthrough](poc/messaging/walkthrough.html). The Telegram PoC turns [fictional messages](poc/telegram/testing/fixtures.ts) into project posts. The messaging PoC admits one private user turn, plans bounded reads, publishes an answer and versioned post changes, then runs memory and request addressing in parallel before unlocking the next send. Both execute real Smithers workflows; their deterministic suites use scripted models, while explicit live commands use real Gemini 3.8 Flash requests. Storage and Telegram delivery remain fixtures.
 
-Start with the [Telegram PoC test](poc/telegram/workflow.test.ts): [fictional messages](poc/telegram/testing/fixtures.ts) pass through real Smithers workflows and real Gemini 3.8 Flash requests. Telegram and storage remain fixtures; web research uses Antigravity's native tools. The test checks ownership, creation versus update, research and follow-up routing without requiring exact wording. Its `result.json` records generated posts, questions, diffs, model answers, declared capabilities, the CLI's public runtime inventory and observed tool calls for human review. The deterministic tests keep a separate fake native-web observation.
-
-Install the PoC with `pnpm --dir poc/telegram install`. Install [Antigravity CLI](https://antigravity.google/docs/cli/install/) and run `agy` once to sign in with Google Pro. This adapter was tested with CLI 1.1.27. Google [ended consumer Gemini CLI access](https://developers.googleblog.com/en/an-important-update-transitioning-gemini-cli-to-antigravity-cli/); Antigravity is the supported subscription route.
+Install the PoC workspace with `pnpm --dir poc install`. Install [Antigravity CLI](https://antigravity.google/docs/cli/install/) and run `agy` once to sign in with Google Pro. This adapter was tested with CLI 1.1.27. Google [ended consumer Gemini CLI access](https://developers.googleblog.com/en/an-important-update-transitioning-gemini-cli-to-antigravity-cli/); Antigravity is the supported subscription route.
 
 In `~/.gemini/antigravity-cli/settings.json`, set `useG1Credits` to `false` and add `mcp(amber/*)` and `read_url(*)` to `permissions.allow`. Preserve existing settings. Antigravity omits the default `false` value when saving; the adapter rejects an explicit `true`. The [credit setting](https://www.antigravity.google/docs/cli/credits/) disables overage fallback. The broad URL grant is currently required because CLI 1.1.27 soft-denies native page reads in headless mode without it; a workspace `PreToolUse` permission override did not bypass that prompt when `inheritCustomizations` was false. The custom-agent tool list, not this process-wide permission grant, selects which Amber task receives the native fetch tool.
 
@@ -65,7 +64,9 @@ Each task gets a fresh custom primary agent with `inheritCustomizations: false`,
 
 Native calls are bound to completed NDJSON tool steps. CLI 1.1.27 returns `undefined` for native `tool_info.output`, and `PostToolUse` did not fire for these calls with inherited customizations disabled. Amber incrementally reads bounded CLI stdout so `readFetchedPage` can bind the validated current conversation ID and completed fetch step while the model is still running. The tool accepts only the fetched URL, an optional offset and a chunk size up to 6,000 characters, with a 24,000-character task budget. It makes no HTTP request and cannot select an artifact path or another conversation. Search evidence accepts links only from the tool's `Sources:` block. Fetch evidence and reader access both require a successful receipt, nonempty captured page content and matching requested, receipt and content-source URLs. Empty output, errors, missing bodies, unrelated body links and model-written URLs fail closed. Direct IP and local hostnames are rejected as evidence, but the provider resolves DNS and holds the broad `read_url(*)` permission, so this is not a complete application SSRF boundary. The focused [live native-web result](poc/telegram/native-web-result.json) contains sanitized actual search, fetch, source and adversarial-probe evidence for the reviewed IANA assertion; [the fetched-page result](poc/telegram/fetched-page-result.json) records a fresh response UUID read through the scoped reader.
 
-- `pnpm test:telegram`: **live subscription requests**; inspect `poc/telegram/result.json`, `poc/telegram/native-web-result.json` and `poc/telegram/fetched-page-result.json` afterward.
-- `pnpm --dir poc/telegram test`: deterministic workflow and native MCP transport tests, also run in CI.
+- `pnpm --dir poc install`: install the shared PoC workspace.
+- `pnpm --dir poc test`: run both deterministic PoC suites; no live model requests.
+- `pnpm test:telegram`: make **live subscription requests** for the Telegram PoC; inspect its three saved result files afterward.
+- `pnpm test:messaging`: make **eight live subscription requests** for the two-turn messaging proof; inspect `poc/messaging/result.json` afterward.
 
-The PoC has its own [package](poc/telegram/package.json), lockfile and TypeScript config. Smithers 1.0 is [not yet published](https://github.com/smithersai/smithers/blob/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c/apps/site/docs/installation.mdx), so its packages use the Git revision pinned in [the PoC dependency config](poc/telegram/pnpm-workspace.yaml).
+The PoCs share one [workspace](poc/pnpm-workspace.yaml), lockfile and subscription adapter. Each PoC keeps its own package and TypeScript config. Smithers 1.0 is [not yet published](https://github.com/smithersai/smithers/blob/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c/apps/site/docs/installation.mdx), so the workspace pins one immutable Git revision.

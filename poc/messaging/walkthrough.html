@@ -1,0 +1,1148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Amber messaging PoC · Live walkthrough</title>
+    <style>
+    :root {
+      --ink: #202020;
+      --secondary: #5f5f5f;
+      --quiet: #73736f;
+      --line: #e8e8e3;
+      --line-strong: #d7d7cf;
+      --soft: #f6f6f4;
+      --paper: #fff;
+      --amber: #b96808;
+      --amber-deep: #744000;
+      --amber-soft: #fff4df;
+      --green: #21643a;
+      --green-soft: #edf8f0;
+      --blue: #255f85;
+      --blue-soft: #eef5fa;
+      --red: #8f3030;
+      --red-soft: #fff1f1;
+      --shadow: 0 14px 40px rgb(32 32 32 / 0.07);
+      --radius: 16px;
+      --content: 1080px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 84px;
+    }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font:
+        15px / 1.58 -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    p,
+    h1,
+    h2,
+    h3,
+    h4 {
+      margin: 0;
+    }
+    a {
+      color: inherit;
+    }
+    code,
+    pre,
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    code {
+      padding: 0.1em 0.34em;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--soft);
+      font-size: 0.88em;
+    }
+    summary:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--amber);
+      outline-offset: 3px;
+    }
+
+    .topbar {
+      position: sticky;
+      z-index: 10;
+      top: 0;
+      border-bottom: 1px solid var(--line);
+      background: rgb(255 255 255 / 0.94);
+      backdrop-filter: blur(14px);
+    }
+    .topbar-inner {
+      width: min(calc(var(--content) + 64px), 100%);
+      min-height: 66px;
+      margin: auto;
+      padding: 10px 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 9px;
+      text-decoration: none;
+      font-size: 21px;
+      font-weight: 720;
+      letter-spacing: -0.04em;
+      white-space: nowrap;
+    }
+    .brand-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+    nav {
+      margin-left: auto;
+      display: flex;
+      gap: 3px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    nav a {
+      flex: none;
+      padding: 7px 9px;
+      border-radius: 7px;
+      color: var(--quiet);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    nav a:hover {
+      background: var(--soft);
+      color: var(--ink);
+    }
+
+    .wrap {
+      width: min(var(--content), calc(100% - 48px));
+      margin-inline: auto;
+    }
+    .hero {
+      padding: 82px 0 64px;
+    }
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--amber-deep);
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 18px;
+      height: 2px;
+      background: var(--amber);
+    }
+    h1 {
+      max-width: 880px;
+      margin-top: 17px;
+      font-size: clamp(43px, 7vw, 74px);
+      line-height: 0.99;
+      letter-spacing: -0.062em;
+      font-weight: 720;
+    }
+    .lede {
+      max-width: 790px;
+      margin-top: 26px;
+      color: var(--secondary);
+      font-size: clamp(17px, 2vw, 21px);
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 28px;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 4px 10px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      color: var(--secondary);
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .tag.live {
+      border-color: #edc98a;
+      background: var(--amber-soft);
+      color: var(--amber-deep);
+    }
+    .tag.live::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+    .scoreboard {
+      margin-top: 48px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .score {
+      min-width: 0;
+      padding: 18px 16px;
+      border-right: 1px solid var(--line);
+    }
+    .score:last-child {
+      border: 0;
+    }
+    .score b {
+      display: block;
+      font-size: 25px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+    .score span {
+      display: block;
+      margin-top: 7px;
+      color: var(--quiet);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+    .truth {
+      margin-top: 22px;
+      padding: 17px 19px;
+      border-left: 3px solid var(--amber);
+      border-radius: 3px 11px 11px 3px;
+      background: var(--amber-soft);
+      color: #57360f;
+    }
+
+    .section {
+      padding: 80px 0;
+      border-top: 1px solid var(--line);
+    }
+    .section.soft {
+      background: var(--soft);
+    }
+    .section-head {
+      display: grid;
+      grid-template-columns: 104px minmax(0, 1fr);
+      gap: 24px;
+      margin-bottom: 36px;
+    }
+    .step {
+      padding-top: 8px;
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    h2 {
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1.08;
+      letter-spacing: -0.045em;
+    }
+    .intro {
+      max-width: 770px;
+      margin-top: 12px;
+      color: var(--secondary);
+      font-size: 17px;
+    }
+    h3 {
+      font-size: 20px;
+      line-height: 1.25;
+      letter-spacing: -0.025em;
+    }
+    h4 {
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .agent {
+      position: relative;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+    }
+    .agent::after {
+      content: "→";
+      position: absolute;
+      top: 24px;
+      right: -17px;
+      z-index: 2;
+      color: var(--amber);
+      font-weight: 800;
+    }
+    .agent:last-child::after {
+      display: none;
+    }
+    .agent b {
+      display: block;
+      margin-bottom: 7px;
+    }
+    .agent p {
+      color: var(--secondary);
+      font-size: 13px;
+    }
+    .num {
+      display: inline-grid;
+      width: 24px;
+      height: 24px;
+      margin-bottom: 12px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--amber-soft);
+      color: var(--amber-deep);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .conversation {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 22px;
+      align-items: start;
+    }
+    .phone {
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      border-radius: 20px;
+      background: #fbfbfa;
+      box-shadow: var(--shadow);
+    }
+    .phone-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: white;
+      font-weight: 700;
+    }
+    .messages {
+      padding: 20px;
+      display: grid;
+      gap: 12px;
+    }
+    .bubble {
+      max-width: 90%;
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-radius: 14px 14px 14px 4px;
+      background: white;
+    }
+    .bubble.user {
+      justify-self: end;
+      border-color: #ebc788;
+      border-radius: 14px 14px 4px 14px;
+      background: var(--amber-soft);
+    }
+    .bubble small {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--quiet);
+      font-size: 10px;
+      font-weight: 760;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .side {
+      display: grid;
+      gap: 12px;
+    }
+    .card {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+    }
+    .card p,
+    .card li {
+      color: var(--secondary);
+    }
+    .card h3 + p,
+    .card h4 + p {
+      margin-top: 8px;
+    }
+    .pill {
+      display: inline-flex;
+      margin: 8px 5px 0 0;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--secondary);
+      font-size: 11px;
+      font-weight: 650;
+    }
+    .pill.ok {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+    .pill.open {
+      background: var(--amber-soft);
+      color: var(--amber-deep);
+    }
+    .pill.info {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+    }
+    .phase {
+      position: relative;
+      padding: 16px 13px 16px 20px;
+      border-top: 2px solid var(--line-strong);
+    }
+    .phase::before {
+      content: "";
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      top: -6px;
+      left: 2px;
+      border-radius: 50%;
+      background: var(--line-strong);
+    }
+    .phase.response {
+      border-color: var(--amber);
+      background: var(--amber-soft);
+    }
+    .phase.response::before {
+      background: var(--amber);
+    }
+    .phase.background {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+    }
+    .phase.background::before {
+      background: var(--blue);
+    }
+    .phase.unlocked {
+      border-color: var(--green);
+      background: var(--green-soft);
+    }
+    .phase.unlocked::before {
+      background: var(--green);
+    }
+    .phase b {
+      display: block;
+      font-size: 13px;
+    }
+    .phase span {
+      display: block;
+      margin-top: 5px;
+      color: var(--quiet);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .diff-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    .diff {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+    }
+    .diff-head {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--line);
+      font-weight: 700;
+    }
+    .line {
+      padding: 10px 15px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+    .minus {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+    .plus {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+    .neutral {
+      background: var(--soft);
+      color: var(--secondary);
+    }
+
+    .proof-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    .check {
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+    }
+    .check b {
+      display: block;
+      margin-bottom: 6px;
+    }
+    .check p {
+      color: var(--secondary);
+      font-size: 13px;
+    }
+    .check.fail {
+      border-color: #ebcaca;
+      background: #fffafa;
+    }
+    .check.future {
+      border-style: dashed;
+      background: var(--soft);
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+    }
+    details + details {
+      margin-top: 10px;
+    }
+    summary {
+      cursor: pointer;
+      padding: 14px 16px;
+      font-weight: 680;
+    }
+    details[open] summary {
+      border-bottom: 1px solid var(--line);
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      color: #353535;
+      background: #fafaf8;
+      font-size: 12px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .sources {
+      margin-top: 26px;
+      color: var(--quiet);
+      font-size: 12px;
+    }
+    .filemap {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .file {
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: white;
+    }
+    .file b {
+      display: block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+    }
+    .file span {
+      display: block;
+      margin-top: 4px;
+      color: var(--quiet);
+      font-size: 12px;
+    }
+    footer {
+      padding: 34px 0 52px;
+      border-top: 1px solid var(--line);
+      color: var(--quiet);
+      font-size: 12px;
+    }
+
+    @media (max-width: 780px) {
+      .topbar-inner {
+        padding-inline: 18px;
+      }
+      nav a:nth-child(-n + 2) {
+        display: none;
+      }
+      .wrap {
+        width: min(100% - 28px, var(--content));
+      }
+      .hero {
+        padding: 56px 0 44px;
+      }
+      .scoreboard {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .score {
+        border-bottom: 1px solid var(--line);
+      }
+      .score:nth-child(2n) {
+        border-right: 0;
+      }
+      .score:last-child {
+        grid-column: 1 / -1;
+      }
+      .section {
+        padding: 58px 0;
+      }
+      .section-head {
+        grid-template-columns: 1fr;
+        gap: 5px;
+      }
+      .flow,
+      .conversation,
+      .diff-grid,
+      .proof-grid,
+      .filemap {
+        grid-template-columns: 1fr;
+      }
+      .agent::after {
+        content: "↓";
+        top: auto;
+        right: 20px;
+        bottom: -20px;
+      }
+      .timeline {
+        grid-template-columns: 1fr;
+        gap: 2px;
+      }
+      .phase {
+        border-top: 0;
+        border-left: 2px solid var(--line-strong);
+      }
+      .phase::before {
+        top: 20px;
+        left: -6px;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#top"><span class="brand-dot"></span> Amber</a>
+        <nav aria-label="Walkthrough sections">
+          <a href="#shape">Four tasks</a><a href="#turns">Live turns</a><a href="#state">State</a
+          ><a href="#proof">Proof</a><a href="#source">Source</a>
+        </nav>
+      </div>
+    </header>
+    <main id="top">
+      <section class="hero">
+        <div class="wrap">
+          <div class="eyebrow">Messaging PoC · recorded live proof</div>
+          <h1>One conversation. Four bounded tasks. One durable turn boundary.</h1>
+          <p class="lede">
+            Two invented messages ran through real <strong>Gemini 3.8 Flash Medium</strong> requests
+            on a Google subscription. The answer and atomic post writes became visible first; memory
+            and request addressing finished in parallel before the next send unlocked.
+          </p>
+          <div class="tags">
+            <span class="tag live">live model</span><span class="tag">invented fixture data</span
+            ><span class="tag">Smithers Flow/Action</span><span class="tag">no Telegram send</span>
+          </div>
+          <div class="scoreboard">
+            <div class="score"><b>2</b><span>completed user turns</span></div>
+            <div class="score"><b>8</b><span>real model calls</span></div>
+            <div class="score"><b>4</b><span>posts created or changed</span></div>
+            <div class="score"><b>3</b><span>requests resolved</span></div>
+            <div class="score"><b>0</b><span>research tools used</span></div>
+          </div>
+          <p class="truth">
+            <strong>Observed, not simulated:</strong>
+            the text, plans, diffs, request reasons, progress times, model configuration, and final
+            state below come from <code>result.json</code>. Storage is still an in-memory seam, not
+            deployed durability.
+          </p>
+        </div>
+      </section>
+
+      <section class="section soft" id="shape">
+        <div class="wrap">
+          <div class="section-head">
+            <div class="step">Control flow</div>
+            <div>
+              <h2>Each agent receives only what its job needs.</h2>
+              <p class="intro">
+                Admission happens before model work. The planner sees the current message, three
+                recent exchanges, and unresolved requests. The application executes bounded
+                user-scoped queries and adds owned posts linked from those requests. The responder
+                alone receives all current user memories.
+              </p>
+            </div>
+          </div>
+          <div class="flow">
+            <div class="agent">
+              <span class="num">1</span><b>Query planner</b>
+              <p>
+                Returns at most six structured queries. It cannot write SQL or see all memories.
+              </p>
+            </div>
+            <div class="agent">
+              <span class="num">2</span><b>Responder</b>
+              <p>
+                Returns the visible answer plus zero or more versioned post changes and a
+                pending-candidate outcome.
+              </p>
+            </div>
+            <div class="agent">
+              <span class="num">3</span><b>Memory</b>
+              <p>
+                Creates, updates, or deletes durable preferences after publication. It does not
+                store project facts.
+              </p>
+            </div>
+            <div class="agent">
+              <span class="num">4</span><b>Addressing</b>
+              <p>
+                Marks only directly answered or explicitly ignored prior requests. Deferrals stay
+                open.
+              </p>
+            </div>
+          </div>
+          <div class="card" style="margin-top:14px">
+            <h3>Bounded context versus stored history</h3>
+            <span class="pill info">3 recent exchanges</span
+            ><span class="pill info">≤ 6 queries</span
+            ><span class="pill info">≤ 10 results/query</span
+            ><span class="pill info">≤ 20 linked-request posts</span
+            ><span class="pill info">8 research calls</span>
+            <p style="margin-top:12px">
+              Turn two’s recent window contained history 4, history 5, and turn one. The planner
+              searched older user messages for “Aurora” and “invite-only,” retrieving
+              <code>history-1:user</code>: “Aurora should remain invite-only.” Full history was not
+              injected into every task.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="turns">
+        <div class="wrap">
+          <div class="section-head">
+            <div class="step">Live turns</div>
+            <div>
+              <h2>The exact conversation and visible answers.</h2>
+              <p class="intro">
+                Agent-originated requests already lived in the same private conversation. The first
+                message answered two questions, ignored one suggestion, and deliberately left the
+                export question untouched.
+              </p>
+            </div>
+          </div>
+          <div class="conversation">
+            <div class="phone">
+              <div class="phone-head">Amber · conversation:user-amber</div>
+              <div class="messages">
+                <div class="bubble">
+                  <small>Existing agent question · Clipwise</small>Which license will Clipwise use?
+                </div>
+                <div class="bubble">
+                  <small>Existing agent question · Noted</small>Does Noted support Mandarin?
+                </div>
+                <div class="bubble">
+                  <small>Existing agent suggestion · Atlas</small>Should Atlas support team
+                  workspaces?
+                </div>
+                <div class="bubble">
+                  <small>Existing agent question · Noted · remains open</small>Which three export
+                  formats will Noted support?
+                </div>
+                <div class="bubble user">
+                  <small>User · turn 1</small>Noted supports Mandarin. Clipwise uses the MIT license
+                  and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer
+                  detailed factual posts and forget my macOS-only preference.
+                </div>
+                <div class="bubble">
+                  <small>Amber · visible after publication</small>Noted has been updated to reflect
+                  support for Mandarin voice transcription, and Clipwise is published with the MIT
+                  license and noted as free. Understood regarding setting aside team workspaces for
+                  Atlas, preferring detailed factual posts, and setting aside the macOS-only
+                  preference.
+                </div>
+                <div class="bubble user">
+                  <small>User · turn 2</small>Update Atlas to say it works offline and Noted to
+                  emphasize on-device transcription. PDF export is planned for the next release;
+                  defer the other export formats. Aurora should stay invite-only, as I said before.
+                  I no longer want detailed posts; keep them concise.
+                </div>
+                <div class="bubble">
+                  <small>Amber · visible after publication</small>Atlas has been updated to state
+                  that it works offline, Noted has been updated to emphasize on-device transcription
+                  with PDF export planned for the next release while deferring other formats, and
+                  Aurora has been updated to invite-only status. Understood regarding your
+                  preference for concise posts.
+                </div>
+              </div>
+            </div>
+            <aside class="side">
+              <div class="card">
+                <h3>Turn one</h3>
+                <p>
+                  The application automatically supplied Noted and Atlas because unresolved requests
+                  linked them. The responder changed Noted immediately and published the pending
+                  Clipwise candidate.
+                </p>
+                <span class="pill ok">Mandarin answered</span
+                ><span class="pill ok">license answered</span
+                ><span class="pill ok">team ignored</span
+                ><span class="pill open">exports open</span>
+              </div>
+              <div class="card">
+                <h3>Stable publication identity</h3>
+                <p>
+                  The model did not choose a post ID. The application recorded
+                  <code>candidate-clipwise → post:candidate-clipwise</code>, and the assistant
+                  message links to the persisted post.
+                </p>
+              </div>
+              <div class="card">
+                <h3>Turn two</h3>
+                <p>
+                  The responder used the older Aurora message as evidence, changed three posts
+                  atomically, kept PDF explicitly planned, and did not repeat the deferred export
+                  question.
+                </p>
+                <span class="pill ok">Atlas v5</span><span class="pill ok">Noted v4</span
+                ><span class="pill ok">Aurora v2</span>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="section soft" id="state">
+        <div class="wrap">
+          <div class="section-head">
+            <div class="step">State changes</div>
+            <div>
+              <h2>Post writes are visible before background persistence finishes.</h2>
+              <p class="intro">
+                Every existing-post change carried the exact expected version and evidence IDs.
+                Publication applied all changes or none.
+              </p>
+            </div>
+          </div>
+          <div class="timeline">
+            <div class="phase">
+              <b>Admitted</b
+              ><span
+                >User-scoped lock acquired; duplicate or concurrent delivery cannot own
+                cleanup.</span
+              >
+            </div>
+            <div class="phase">
+              <b>Planned + read</b
+              ><span>Bounded queries execute against owned records and the pre-turn cutoff.</span>
+            </div>
+            <div class="phase response">
+              <b>Response visible</b
+              ><span>Answer, post diffs, and candidate publication commit atomically.</span>
+            </div>
+            <div class="phase background">
+              <b>Background running</b
+              ><span>Memory and addressing run in parallel. Send remains locked.</span>
+            </div>
+            <div class="phase unlocked">
+              <b>Finished + unlocked</b
+              ><span>Both receipts saved; the next turn may be admitted.</span>
+            </div>
+          </div>
+          <div class="diff-grid" style="margin-top:28px">
+            <div class="diff">
+              <div class="diff-head">Noted · turn 1 · v2 → v3</div>
+              <div class="minus line">− English voice notes on device.</div>
+              <div class="plus line">+ English and Mandarin voice notes on device.</div>
+            </div>
+            <div class="diff">
+              <div class="diff-head">Clipwise · new post v1</div>
+              <div class="neutral line">candidate-clipwise → post:candidate-clipwise</div>
+              <div class="plus line">
+                + Free clipboard organizer licensed under the MIT license.
+              </div>
+            </div>
+            <div class="diff">
+              <div class="diff-head">Atlas · turn 2 · v4 → v5</div>
+              <div class="minus line">− A visual workspace for research.</div>
+              <div class="plus line">
+                + An offline visual workspace for research; works offline.
+              </div>
+            </div>
+            <div class="diff">
+              <div class="diff-head">Noted · turn 2 · v3 → v4</div>
+              <div class="minus line">− Offline voice transcription for macOS.</div>
+              <div class="plus line">
+                + On-device transcription. PDF export is planned for the next release.
+              </div>
+            </div>
+            <div class="diff">
+              <div class="diff-head">Aurora · turn 2 · v1 → v2</div>
+              <div class="minus line">− Public beta access is available.</div>
+              <div class="plus line">+ Access is invite-only.</div>
+            </div>
+            <div class="diff">
+              <div class="diff-head">Memory · background</div>
+              <div class="minus line">− Only mention macOS releases.</div>
+              <div class="minus line">− Keep posts short.</div>
+              <div class="plus line">+ Prefer detailed factual posts. · v2</div>
+              <div class="plus line">+ Prefer concise posts. · v3</div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:14px">
+            <h3>Request state after both turns</h3>
+            <span class="pill ok">Clipwise license · answered</span
+            ><span class="pill ok">Noted Mandarin · answered</span
+            ><span class="pill ok">Atlas teams · ignored</span
+            ><span class="pill open">Noted exports · open after deferral</span>
+            <p style="margin-top:12px">
+              The open request appears once. The addressing agent returned no resolution in turn two
+              because naming only planned PDF and deferring the other formats was partial, not an
+              answer.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="proof">
+        <div class="wrap">
+          <div class="section-head">
+            <div class="step">Proof boundaries</div>
+            <div>
+              <h2>Observed success and deterministic failures are separate evidence.</h2>
+              <p class="intro">
+                The live run proves model behavior for these exact invented inputs. Scripted tests
+                prove control-flow invariants that a happy-path live run cannot exercise safely.
+              </p>
+            </div>
+          </div>
+          <h3>Observed in the live run</h3>
+          <div class="proof-grid" style="margin-top:14px">
+            <div class="check">
+              <b>Eight real calls completed</b>
+              <p>
+                Planner, responder, memory, and addressing each ran exactly once per turn through
+                the Google subscription adapter.
+              </p>
+            </div>
+            <div class="check">
+              <b>No unnecessary research</b>
+              <p>
+                The responder declared only finish, search, fetch, and the fetched-body reader.
+                Private evidence was sufficient, so none ran.
+              </p>
+            </div>
+            <div class="check">
+              <b>Semantic distinctions held</b>
+              <p>“Free” remained price; MIT remained license. PDF stayed planned, never shipped.</p>
+            </div>
+            <div class="check">
+              <b>Parallel background order held</b>
+              <p>
+                Both background start events preceded the first completion, and finalize followed
+                both jobs in each turn.
+              </p>
+            </div>
+          </div>
+          <h3 style="margin-top:34px">Deterministic failure and replay checks</h3>
+          <div class="proof-grid" style="margin-top:14px">
+            <div class="check fail">
+              <b>Rejected admission cannot abort ownership</b>
+              <p>
+                Different text, cross-user collision, identical concurrent delivery, and another
+                same-user turn all return failed admission receipts while the legitimate turn stays
+                locked.
+              </p>
+            </div>
+            <div class="check fail">
+              <b>Successful jobs do not rerun</b>
+              <p>
+                A retry after memory failure made one new memory call and zero new addressing calls.
+                The answer and post diff remained singletons.
+              </p>
+            </div>
+            <div class="check fail">
+              <b>Stale retry cannot restore old intent</b>
+              <p>
+                After a newer turn changed “detailed” to “concise,” retrying the older failed memory
+                job was rejected before a model call.
+              </p>
+            </div>
+            <div class="check fail">
+              <b>Bounded recovery fails visibly</b>
+              <p>
+                Two background attempts are allowed. Terminal failure releases the send lock; an
+                exhausted or stale retry returns an explicit error.
+              </p>
+            </div>
+            <div class="check fail">
+              <b>Atomic ownership checks</b>
+              <p>
+                Version conflict and foreign ownership reject the whole post batch without partial
+                writes.
+              </p>
+            </div>
+            <div class="check fail">
+              <b>Research ceiling</b>
+              <p>A ninth responder research observation fails closed and publishes no answer.</p>
+            </div>
+          </div>
+          <h3 style="margin-top:34px">Planned production boundary</h3>
+          <div class="proof-grid" style="margin-top:14px">
+            <div class="check future">
+              <b>Transactional database admission</b>
+              <p>
+                Replace the fixture maps with a unique per-user active-turn constraint, versioned
+                writes, scoped queries, and durable idempotency receipts.
+              </p>
+            </div>
+            <div class="check future">
+              <b>Durable background queue</b>
+              <p>
+                Persist memory and addressing jobs, attempt counters, terminal failure, progress
+                events, and the stale-turn sequence check across process restarts.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section soft" id="source">
+        <div class="wrap">
+          <div class="section-head">
+            <div class="step">Inspectable source</div>
+            <div>
+              <h2>The prompt and workflow boundary fit on one page.</h2>
+              <p class="intro">
+                The live artifact stores SHA-256 provenance for these source files. Expand only what
+                you need; the raw model inputs and outputs remain in <code>result.json</code>.
+              </p>
+            </div>
+          </div>
+          <details>
+            <summary>Prompt 1 · Query planner</summary>
+            <pre># Query planner
+
+Resolve references in the current user message using only the supplied last three completed exchanges and pending assistant requests. Cover every named or affected project, not only the first one. Return zero or more simple search queries over posts, user messages, or assistant messages. The application already retrieves owned posts linked from pending requests, so do not duplicate those lookups; query every other affected project. Use concrete terms from the conversation. Keep each limit small. Do not request all memories or invent SQL. The application owns scope, parameters, cutoffs, and query execution.</pre>
+          </details>
+          <details>
+            <summary>Prompt 2 · Responder</summary>
+            <pre># Responder
+
+Answer the authenticated user in plain, concise, factual language. Use the current message, bounded query results, all supplied memories, all unaddressed assistant requests, and the last three completed exchanges. Classify the answer and its outbound intent explicitly. Return zero or more owned-post changes with exact expected versions and evidence references. Never write storage directly. Publish useful supported changes immediately without an approval step. If evidence is insufficient, ask one targeted question and invent no post. A useful partial update may be applied while asking one meaningful remaining question. Preserve stated preferences as preferences, not product facts. Price and license are separate facts: “free” does not state a license. Keep planned or future features explicitly planned; never promote them to current capabilities. Memory and request-addressing tasks run after this answer becomes visible, so acknowledge preference and request intent without claiming that a preference was saved, updated, deleted, or that a request was closed.
+
+For a pending candidate, choose none, publish, or clarify. Publish only when the user resolves the missing fact and cite the candidate plus supporting message or request; the application assigns the post ID and records the candidate-to-post association. Do not repeat a supplied outstanding request, ask a generic follow-up, or nag after a deferral. Existing unresolved requests remain visible without appearing again in the answer. Native web search and page reading are available when current public facts are necessary; cite only observed fetched/search evidence. You have at most eight research tool calls. After `read_url_content`, call `readFetchedPage` with the same URL because the native receipt is not the page body. Stop research once the supplied private evidence resolves the task.</pre>
+          </details>
+          <details>
+            <summary>Prompt 3 · Memory</summary>
+            <pre># Memory
+
+Compare the user message and assistant answer with every supplied user memory. Return idempotent create, update, or delete operations for durable user preferences only. Replace conflicting preferences intelligently. Delete a preference when the user retracts it. Do not store transient project facts, assistant guesses, or a duplicate of an existing preference. There is no archive or restore operation.</pre>
+          </details>
+          <details>
+            <summary>Prompt 4 · Addressing</summary>
+            <pre># Addressing
+
+Review the supplied snapshot of previously unaddressed assistant questions, requests, and suggestions against this user message and assistant answer. Resolve only requests directly answered or explicitly ignored now, and give a short evidence-based reason. Unrelated new information, partial answers, and deferrals remain open. Do not address a new request in the current assistant answer because it is not in the snapshot.</pre>
+          </details>
+          <details>
+            <summary>Key workflow · ownership and skip branches</summary>
+            <pre>MessagingTurn
+  AdmitTurn
+  branch admission.result.kind === "admitted"
+    admitted → AdmittedTurn.child
+      PlanQueries → ExecuteQueries → Respond → PublishResponse
+      Background
+        MemoryJob ─┐
+        AddressingJob ─┴→ FinalizeTurn
+      catch → AbortTurn(admitted turn proof only)
+    replay/rejected → ReadAdmissionReceipt
+
+Background job
+  LoadBackgroundJob
+  branch skip
+    true  → ReuseBackgroundJob(saved receipt)
+    false → model task → atomic apply</pre>
+          </details>
+          <div class="filemap" style="margin-top:24px">
+            <div class="file">
+              <b>workflow.ts</b
+              ><span
+                >Smithers actions, branches, child flows, and parallel background fan-out.</span
+              >
+            </div>
+            <div class="file">
+              <b>agents.ts</b><span>Four model task layers and application action handlers.</span>
+            </div>
+            <div class="file">
+              <b>model.ts</b
+              ><span
+                >Structured output, tool allowlist, evidence capture, and eight-call ceiling.</span
+              >
+            </div>
+            <div class="file">
+              <b>schemas.ts</b
+              ><span>Messages, queries, diffs, candidate associations, jobs, and receipts.</span>
+            </div>
+            <div class="file">
+              <b>testing/store.ts</b
+              ><span>User-scoped in-memory adapter, locks, versions, retries, and progress.</span>
+            </div>
+            <div class="file">
+              <b>testing/workflow.test.ts</b
+              ><span>Nine deterministic workflow tests plus scripted result snapshot.</span>
+            </div>
+            <div class="file">
+              <b>workflow.live.test.ts</b
+              ><span>Two-turn semantic assertions and live artifact recording.</span>
+            </div>
+            <div class="file">
+              <b>result.json</b
+              ><span
+                >Actual inputs, queries, outputs, per-turn state, progress, tools, and hashes.</span
+              >
+            </div>
+          </div>
+          <p class="sources">
+            Source provenance: live run generated from commit <code>68a5e24</code>. Provider
+            configuration reported <code>gemini-3.8-flash-medium</code> through Antigravity’s stream
+            JSON contract. All people, messages, posts, and preferences are invented fixtures.
+          </p>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <div class="wrap">
+        Amber messaging PoC · live observation and deterministic invariants · September 2026
+      </div>
+    </footer>
+  </body>
+</html>
