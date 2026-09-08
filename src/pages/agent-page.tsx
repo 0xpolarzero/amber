@@ -375,37 +375,38 @@ function TelegramSourceDisclosure({
         title="Source Telegram messages"
       >
         <Icon name="telegram" />
-        <span>Source Telegram messages</span>
         <Icon name="chevronDown" className="telegram-source-caret" />
       </summary>
-      <p className="telegram-source-disclosure">{source.disclosure}</p>
-      <p className="telegram-source-batch">
-        Batch {source.batchId} · group {source.groupId}
-      </p>
-      <ol>
-        {source.messages.map((message) => (
-          <li key={message.id}>
-            <span>
-              <strong>{message.authorId ?? 'unknown'}</strong> · #{message.id}
-              {message.replyToId ? ` · reply to #${message.replyToId}` : ''}
-            </span>
-            <p>{message.text}</p>
-          </li>
-        ))}
-      </ol>
-      <div className="telegram-source-outcomes">
-        {source.outcomes.posts.map((post) => (
-          <p key={`${post.authorId}:${post.title}`}>
-            <strong>{post.authorId}</strong> · {post.outcome} “{post.title}” ·{' '}
-            {post.questionCount} follow-up{' '}
-            {post.questionCount === 1 ? 'question' : 'questions'}
-          </p>
-        ))}
-        {source.outcomes.ignored.map((ignored) => (
-          <p key={ignored.messageId}>
-            <strong>#{ignored.messageId} ignored</strong> · {ignored.reason}
-          </p>
-        ))}
+      <div className="telegram-source-content">
+        <p className="telegram-source-disclosure">{source.disclosure}</p>
+        <p className="telegram-source-batch">
+          Batch {source.batchId} · group {source.groupId}
+        </p>
+        <ol>
+          {source.messages.map((message) => (
+            <li key={message.id}>
+              <span>
+                <strong>{message.authorId ?? 'unknown'}</strong> · #{message.id}
+                {message.replyToId ? ` · reply to #${message.replyToId}` : ''}
+              </span>
+              <p>{message.text}</p>
+            </li>
+          ))}
+        </ol>
+        <div className="telegram-source-outcomes">
+          {source.outcomes.posts.map((post) => (
+            <p key={`${post.authorId}:${post.title}`}>
+              <strong>{post.authorId}</strong> · {post.outcome} “{post.title}” ·{' '}
+              {post.questionCount} follow-up{' '}
+              {post.questionCount === 1 ? 'question' : 'questions'}
+            </p>
+          ))}
+          {source.outcomes.ignored.map((ignored) => (
+            <p key={ignored.messageId}>
+              <strong>#{ignored.messageId} ignored</strong> · {ignored.reason}
+            </p>
+          ))}
+        </div>
       </div>
     </details>
   )

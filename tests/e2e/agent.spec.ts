@@ -26,6 +26,19 @@ test('walks the recorded extraction and messaging guide without typing or waitin
   ).toBeFocused()
   const source = page.locator('details.telegram-source')
   await expect(source).toHaveAttribute('open', '')
+  const iconPosition = () =>
+    source.evaluate((element) => {
+      const sourceBounds = element.getBoundingClientRect()
+      return [...element.querySelectorAll('summary svg')].map((icon) => {
+        const bounds = icon.getBoundingClientRect()
+        return { x: bounds.x - sourceBounds.x, y: bounds.y - sourceBounds.y }
+      })
+    })
+  const expandedPositions = await iconPosition()
+  await source.locator('summary').click()
+  expect(await iconPosition()).toEqual(expandedPositions)
+  await source.locator('summary').click()
+  expect(await iconPosition()).toEqual(expandedPositions)
   await expect(source).toContainText(preview.disclosure)
   await expect(source).toContainText('carl · #105 · reply to #102')
   await expect(source).toContainText('Does Noted understand Mandarin?')
