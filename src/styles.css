@@ -2824,7 +2824,7 @@ dialog::backdrop {
 }
 .workflow-trace > summary {
   display: grid;
-  grid-template-columns: 36px 1fr auto;
+  grid-template-columns: 48px 1fr auto;
   align-items: center;
   min-height: 36px;
   padding: 0 9px 0 0;
@@ -2838,8 +2838,8 @@ dialog::backdrop {
   color: var(--ink);
 }
 .workflow-trace:not([open]) > summary {
-  width: 36px;
-  grid-template-columns: 36px;
+  width: 48px;
+  grid-template-columns: 48px;
   padding-right: 0;
 }
 .workflow-trace:not([open]) > summary > span:not(.workflow-trace-toggle-icons) {
@@ -2850,7 +2850,7 @@ dialog::backdrop {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  width: 36px;
+  width: 48px;
   height: 36px;
 }
 .workflow-trace-toggle-icons > svg:first-child {
