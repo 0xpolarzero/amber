@@ -11,11 +11,11 @@ import type {
 } from './state'
 
 export const AGENT_SCENARIOS = [
-  ['rich-complete', 'Recorded Gemini result'],
-  ['extracted', 'Recorded extraction'],
   ['empty', 'Developer fixture: empty'],
+  ['extracted', 'Recorded extraction'],
   ['stage-planning', 'Simulation: planning'],
   ['stage-background-both', 'Simulation: background work'],
+  ['rich-complete', 'Recorded Gemini result'],
   ['failure-before-publication', 'Simulation: foreground failure'],
   ['failure-addressing', 'Simulation: request task failed'],
   ['retry-exhausted', 'Simulation: retry exhausted'],
