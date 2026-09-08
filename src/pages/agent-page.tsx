@@ -155,6 +155,12 @@ function AgentChat({
             key={message.id}
             id={`message-${message.id}`}
             tabIndex={-1}
+            aria-current={
+              activePanel === 'pending' &&
+              message.id === pending[pendingIndex]?.id
+                ? true
+                : undefined
+            }
             className={`chat-message ${message.sender === 'user' ? 'outgoing' : ''} ${isUnaddressed(message) ? 'unaddressed' : ''}`}
           >
             {message.sender === 'amber' ? (

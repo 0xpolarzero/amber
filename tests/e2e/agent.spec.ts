@@ -224,6 +224,13 @@ test('moves through multiple pending messages and keeps panels mutually exclusiv
   const pendingPanel = page.getByRole('region', { name: 'Pending requests' })
   await expect(pendingPanel).toContainText('1 of 3')
   await expect(page.locator('#message-e2e-pending-one')).toBeFocused()
+  const selected = page.locator('.chat-message[aria-current="true"]')
+  await expect(selected).toHaveCount(1)
+  await expect(selected).toHaveAttribute('id', 'message-e2e-pending-one')
+  await page
+    .getByRole('textbox', { name: 'Message Amber', exact: true })
+    .focus()
+  await expect(selected).toHaveCSS('outline-style', 'solid')
   await expect(
     pendingPanel.getByRole('button', { name: 'Previous pending message' }),
   ).toBeDisabled()
@@ -234,6 +241,8 @@ test('moves through multiple pending messages and keeps panels mutually exclusiv
   await next.click()
   await expect(pendingPanel).toContainText('2 of 3')
   await expect(page.locator('#message-e2e-pending-two')).toBeFocused()
+  await expect(selected).toHaveCount(1)
+  await expect(selected).toHaveAttribute('id', 'message-e2e-pending-two')
   await next.click()
   await expect(pendingPanel).toContainText('3 of 3')
   await expect(page.locator('#message-e2e-pending-three')).toBeFocused()
@@ -247,6 +256,7 @@ test('moves through multiple pending messages and keeps panels mutually exclusiv
 
   await page.getByRole('button', { name: 'Open memory (1 saved)' }).click()
   await expect(pendingPanel).toHaveCount(0)
+  await expect(selected).toHaveCount(0)
   await expect(page.getByRole('region', { name: 'Memory' })).toBeVisible()
 })
 
