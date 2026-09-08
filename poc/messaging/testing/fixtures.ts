@@ -12,6 +12,7 @@ const message = (
 ): typeof S.Message.Type => ({
   id,
   userId: user,
+  conversationId: `conversation:${user}`,
   role,
   text,
   sequence,
@@ -58,6 +59,15 @@ export const posts: readonly (typeof S.Post.Type)[] = [
     title: 'Atlas',
     summary: 'A visual workspace for research.',
     detail: 'Atlas connects notes and sources.',
+    published: true,
+  },
+  {
+    id: 'aurora',
+    authorId: userId,
+    version: 1,
+    title: 'Aurora',
+    summary: 'A collaborative planning tool in public beta.',
+    detail: 'Aurora helps teams plan launches. Public beta access is available.',
     published: true,
   },
   {

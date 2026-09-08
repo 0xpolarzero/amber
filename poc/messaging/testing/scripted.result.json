@@ -1,0 +1,139 @@
+{
+  "mode": "scripted-model",
+  "receipt": {
+    "turnId": "turn-main",
+    "userId": "user-amber",
+    "status": "completed",
+    "assistantMessageId": "turn-main:assistant",
+    "diffs": [
+      {
+        "postId": "noted",
+        "before": {
+          "id": "noted",
+          "authorId": "user-amber",
+          "version": 2,
+          "title": "Noted",
+          "summary": "Offline voice transcription for macOS.",
+          "detail": "Noted transcribes English voice notes on device.",
+          "published": true
+        },
+        "after": {
+          "id": "noted",
+          "authorId": "user-amber",
+          "version": 3,
+          "title": "Noted",
+          "summary": "Offline multilingual voice transcription for macOS.",
+          "detail": "Noted transcribes English and Mandarin voice notes on device.",
+          "published": true
+        }
+      },
+      {
+        "postId": "atlas",
+        "before": {
+          "id": "atlas",
+          "authorId": "user-amber",
+          "version": 4,
+          "title": "Atlas",
+          "summary": "A visual workspace for research.",
+          "detail": "Atlas connects notes and sources.",
+          "published": true
+        },
+        "after": {
+          "id": "atlas",
+          "authorId": "user-amber",
+          "version": 5,
+          "title": "Atlas",
+          "summary": "An offline visual workspace for research.",
+          "detail": "Atlas connects notes and sources without a network connection.",
+          "published": true
+        }
+      }
+    ],
+    "candidatePublications": [
+      {
+        "candidateId": "candidate-clipwise",
+        "postId": "post:candidate-clipwise"
+      }
+    ],
+    "background": [
+      {
+        "task": "memory",
+        "status": "done",
+        "reason": null
+      },
+      {
+        "task": "addressing",
+        "status": "done",
+        "reason": null
+      }
+    ]
+  },
+  "diffs": [
+    {
+      "postId": "noted",
+      "before": {
+        "id": "noted",
+        "authorId": "user-amber",
+        "version": 2,
+        "title": "Noted",
+        "summary": "Offline voice transcription for macOS.",
+        "detail": "Noted transcribes English voice notes on device.",
+        "published": true
+      },
+      "after": {
+        "id": "noted",
+        "authorId": "user-amber",
+        "version": 3,
+        "title": "Noted",
+        "summary": "Offline multilingual voice transcription for macOS.",
+        "detail": "Noted transcribes English and Mandarin voice notes on device.",
+        "published": true
+      }
+    },
+    {
+      "postId": "atlas",
+      "before": {
+        "id": "atlas",
+        "authorId": "user-amber",
+        "version": 4,
+        "title": "Atlas",
+        "summary": "A visual workspace for research.",
+        "detail": "Atlas connects notes and sources.",
+        "published": true
+      },
+      "after": {
+        "id": "atlas",
+        "authorId": "user-amber",
+        "version": 5,
+        "title": "Atlas",
+        "summary": "An offline visual workspace for research.",
+        "detail": "Atlas connects notes and sources without a network connection.",
+        "published": true
+      }
+    }
+  ],
+  "memories": [
+    {
+      "id": "foreign-memory",
+      "userId": "user-sable",
+      "text": "Private preference.",
+      "version": 1
+    },
+    {
+      "id": "style",
+      "userId": "user-amber",
+      "text": "Use detailed factual posts.",
+      "version": 2
+    }
+  ],
+  "addressing": {
+    "request-language": {
+      "outcome": "answered",
+      "reason": "User confirmed Mandarin support."
+    },
+    "request-price": {
+      "outcome": "ignored",
+      "reason": "User explicitly said to skip pricing."
+    }
+  }
+}

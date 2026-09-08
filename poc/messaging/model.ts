@@ -31,6 +31,7 @@ export function modelTasks(ports: Pick<Ports, 'model' | 'observe' | 'progress'>)
     nativeTools: readonly NativeToolName[] = [],
   ) =>
     Effect.gen(function* () {
+      let calls = 0
       const pages: (typeof S.WebPage.Type)[] = []
       const request: ModelRequest = {
         task,
@@ -40,16 +41,19 @@ export function modelTasks(ports: Pick<Ports, 'model' | 'observe' | 'progress'>)
         tools: [],
         nativeTools,
         callTool: () =>
-          Effect.fail(
-            new S.Failure({ operation: 'tool-access', message: 'No application tool is exposed.' }),
-          ),
+          checked('tool-access', () => {
+            if (++calls > 8) throw new Error('The eight-call budget is exhausted.')
+            throw new Error('No application tool is exposed.')
+          }),
         observe: (observation) =>
           ports.observe(task, observation).pipe(
             Effect.andThen(
               checked('native-tool-evidence', () => {
                 if (observation.kind !== 'native-tool') return
-                if (!nativeTools.includes(observation.name))
-                  throw new Error('Native tool unavailable.')
+                if (!nativeTools.includes(observation.name) || ++calls > 8)
+                  throw new Error(
+                    'Native tool is unavailable or the eight-call budget is exhausted.',
+                  )
                 pages.push(
                   ...pagesFromNativeTool(observation.name, observation.input, observation.output),
                 )

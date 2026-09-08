@@ -11,10 +11,7 @@ import { candidates, fixture, otherUserId, userId } from './fixtures'
 import { messagingStore } from './store'
 
 const planner = {
-  queries: [
-    { resource: 'posts' as const, terms: ['Noted', 'Atlas'], limit: 10 },
-    { resource: 'user_messages' as const, terms: ['Aurora'], limit: 5 },
-  ],
+  queries: [{ resource: 'user_messages' as const, terms: ['Aurora'], limit: 5 }],
 }
 const response = (turnId: string): typeof S.Response.Type => ({
   text: 'Updated Noted and Atlas, and published Clipwise. Does Clipwise have a public URL?',
@@ -50,7 +47,6 @@ const response = (turnId: string): typeof S.Response.Type => ({
     kind: 'publish',
     candidateId: 'candidate-clipwise',
     expectedVersion: 1,
-    postId: 'clipwise',
     title: 'Clipwise',
     summary: 'A free clipboard organizer.',
     detail: 'Clipwise groups clipboard history by project.',
@@ -132,6 +128,7 @@ it('publishes atomically before concurrent background work and holds per-user ad
         ])
         expect(input.queryResults.userMessages.map(({ id }) => id)).toContain('history-1:user')
         expect(input.queryResults.posts.map(({ id }) => id).sort()).toEqual(['atlas', 'noted'])
+        expect([...input.queryResults.linkedRequestPostIds].sort()).toEqual(['atlas', 'noted'])
         expect(input.queryResults.posts.some(({ authorId }) => authorId === otherUserId)).toBe(
           false,
         )
@@ -183,9 +180,31 @@ it('publishes atomically before concurrent background work and holds per-user ad
   expect(during.turns['turn-main'].status).toBe('published')
   expect(during.posts.find(({ id }) => id === 'noted')?.version).toBe(3)
   expect(during.posts.find(({ id }) => id === 'atlas')?.version).toBe(5)
-  expect(during.posts.find(({ id }) => id === 'clipwise')).toBeDefined()
+  const candidatePublication = during.turns['turn-main'].published?.candidatePublications[0]
+  expect(candidatePublication?.candidateId).toBe('candidate-clipwise')
+  expect(during.posts.find(({ id }) => id === candidatePublication?.postId)).toBeDefined()
   expect(during.memories.find(({ id }) => id === 'style')?.version).toBe(1)
 
+  const callsBeforeRejections = seen.length
+  const rejectedInputs = [
+    {
+      turnId: 'turn-main',
+      userId,
+      text: 'Noted supports Mandarin. Clipwise is free, publish it. Skip pricing. Update Atlas to say it works offline. Prefer detailed factual posts and forget my macOS-only preference.',
+    },
+    { turnId: 'turn-main', userId, text: 'Different text.' },
+    { turnId: 'turn-main', userId: otherUserId, text: 'Cross-user collision.' },
+  ] as const
+  for (const [index, rejectedInput] of rejectedInputs.entries()) {
+    const rejected = await Effect.runPromise(
+      MessagingTurn.execute(rejectedInput, { executionId: `turn-rejected-${index}` }).pipe(
+        Effect.provide(host(store, model)),
+        Effect.timeout('2 seconds'),
+      ),
+    )
+    expect(rejected.status).toBe('failed')
+    expect(store.active.get(userId)).toBe('turn-main')
+  }
   const overlap = await Effect.runPromise(
     MessagingTurn.execute(
       { turnId: 'turn-overlap', userId, text: 'This must not overlap.' },
@@ -194,13 +213,24 @@ it('publishes atomically before concurrent background work and holds per-user ad
   )
   expect(overlap.status).toBe('failed')
   expect(store.active.get(userId)).toBe('turn-main')
+  const completedReplayDuringActive = await Effect.runPromise(
+    MessagingTurn.execute(
+      { turnId: 'history-5', userId, text: 'Keep release details factual.' },
+      { executionId: 'history-5:replay' },
+    ).pipe(Effect.provide(host(store, model)), Effect.timeout('2 seconds')),
+  )
+  expect(completedReplayDuringActive.status).toBe('completed')
+  expect(store.active.get(userId)).toBe('turn-main')
+  expect(seen).toHaveLength(callsBeforeRejections)
   const other = await Effect.runPromise(
     store.ports.admitTurn({ turnId: 'turn-other', userId: otherUserId, text: 'Independent.' }),
   )
-  expect(other.turn.userId).toBe(otherUserId)
+  expect(other.result.kind).toBe('admitted')
+  if (other.result.kind !== 'admitted') throw new Error('Expected an admitted independent turn.')
+  expect(other.result.context.turn.userId).toBe(otherUserId)
   await Effect.runPromise(
     store.ports.abortTurn({
-      turn: { turnId: 'turn-other', userId: otherUserId, text: 'Independent.' },
+      turn: other.result.context.turn,
       failure: new S.Failure({ operation: 'test', message: 'cleanup' }),
     }),
   )
@@ -222,7 +252,41 @@ it('publishes atomically before concurrent background work and holds per-user ad
   expect(final.messages.find(({ id }) => id === 'request-partial')?.addressed).toBe(false)
   expect(final.messages.find(({ id }) => id === 'turn-main:assistant')?.addressed).toBe(false)
   expect(final.messages.find(({ id }) => id === 'information-only')?.addressed).toBe(true)
+  expect(
+    new Set(
+      final.messages
+        .filter(({ userId: owner }) => owner === userId)
+        .map(({ conversationId }) => conversationId),
+    ),
+  ).toEqual(new Set([`conversation:${userId}`]))
   expect(seen.filter(({ task }) => ['memory', 'addressing'].includes(task))).toHaveLength(2)
+  const beforeReplay = store.snapshot()
+  const replayed = await Effect.runPromise(
+    MessagingTurn.execute(
+      {
+        turnId: 'turn-main',
+        userId,
+        text: 'Noted supports Mandarin. Clipwise is free, publish it. Skip pricing. Update Atlas to say it works offline. Prefer detailed factual posts and forget my macOS-only preference.',
+      },
+      { executionId: 'turn-main:completed-replay' },
+    ).pipe(Effect.provide(host(store, model)), Effect.timeout('2 seconds')),
+  )
+  expect(replayed).toEqual(receipt)
+  expect(store.snapshot()).toEqual(beforeReplay)
+  expect(seen).toHaveLength(callsBeforeRejections)
+  await expect(
+    `${JSON.stringify(
+      {
+        mode: 'scripted-model',
+        receipt,
+        diffs: final.turns['turn-main'].published?.diffs,
+        memories: final.memories,
+        addressing: final.addressing,
+      },
+      null,
+      2,
+    )}\n`,
+  ).toMatchFileSnapshot('./scripted.result.json')
 })
 
 it('keeps outbound admission idempotent and distinguishes actionable messages', () => {
@@ -372,7 +436,12 @@ it('records a targeted pending-candidate clarification without inventing a post'
 it('retries only terminal background work without duplicating the published answer or diffs', async () => {
   const store = messagingStore(fixture)
   let failMemory = true
+  const modelCalls = { planner: 0, responder: 0, memory: 0, addressing: 0 }
   const model: Ports['model'] = (request) => {
+    if (request.task === 'query-planner') modelCalls.planner++
+    if (request.task === 'responder') modelCalls.responder++
+    if (request.task === 'memory') modelCalls.memory++
+    if (request.task === 'addressing') modelCalls.addressing++
     if (request.task === 'query-planner')
       return Effect.succeed({ queries: [{ resource: 'posts', terms: ['Noted'], limit: 2 }] })
     if (request.task === 'responder') {
@@ -423,4 +492,143 @@ it('retries only terminal background work without duplicating the published answ
   expect(final.messages).toEqual(published.messages)
   expect(final.memories.find(({ id }) => id === 'style')).toMatchObject({ version: 2 })
   expect(final.turns['turn-retry'].attempts).toEqual({ memory: 2, addressing: 1 })
+  expect(modelCalls).toEqual({ planner: 1, responder: 1, memory: 2, addressing: 1 })
+})
+
+it('rejects a stale background retry after a newer user turn is admitted', async () => {
+  const store = messagingStore(fixture)
+  let oldMemoryCalls = 0
+  const model: Ports['model'] = (request) => {
+    if (request.task === 'query-planner') return Effect.succeed({ queries: [] })
+    if (request.task === 'responder')
+      return Effect.succeed({
+        text: 'Acknowledged the preference change; background processing is still pending.',
+        intent: 'informational',
+        classification: 'instruction',
+        postChanges: [],
+        pendingOutcome: { kind: 'none' },
+      })
+    if (request.task === 'addressing') return Effect.succeed({ resolutions: [] })
+    const input = request.input as { userMessage: typeof S.Message.Type }
+    if (input.userMessage.turnId === 'turn-old') {
+      oldMemoryCalls++
+      return Effect.fail(new S.Failure({ operation: 'memory', message: 'provider unavailable' }))
+    }
+    return Effect.succeed({
+      operations: [
+        { kind: 'update', id: 'style', expectedVersion: 1, text: 'Keep posts concise.' },
+      ],
+    })
+  }
+  const old = await Effect.runPromise(
+    MessagingTurn.execute(
+      { turnId: 'turn-old', userId, text: 'Prefer detailed posts.' },
+      { executionId: 'turn-old' },
+    ).pipe(Effect.provide(host(store, model)), Effect.timeout('3 seconds')),
+  )
+  expect(old.status).toBe('background_failed')
+  expect(store.active.has(userId)).toBe(false)
+  const newer = await Effect.runPromise(
+    MessagingTurn.execute(
+      { turnId: 'turn-new', userId, text: 'I retract that. Keep posts concise.' },
+      { executionId: 'turn-new' },
+    ).pipe(Effect.provide(host(store, model)), Effect.timeout('3 seconds')),
+  )
+  expect(newer.status).toBe('completed')
+  await expect(
+    Effect.runPromise(
+      RetryBackground.execute(
+        { turnId: 'turn-old', userId },
+        { executionId: 'turn-old:stale-retry' },
+      ).pipe(Effect.provide(host(store, model)), Effect.timeout('3 seconds')),
+    ),
+  ).rejects.toThrow('stale')
+  expect(oldMemoryCalls).toBe(1)
+  expect(store.snapshot().memories.find(({ id }) => id === 'style')).toMatchObject({
+    text: 'Keep posts concise.',
+    version: 2,
+  })
+  expect(store.active.has(userId)).toBe(false)
+})
+
+it('stops background retries after the explicit two-attempt budget', async () => {
+  const store = messagingStore(fixture)
+  const model: Ports['model'] = (request) => {
+    if (request.task === 'query-planner') return Effect.succeed({ queries: [] })
+    if (request.task === 'responder')
+      return Effect.succeed({
+        text: 'No post change.',
+        intent: 'informational',
+        classification: 'answer',
+        postChanges: [],
+        pendingOutcome: { kind: 'none' },
+      })
+    if (request.task === 'memory')
+      return Effect.fail(new S.Failure({ operation: 'memory', message: 'provider unavailable' }))
+    return Effect.succeed({ resolutions: [] })
+  }
+  const first = await Effect.runPromise(
+    MessagingTurn.execute(
+      { turnId: 'turn-budget', userId, text: 'Remember a durable preference.' },
+      { executionId: 'turn-budget' },
+    ).pipe(Effect.provide(host(store, model)), Effect.timeout('3 seconds')),
+  )
+  expect(first.status).toBe('background_failed')
+  const second = await Effect.runPromise(
+    RetryBackground.execute(
+      { turnId: 'turn-budget', userId },
+      { executionId: 'turn-budget:retry-1' },
+    ).pipe(Effect.provide(host(store, model)), Effect.timeout('3 seconds')),
+  )
+  expect(second.status).toBe('background_failed')
+  await expect(
+    Effect.runPromise(
+      RetryBackground.execute(
+        { turnId: 'turn-budget', userId },
+        { executionId: 'turn-budget:retry-2' },
+      ).pipe(Effect.provide(host(store, model)), Effect.timeout('3 seconds')),
+    ),
+  ).rejects.toThrow('retry budget exhausted')
+  expect(store.active.has(userId)).toBe(false)
+  expect(store.snapshot().messages.filter(({ id }) => id === 'turn-budget:assistant')).toHaveLength(
+    1,
+  )
+})
+
+it('fails closed after the responder exceeds its eight-call research budget', async () => {
+  const store = messagingStore(fixture)
+  const model: Ports['model'] = (request) => {
+    if (request.task === 'query-planner') return Effect.succeed({ queries: [] })
+    return Effect.gen(function* () {
+      for (let index = 0; index < 9; index++)
+        yield* request.observe({
+          kind: 'native-tool',
+          name: 'search_web',
+          input: { Query: `bounded probe ${index}` },
+          output: {
+            provenance: 'antigravity-cli-step-artifact-v1',
+            status: 'success',
+            toolOutput: 'No sources.',
+          },
+        })
+      return {
+        text: 'This result must not publish.',
+        intent: 'informational',
+        classification: 'answer',
+        postChanges: [],
+        pendingOutcome: { kind: 'none' },
+      }
+    })
+  }
+  const receipt = await Effect.runPromise(
+    MessagingTurn.execute(
+      { turnId: 'turn-tool-budget', userId, text: 'Research this.' },
+      { executionId: 'turn-tool-budget' },
+    ).pipe(Effect.provide(host(store, model)), Effect.timeout('3 seconds')),
+  )
+  expect(receipt.status).toBe('failed')
+  expect(store.snapshot().messages.some(({ id }) => id === 'turn-tool-budget:assistant')).toBe(
+    false,
+  )
+  expect(store.active.has(userId)).toBe(false)
 })

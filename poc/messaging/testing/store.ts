@@ -46,8 +46,46 @@ export function messagingStore(fixture: Fixture = {}) {
       try: fn,
       catch: (error) => new S.Failure({ operation, message: String(error) }),
     })
+  const stage = <A>(
+    operation: string,
+    event: Omit<Parameters<Ports['progress']>[0], 'status'>,
+    fn: () => A,
+  ) => {
+    progress.push({ ...event, status: 'running', at: Date.now() })
+    return run(operation, () => {
+      try {
+        const value = fn()
+        progress.push({ ...event, status: 'done', at: Date.now() })
+        return value
+      } catch (error) {
+        progress.push({ ...event, status: 'failed', at: Date.now() })
+        throw error
+      }
+    })
+  }
   const userMessages = (userId: string) =>
     [...messages.values()].filter((message) => message.userId === userId)
+  const failedReceipt = (input: typeof S.TurnInput.Type): typeof S.TurnReceipt.Type => ({
+    turnId: input.turnId,
+    userId: input.userId,
+    status: 'failed',
+    assistantMessageId: null,
+    diffs: [],
+    candidatePublications: [],
+    background: [],
+  })
+  const savedReceipt = (turnId: string, record: TurnRecord): typeof S.TurnReceipt.Type => ({
+    turnId,
+    userId: record.input.userId,
+    status:
+      record.status === 'completed' || record.status === 'background_failed'
+        ? record.status
+        : 'failed',
+    assistantMessageId: record.published?.assistantMessage.id ?? null,
+    diffs: record.published?.diffs ?? [],
+    candidatePublications: record.published?.candidatePublications ?? [],
+    background: [...record.jobs.values()],
+  })
   const unaddressed = (userId: string, cutoff = Number.POSITIVE_INFINITY) =>
     userMessages(userId)
       .filter(
@@ -113,18 +151,46 @@ export function messagingStore(fixture: Fixture = {}) {
         progress.push({ ...event, at: Date.now() })
       }),
     admitTurn: (input) =>
-      run('admit-turn', () => {
+      stage('admit-turn', { turnId: input.turnId, userId: input.userId, task: 'admission' }, () => {
         const existing = turns.get(input.turnId)
         if (existing) {
           if (!same(existing.input, input))
-            throw new Error('Turn id was reused with different input.')
-          return existing.planner
+            return {
+              result: {
+                kind: 'rejected' as const,
+                receipt: failedReceipt(input),
+                reason: 'Turn id was reused by different input or another user.',
+              },
+            }
+          if (
+            existing.status === 'completed' ||
+            existing.status === 'background_failed' ||
+            existing.status === 'failed'
+          )
+            return {
+              result: { kind: 'replay' as const, receipt: savedReceipt(input.turnId, existing) },
+            }
+          return {
+            result: {
+              kind: 'rejected' as const,
+              receipt: failedReceipt(input),
+              reason: `Turn ${input.turnId} is already active or failed.`,
+            },
+          }
         }
         const current = active.get(input.userId)
-        if (current) throw new Error(`User already has active turn ${current}.`)
+        if (current)
+          return {
+            result: {
+              kind: 'rejected' as const,
+              receipt: failedReceipt(input),
+              reason: `User already has active turn ${current}.`,
+            },
+          }
         const userMessage: typeof S.Message.Type = {
           id: `${input.turnId}:user`,
           userId: input.userId,
+          conversationId: `conversation:${input.userId}`,
           role: 'user',
           text: input.text,
           sequence: ++sequence,
@@ -148,179 +214,213 @@ export function messagingStore(fixture: Fixture = {}) {
           attempts: new Map(),
         })
         active.set(input.userId, input.turnId)
-        return planner
+        return { result: { kind: 'admitted' as const, context: planner } }
       }),
     executeQueries: ({ context, plan }) =>
-      run('execute-queries', () => {
-        const record = turns.get(context.turn.turnId)
-        if (
-          !record ||
-          record.input.userId !== context.turn.userId ||
-          !same(record.planner, context)
-        )
-          throw new Error('Planner context is not the admitted authenticated turn.')
-        const result: {
-          posts: (typeof S.Post.Type)[]
-          userMessages: (typeof S.Message.Type)[]
-          assistantMessages: (typeof S.Message.Type)[]
-        } = {
-          posts: [],
-          userMessages: [],
-          assistantMessages: [],
-        }
-        for (const query of plan.queries) {
-          if (query.resource === 'posts') {
-            result.posts.push(
-              ...[...posts.values()]
-                .filter(
-                  (post) =>
-                    post.authorId === context.turn.userId &&
-                    matches(`${post.title} ${post.summary} ${post.detail}`, query.terms),
-                )
-                .slice(0, query.limit),
-            )
-          } else {
-            const role = query.resource === 'user_messages' ? 'user' : 'assistant'
-            const target = role === 'user' ? result.userMessages : result.assistantMessages
-            target.push(
-              ...userMessages(context.turn.userId)
-                .filter(
-                  (message) =>
-                    message.role === role &&
-                    message.sequence < context.turn.cutoffSequence &&
-                    matches(message.text, query.terms),
-                )
-                .sort((a, b) => b.sequence - a.sequence)
-                .slice(0, query.limit),
-            )
+      stage(
+        'execute-queries',
+        {
+          turnId: context.turn.turnId,
+          userId: context.turn.userId,
+          task: 'query_execution',
+        },
+        () => {
+          const record = turns.get(context.turn.turnId)
+          if (
+            !record ||
+            record.input.userId !== context.turn.userId ||
+            !same(record.planner, context)
+          )
+            throw new Error('Planner context is not the admitted authenticated turn.')
+          const result: {
+            posts: (typeof S.Post.Type)[]
+            userMessages: (typeof S.Message.Type)[]
+            assistantMessages: (typeof S.Message.Type)[]
+          } = {
+            posts: context.pendingRequests.flatMap((request) => {
+              if (!request.linkedPostId) return []
+              const post = posts.get(request.linkedPostId)
+              return post?.authorId === context.turn.userId ? [post] : []
+            }),
+            userMessages: [],
+            assistantMessages: [],
           }
-        }
-        const dedupe = <A extends { id: string }>(items: readonly A[]) => [
-          ...new Map(items.map((item) => [item.id, item])).values(),
-        ]
-        return {
-          ...context,
-          queryResults: {
-            posts: dedupe(result.posts).slice(0, 30),
-            userMessages: dedupe(result.userMessages).slice(0, 30),
-            assistantMessages: dedupe(result.assistantMessages).slice(0, 30),
-          },
-          memories: [...memories.values()].filter(({ userId }) => userId === context.turn.userId),
-          unaddressed: unaddressed(context.turn.userId, context.turn.cutoffSequence),
-          candidates: [...candidates.values()].filter(
-            ({ userId, status }) => userId === context.turn.userId && status === 'pending',
-          ),
-        }
-      }),
+          for (const query of plan.queries) {
+            if (query.resource === 'posts') {
+              result.posts.push(
+                ...[...posts.values()]
+                  .filter(
+                    (post) =>
+                      post.authorId === context.turn.userId &&
+                      matches(`${post.title} ${post.summary} ${post.detail}`, query.terms),
+                  )
+                  .slice(0, query.limit),
+              )
+            } else {
+              const role = query.resource === 'user_messages' ? 'user' : 'assistant'
+              const target = role === 'user' ? result.userMessages : result.assistantMessages
+              target.push(
+                ...userMessages(context.turn.userId)
+                  .filter(
+                    (message) =>
+                      message.role === role &&
+                      message.sequence < context.turn.cutoffSequence &&
+                      matches(message.text, query.terms),
+                  )
+                  .sort((a, b) => b.sequence - a.sequence)
+                  .slice(0, query.limit),
+              )
+            }
+          }
+          const dedupe = <A extends { id: string }>(items: readonly A[]) => [
+            ...new Map(items.map((item) => [item.id, item])).values(),
+          ]
+          return {
+            ...context,
+            queryResults: {
+              posts: dedupe(result.posts).slice(0, 30),
+              userMessages: dedupe(result.userMessages).slice(0, 30),
+              assistantMessages: dedupe(result.assistantMessages).slice(0, 30),
+              linkedRequestPostIds: dedupe(result.posts)
+                .filter((post) =>
+                  context.pendingRequests.some(({ linkedPostId }) => linkedPostId === post.id),
+                )
+                .map(({ id }) => id)
+                .slice(0, 20),
+            },
+            memories: [...memories.values()].filter(({ userId }) => userId === context.turn.userId),
+            unaddressed: unaddressed(context.turn.userId, context.turn.cutoffSequence),
+            candidates: [...candidates.values()].filter(
+              ({ userId, status }) => userId === context.turn.userId && status === 'pending',
+            ),
+          }
+        },
+      ),
     publishResponse: ({ context, result }) =>
-      run('publish-response', () => {
-        const record = turns.get(context.turn.turnId)
-        if (record?.status !== 'running' || active.get(context.turn.userId) !== context.turn.turnId)
-          throw new Error('Turn is not active for publication.')
-        const stagedPosts = new Map([...posts].map(([id, post]) => [id, structuredClone(post)]))
-        const stagedCandidates = new Map(
-          [...candidates].map(([id, candidate]) => [id, structuredClone(candidate)]),
-        )
-        const diffs: (typeof S.PostDiff.Type)[] = []
-        for (const change of result.response.postChanges) {
-          const before = stagedPosts.get(change.postId)
+      stage(
+        'publish-response',
+        {
+          turnId: context.turn.turnId,
+          userId: context.turn.userId,
+          task: 'publication',
+        },
+        () => {
+          const record = turns.get(context.turn.turnId)
           if (
-            !before ||
-            before.authorId !== context.turn.userId ||
-            before.version !== change.expectedVersion
+            record?.status !== 'running' ||
+            active.get(context.turn.userId) !== context.turn.turnId
           )
-            throw new Error('Post changed or belongs to another user.')
-          const after: typeof S.Post.Type = {
-            id: before.id,
-            authorId: before.authorId,
-            version: before.version + 1,
-            title: change.title,
-            summary: change.summary,
-            detail: change.detail,
-            published: change.published,
-          }
-          stagedPosts.set(after.id, after)
-          diffs.push({ postId: after.id, before, after })
-        }
-        const pending = result.response.pendingOutcome
-        let linkedCandidate: string | null = null
-        if (pending.kind !== 'none') {
-          const candidate = stagedCandidates.get(pending.candidateId)
-          if (
-            !candidate ||
-            candidate.userId !== context.turn.userId ||
-            candidate.status !== 'pending'
+            throw new Error('Turn is not active for publication.')
+          const stagedPosts = new Map([...posts].map(([id, post]) => [id, structuredClone(post)]))
+          const stagedCandidates = new Map(
+            [...candidates].map(([id, candidate]) => [id, structuredClone(candidate)]),
           )
-            throw new Error('Candidate is unavailable.')
-          linkedCandidate = candidate.id
-          if (pending.kind === 'publish') {
-            if (candidate.version !== pending.expectedVersion || stagedPosts.has(pending.postId))
-              throw new Error('Candidate changed or post id already exists.')
+          const diffs: (typeof S.PostDiff.Type)[] = []
+          const candidatePublications: (typeof S.CandidatePublication.Type)[] = []
+          for (const change of result.response.postChanges) {
+            const before = stagedPosts.get(change.postId)
+            if (
+              !before ||
+              before.authorId !== context.turn.userId ||
+              before.version !== change.expectedVersion
+            )
+              throw new Error('Post changed or belongs to another user.')
             const after: typeof S.Post.Type = {
-              id: pending.postId,
-              authorId: context.turn.userId,
-              version: 1,
-              title: pending.title,
-              summary: pending.summary,
-              detail: pending.detail,
-              published: true,
+              id: before.id,
+              authorId: before.authorId,
+              version: before.version + 1,
+              title: change.title,
+              summary: change.summary,
+              detail: change.detail,
+              published: change.published,
             }
             stagedPosts.set(after.id, after)
-            stagedCandidates.set(candidate.id, {
-              ...candidate,
-              status: 'published',
-              version: candidate.version + 1,
-            })
+            diffs.push({ postId: after.id, before, after })
           }
-        }
-        posts.clear()
-        for (const [id, post] of stagedPosts) posts.set(id, post)
-        candidates.clear()
-        for (const [id, candidate] of stagedCandidates) candidates.set(id, candidate)
-        const userMessage = messages.get(context.turn.userMessageId)
-        if (!userMessage) throw new Error('Current user message disappeared.')
-        const assistantMessage: typeof S.Message.Type = {
-          id: `${context.turn.turnId}:assistant`,
-          userId: context.turn.userId,
-          role: 'assistant',
-          text: result.response.text,
-          sequence: ++sequence,
-          turnId: context.turn.turnId,
-          intent: result.response.intent,
-          linkedPostId: diffs[0]?.postId ?? null,
-          pendingCandidateId: linkedCandidate,
-          addressed: !actionable(result.response.intent),
-        }
-        messages.set(assistantMessage.id, assistantMessage)
-        const published = {
-          turn: context.turn,
-          userMessage,
-          assistantMessage,
-          response: result.response,
-          webEvidence: result.webEvidence,
-          diffs,
-          memorySnapshot: context.memories,
-          requestSnapshot: context.unaddressed,
-        }
-        record.published = published
-        record.status = 'published'
-        return published
-      }),
+          const pending = result.response.pendingOutcome
+          let linkedCandidate: string | null = null
+          if (pending.kind !== 'none') {
+            const candidate = stagedCandidates.get(pending.candidateId)
+            if (
+              !candidate ||
+              candidate.userId !== context.turn.userId ||
+              candidate.status !== 'pending'
+            )
+              throw new Error('Candidate is unavailable.')
+            linkedCandidate = candidate.id
+            if (pending.kind === 'publish') {
+              const postId = `post:${candidate.id}`
+              if (candidate.version !== pending.expectedVersion || stagedPosts.has(postId))
+                throw new Error('Candidate changed or post id already exists.')
+              const after: typeof S.Post.Type = {
+                id: postId,
+                authorId: context.turn.userId,
+                version: 1,
+                title: pending.title,
+                summary: pending.summary,
+                detail: pending.detail,
+                published: true,
+              }
+              stagedPosts.set(after.id, after)
+              candidatePublications.push({ candidateId: candidate.id, postId: after.id })
+              stagedCandidates.set(candidate.id, {
+                ...candidate,
+                status: 'published',
+                version: candidate.version + 1,
+              })
+            }
+          }
+          posts.clear()
+          for (const [id, post] of stagedPosts) posts.set(id, post)
+          candidates.clear()
+          for (const [id, candidate] of stagedCandidates) candidates.set(id, candidate)
+          const userMessage = messages.get(context.turn.userMessageId)
+          if (!userMessage) throw new Error('Current user message disappeared.')
+          const assistantMessage: typeof S.Message.Type = {
+            id: `${context.turn.turnId}:assistant`,
+            userId: context.turn.userId,
+            conversationId: `conversation:${context.turn.userId}`,
+            role: 'assistant',
+            text: result.response.text,
+            sequence: ++sequence,
+            turnId: context.turn.turnId,
+            intent: result.response.intent,
+            linkedPostId: diffs[0]?.postId ?? candidatePublications[0]?.postId ?? null,
+            pendingCandidateId: linkedCandidate,
+            addressed: !actionable(result.response.intent),
+          }
+          messages.set(assistantMessage.id, assistantMessage)
+          const published = {
+            turn: context.turn,
+            userMessage,
+            assistantMessage,
+            response: result.response,
+            webEvidence: result.webEvidence,
+            diffs,
+            candidatePublications,
+            memorySnapshot: context.memories,
+            requestSnapshot: context.unaddressed,
+          }
+          record.published = published
+          record.status = 'published'
+          return published
+        },
+      ),
     abortTurn: ({ turn }) =>
       run('abort-turn', () => {
         const record = turns.get(turn.turnId)
-        if (record && record.status === 'running') {
+        if (
+          record &&
+          same(record.planner.turn, turn) &&
+          (record.status === 'running' || record.status === 'published') &&
+          active.get(turn.userId) === turn.turnId
+        ) {
           record.status = 'failed'
-          if (active.get(turn.userId) === turn.turnId) active.delete(turn.userId)
+          active.delete(turn.userId)
         }
-        return {
-          turnId: turn.turnId,
-          userId: turn.userId,
-          status: 'failed' as const,
-          assistantMessageId: null,
-          diffs: [],
-          background: [],
-        }
+        return record
+          ? { ...savedReceipt(turn.turnId, record), status: 'failed' as const }
+          : failedReceipt(turn)
       }),
     loadBackgroundJob: ({ published, task }) =>
       run('load-background-job', () => {
@@ -333,10 +433,16 @@ export function messagingStore(fixture: Fixture = {}) {
           if (attempts >= 2) throw new Error(`${task} retry budget exhausted.`)
           record.attempts.set(task, attempts + 1)
         }
-        return { published, task, skip: done }
+        return {
+          published,
+          task,
+          skip: done,
+          receipt: done ? (record.jobs.get(task) ?? null) : null,
+        }
       }),
-    applyMemory: ({ published, plan }) =>
+    applyMemory: ({ job, plan }) =>
       run('apply-memory', () => {
+        const { published } = job
         const record = turns.get(published.turn.turnId)
         const saved = record?.jobs.get('memory')
         if (saved?.status === 'done') return saved
@@ -376,8 +482,9 @@ export function messagingStore(fixture: Fixture = {}) {
         record?.jobs.set('memory', receipt)
         return receipt
       }),
-    applyAddressing: ({ published, plan }) =>
+    applyAddressing: ({ job, plan }) =>
       run('apply-addressing', () => {
+        const { published } = job
         const record = turns.get(published.turn.turnId)
         const saved = record?.jobs.get('addressing')
         if (saved?.status === 'done') return saved
@@ -418,27 +525,36 @@ export function messagingStore(fixture: Fixture = {}) {
         return receipt
       }),
     finalizeTurn: ({ published, jobs }) =>
-      run('finalize-turn', () => {
-        const record = turns.get(published.turn.turnId)
-        if (!record) throw new Error('Unknown turn.')
-        const background = [jobs.memory, jobs.addressing]
-        const status = background.every(({ status }) => status === 'done')
-          ? ('completed' as const)
-          : ('background_failed' as const)
-        record.status = status
-        if (active.get(published.turn.userId) === published.turn.turnId)
-          active.delete(published.turn.userId)
-        return {
+      stage(
+        'finalize-turn',
+        {
           turnId: published.turn.turnId,
           userId: published.turn.userId,
-          status,
-          assistantMessageId: published.assistantMessage.id,
-          diffs: published.diffs,
-          background,
-        }
-      }),
+          task: 'finalize',
+        },
+        () => {
+          const record = turns.get(published.turn.turnId)
+          if (!record) throw new Error('Unknown turn.')
+          const background = [jobs.memory, jobs.addressing]
+          const status = background.every(({ status }) => status === 'done')
+            ? ('completed' as const)
+            : ('background_failed' as const)
+          record.status = status
+          if (active.get(published.turn.userId) === published.turn.turnId)
+            active.delete(published.turn.userId)
+          return {
+            turnId: published.turn.turnId,
+            userId: published.turn.userId,
+            status,
+            assistantMessageId: published.assistantMessage.id,
+            diffs: published.diffs,
+            candidatePublications: published.candidatePublications,
+            background,
+          }
+        },
+      ),
     loadRetry: (input) =>
-      run('load-retry', () => {
+      stage('load-retry', { turnId: input.turnId, userId: input.userId, task: 'retry' }, () => {
         const record = turns.get(input.turnId)
         if (
           !record?.published ||
@@ -450,6 +566,12 @@ export function messagingStore(fixture: Fixture = {}) {
           ([task, receipt]) => receipt.status === 'failed' && (record.attempts.get(task) ?? 0) < 2,
         )
         if (!retryable) throw new Error('Background retry budget exhausted.')
+        const newerTurn = [...turns.values()].some(
+          (candidate) =>
+            candidate.input.userId === input.userId &&
+            candidate.planner.turn.cutoffSequence > record.planner.turn.cutoffSequence,
+        )
+        if (newerTurn) throw new Error('Background retry is stale after a newer admitted turn.')
         if (active.has(input.userId)) throw new Error('User already has an active turn.')
         active.set(input.userId, input.turnId)
         record.status = 'published'
@@ -504,6 +626,7 @@ export function messagingStore(fixture: Fixture = {}) {
     const message: typeof S.Message.Type = {
       id: decoded.id,
       userId: decoded.userId,
+      conversationId: `conversation:${decoded.userId}`,
       role: 'assistant',
       text: decoded.text,
       sequence: ++sequence,

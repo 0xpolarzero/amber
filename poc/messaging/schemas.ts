@@ -9,6 +9,7 @@ export const Intent = Schema.Literals(['informational', 'question', 'request', '
 export const Message = Schema.Struct({
   id: Id,
   userId: Id,
+  conversationId: Id,
   role: Schema.Literals(['user', 'assistant']),
   text: text(8_000),
   sequence: Version,
@@ -65,6 +66,7 @@ export const QueryResults = Schema.Struct({
   posts: Schema.Array(Post).check(Schema.isMaxLength(30)),
   userMessages: Schema.Array(Message).check(Schema.isMaxLength(30)),
   assistantMessages: Schema.Array(Message).check(Schema.isMaxLength(30)),
+  linkedRequestPostIds: Schema.Array(Id).check(Schema.isMaxLength(20)),
 })
 export const ResponderContext = Schema.Struct({
   ...PlannerContext.fields,
@@ -99,7 +101,6 @@ export const PendingOutcome = Schema.Union([
     kind: Schema.Literal('publish'),
     candidateId: Id,
     expectedVersion: Version,
-    postId: Id,
     title: text(140),
     summary: text(500),
     detail: text(6_000),
@@ -119,6 +120,7 @@ export const ResponderResult = Schema.Struct({
   webEvidence: Schema.Array(WebPage).check(Schema.isMaxLength(8)),
 })
 export const PostDiff = Schema.Struct({ postId: Id, before: Post, after: Post })
+export const CandidatePublication = Schema.Struct({ candidateId: Id, postId: Id })
 export const PublishedTurn = Schema.Struct({
   turn: Turn,
   userMessage: Message,
@@ -126,6 +128,7 @@ export const PublishedTurn = Schema.Struct({
   response: Response,
   webEvidence: Schema.Array(WebPage),
   diffs: Schema.Array(PostDiff),
+  candidatePublications: Schema.Array(CandidatePublication),
   memorySnapshot: Schema.Array(Memory),
   requestSnapshot: Schema.Array(Message),
 })
@@ -152,15 +155,16 @@ export const AddressingPlan = Schema.Struct({
   ).check(Schema.isMaxLength(20)),
 })
 export const BackgroundTask = Schema.Literals(['memory', 'addressing'])
-export const BackgroundContext = Schema.Struct({
-  published: PublishedTurn,
-  task: BackgroundTask,
-  skip: Schema.Boolean,
-})
 export const JobReceipt = Schema.Struct({
   task: BackgroundTask,
   status: Schema.Literals(['done', 'failed']),
   reason: Schema.NullOr(text(500)),
+})
+export const BackgroundContext = Schema.Struct({
+  published: PublishedTurn,
+  task: BackgroundTask,
+  skip: Schema.Boolean,
+  receipt: Schema.NullOr(JobReceipt),
 })
 export const BackgroundJobs = Schema.Struct({ memory: JobReceipt, addressing: JobReceipt })
 export const TurnReceipt = Schema.Struct({
@@ -169,6 +173,17 @@ export const TurnReceipt = Schema.Struct({
   status: Schema.Literals(['completed', 'background_failed', 'failed']),
   assistantMessageId: Schema.NullOr(Id),
   diffs: Schema.Array(PostDiff),
+  candidatePublications: Schema.Array(CandidatePublication),
   background: Schema.Array(JobReceipt),
 })
+export const AdmissionResult = Schema.Union([
+  Schema.Struct({ kind: Schema.Literal('admitted'), context: PlannerContext }),
+  Schema.Struct({ kind: Schema.Literal('replay'), receipt: TurnReceipt }),
+  Schema.Struct({
+    kind: Schema.Literal('rejected'),
+    receipt: TurnReceipt,
+    reason: text(500),
+  }),
+])
+export const Admission = Schema.Struct({ result: AdmissionResult })
 export const RetryInput = Schema.Struct({ turnId: Id, userId: Id })

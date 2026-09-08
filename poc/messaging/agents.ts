@@ -19,6 +19,27 @@ export function messagingLayers(ports: Ports) {
   })
   return Layer.mergeAll(
     T.AdmitTurn.toLayer(ports.admitTurn),
+    T.LoadAdmittedTurn.toLayer((admission) =>
+      Effect.try({
+        try: () => {
+          if (admission.result.kind !== 'admitted') throw new Error('Turn was not admitted.')
+          return admission.result.context
+        },
+        catch: (error) =>
+          new S.Failure({ operation: 'load-admitted-turn', message: String(error) }),
+      }),
+    ),
+    T.ReadAdmissionReceipt.toLayer((admission) =>
+      Effect.try({
+        try: () => {
+          if (admission.result.kind === 'admitted')
+            throw new Error('Admitted turn has no saved receipt.')
+          return admission.result.receipt
+        },
+        catch: (error) =>
+          new S.Failure({ operation: 'read-admission-receipt', message: String(error) }),
+      }),
+    ),
     T.PlanQueries.toLayer((context) =>
       track(
         { turnId: context.turn.turnId, userId: context.turn.userId, task: 'planner' },
@@ -52,34 +73,48 @@ export function messagingLayers(ports: Ports) {
     T.PublishResponse.toLayer(ports.publishResponse),
     T.AbortTurn.toLayer(ports.abortTurn),
     T.LoadBackgroundJob.toLayer(ports.loadBackgroundJob),
-    T.Remember.toLayer((published) =>
-      track(
+    T.Remember.toLayer((job) => {
+      const { published } = job
+      return track(
         event(published, 'memory'),
         generate(S.MemoryPlan, 'memory', memoryPrompt, {
           userMessage: published.userMessage,
           assistantAnswer: published.assistantMessage,
           memories: published.memorySnapshot,
         }).pipe(Effect.map(({ value }) => value)),
-      ),
-    ),
-    T.Address.toLayer((published) =>
-      track(
+      )
+    }),
+    T.Address.toLayer((job) => {
+      const { published } = job
+      return track(
         event(published, 'addressing'),
         generate(S.AddressingPlan, 'addressing', addressingPrompt, {
           userMessage: published.userMessage,
           assistantAnswer: published.assistantMessage,
           unaddressedSnapshot: published.requestSnapshot,
         }).pipe(Effect.map(({ value }) => value)),
-      ),
-    ),
+      )
+    }),
     T.ApplyMemory.toLayer(ports.applyMemory),
     T.ApplyAddressing.toLayer(ports.applyAddressing),
+    T.ReuseBackgroundJob.toLayer((job) =>
+      Effect.try({
+        try: () => {
+          if (!job.skip || !job.receipt || job.receipt.status !== 'done')
+            throw new Error('Background job has no successful receipt to reuse.')
+          return job.receipt
+        },
+        catch: (error) =>
+          new S.Failure({ operation: 'reuse-background-job', message: String(error) }),
+      }),
+    ),
     T.RecordBackgroundFailure.toLayer(ports.recordBackgroundFailure),
     T.FinalizeTurn.toLayer(ports.finalizeTurn),
     T.LoadRetry.toLayer(ports.loadRetry),
     Interpreter.layer(T.MessagingTurn),
     Interpreter.layer(T.RetryBackground),
     Interpreter.layer(T.Background),
+    Interpreter.layer(T.AdmittedTurn),
     Interpreter.layer(T.MemoryJob),
     Interpreter.layer(T.AddressingJob),
   )

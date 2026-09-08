@@ -11,7 +11,16 @@ type Handler<A extends { payloadSchema: { Type: unknown }; successSchema: { Type
 export type ProgressEvent = {
   turnId: string
   userId: string
-  task: 'planner' | 'responder' | 'memory' | 'addressing'
+  task:
+    | 'admission'
+    | 'planner'
+    | 'query_execution'
+    | 'responder'
+    | 'publication'
+    | 'memory'
+    | 'addressing'
+    | 'finalize'
+    | 'retry'
   status: 'running' | 'done' | 'failed'
 }
 

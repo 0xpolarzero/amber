@@ -5,7 +5,17 @@ import * as S from './schemas'
 
 export const AdmitTurn = Action.make('amber/messaging/admit-turn', {
   payload: S.TurnInput,
+  success: S.Admission,
+  error: S.Failure,
+})
+export const LoadAdmittedTurn = Action.make('amber/messaging/load-admitted-turn', {
+  payload: S.Admission,
   success: S.PlannerContext,
+  error: S.Failure,
+})
+export const ReadAdmissionReceipt = Action.make('amber/messaging/read-admission-receipt', {
+  payload: S.Admission,
+  success: S.TurnReceipt,
   error: S.Failure,
 })
 export const PlanQueries = Action.make('amber/messaging/plan-queries', {
@@ -29,7 +39,7 @@ export const PublishResponse = Action.make('amber/messaging/publish-response', {
   error: S.Failure,
 })
 export const AbortTurn = Action.make('amber/messaging/abort-turn', {
-  payload: { turn: S.TurnInput, failure: S.Failure },
+  payload: { turn: S.Turn, failure: S.Failure },
   success: S.TurnReceipt,
   error: S.Failure,
 })
@@ -39,22 +49,27 @@ export const LoadBackgroundJob = Action.make('amber/messaging/load-background-jo
   error: S.Failure,
 })
 export const Remember = Action.make('amber/messaging/remember', {
-  payload: S.PublishedTurn,
+  payload: S.BackgroundContext,
   success: S.MemoryPlan,
   error: S.Failure,
 })
 export const Address = Action.make('amber/messaging/address', {
-  payload: S.PublishedTurn,
+  payload: S.BackgroundContext,
   success: S.AddressingPlan,
   error: S.Failure,
 })
 export const ApplyMemory = Action.make('amber/messaging/apply-memory', {
-  payload: { published: S.PublishedTurn, plan: S.MemoryPlan },
+  payload: { job: S.BackgroundContext, plan: S.MemoryPlan },
   success: S.JobReceipt,
   error: S.Failure,
 })
 export const ApplyAddressing = Action.make('amber/messaging/apply-addressing', {
-  payload: { published: S.PublishedTurn, plan: S.AddressingPlan },
+  payload: { job: S.BackgroundContext, plan: S.AddressingPlan },
+  success: S.JobReceipt,
+  error: S.Failure,
+})
+export const ReuseBackgroundJob = Action.make('amber/messaging/reuse-background-job', {
+  payload: S.BackgroundContext,
   success: S.JobReceipt,
   error: S.Failure,
 })
@@ -80,11 +95,13 @@ export const MemoryJob = Flow.make('amber/messaging/memory-job', {
   error: S.Failure,
   body: (published) =>
     LoadBackgroundJob.call({ published, task: 'memory' }).pipe(
-      Node.bindPlanned(() =>
-        Remember.call(published).pipe(
-          Node.bindPlanned((plan) => ApplyMemory.call({ published, plan })),
-        ),
-      ),
+      Node.branch({
+        if: (job) => job.skip,
+        // biome-ignore lint/suspicious/noThenProperty: Smithers names this required branch arm `then`.
+        then: (job) => ReuseBackgroundJob.call(job),
+        else: (job) =>
+          Remember.call(job).pipe(Node.bindPlanned((plan) => ApplyMemory.call({ job, plan }))),
+      }),
       Node.catch({
         error: S.Failure,
         onFailure: (failure) =>
@@ -99,15 +116,38 @@ export const AddressingJob = Flow.make('amber/messaging/addressing-job', {
   error: S.Failure,
   body: (published) =>
     LoadBackgroundJob.call({ published, task: 'addressing' }).pipe(
-      Node.bindPlanned(() =>
-        Address.call(published).pipe(
-          Node.bindPlanned((plan) => ApplyAddressing.call({ published, plan })),
-        ),
-      ),
+      Node.branch({
+        if: (job) => job.skip,
+        // biome-ignore lint/suspicious/noThenProperty: Smithers names this required branch arm `then`.
+        then: (job) => ReuseBackgroundJob.call(job),
+        else: (job) =>
+          Address.call(job).pipe(Node.bindPlanned((plan) => ApplyAddressing.call({ job, plan }))),
+      }),
       Node.catch({
         error: S.Failure,
         onFailure: (failure) =>
           RecordBackgroundFailure.call({ published, task: 'addressing', failure }),
+      }),
+    ),
+})
+
+export const AdmittedTurn = Flow.make('amber/messaging/admitted-turn', {
+  payload: S.PlannerContext,
+  success: S.TurnReceipt,
+  error: S.Failure,
+  maxRounds: 4,
+  body: (context) =>
+    PlanQueries.call(context).pipe(
+      Node.bindPlanned((plan) => ExecuteQueries.call({ context, plan })),
+      Node.bindPlanned((responderContext) =>
+        Respond.call(responderContext).pipe(
+          Node.bindPlanned((result) => PublishResponse.call({ context: responderContext, result })),
+        ),
+      ),
+      Node.bindPlanned((published) => Background.to(published)),
+      Node.catch({
+        error: S.Failure,
+        onFailure: (failure) => AbortTurn.call({ turn: context.turn, failure }),
       }),
     ),
 })
@@ -130,20 +170,15 @@ export const MessagingTurn = Flow.make('amber/messaging/turn', {
   maxRounds: 4,
   body: (turn) =>
     AdmitTurn.call(turn).pipe(
-      Node.bindPlanned((context) =>
-        PlanQueries.call(context).pipe(
-          Node.bindPlanned((plan) => ExecuteQueries.call({ context, plan })),
-          Node.bindPlanned((responderContext) =>
-            Respond.call(responderContext).pipe(
-              Node.bindPlanned((result) =>
-                PublishResponse.call({ context: responderContext, result }),
-              ),
-            ),
+      Node.branch({
+        if: (admission) => admission.result.kind === 'admitted',
+        // biome-ignore lint/suspicious/noThenProperty: Smithers names this required branch arm `then`.
+        then: (admission) =>
+          LoadAdmittedTurn.call(admission).pipe(
+            Node.bindPlanned((context) => AdmittedTurn.child(context)),
           ),
-        ),
-      ),
-      Node.bindPlanned((published) => Background.to(published)),
-      Node.catch({ error: S.Failure, onFailure: (failure) => AbortTurn.call({ turn, failure }) }),
+        else: (admission) => ReadAdmissionReceipt.call(admission),
+      }),
     ),
 })
 
