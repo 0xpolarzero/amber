@@ -30,7 +30,11 @@ export default defineConfig({
   webServer: {
     command: 'pnpm build && pnpm start',
     url: 'http://127.0.0.1:3100',
-    env: { HOST: '127.0.0.1', PORT: '3100' },
+    env: {
+      HOST: '127.0.0.1',
+      PORT: '3100',
+      VITE_AMBER_E2E: 'true',
+    },
     reuseExistingServer: false,
     timeout: 60_000,
   },

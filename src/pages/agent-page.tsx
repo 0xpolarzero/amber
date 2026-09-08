@@ -1,6 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { AgentMemoryDialog } from '../components/agent-memory'
+import { AgentMemoryPanel } from '../components/agent-memory'
 import { AgentProgress } from '../components/agent-progress'
 import { Icon } from '../components/icon'
 import { ReplyComposer } from '../components/reply-composer'
@@ -55,15 +55,28 @@ function AgentChat({
 }) {
   const { state, dispatch } = usePreview()
   const navigate = useNavigate()
-  const [memoryOpen, setMemoryOpen] = useState(false)
-  const [pendingIndex, setPendingIndex] = useState(-1)
+  const guide =
+    state.guideStep === null ? undefined : AGENT_GUIDE[state.guideStep]
+  const [activePanel, setActivePanel] = useState<'pending' | 'memory' | null>(
+    guide?.revealMemory ? 'memory' : null,
+  )
+  const [pendingIndex, setPendingIndex] = useState(0)
   const [newBelow, setNewBelow] = useState(false)
   const history = useRef<HTMLDivElement>(null)
   const nearBottom = useRef(true)
   const previousCount = useRef(0)
-  const pending = agent.messages.filter(isUnaddressed)
-  const guide =
-    state.guideStep === null ? undefined : AGENT_GUIDE[state.guideStep]
+  const injectedMessages =
+    import.meta.env.VITE_AMBER_E2E === 'true' && typeof window !== 'undefined'
+      ? (
+          window as Window & {
+            __amberTestMessages?: AgentConversation['messages']
+          }
+        ).__amberTestMessages
+      : undefined
+  const messages = injectedMessages
+    ? [...agent.messages, ...injectedMessages]
+    : agent.messages
+  const pending = messages.filter(isUnaddressed)
   const context = [...state.posts, ...state.agentPosts].find(
     (post) => post.id === postId,
   )
@@ -90,62 +103,33 @@ function AgentChat({
     message?.scrollIntoView({ block: 'start' })
     if (guide.focusMessage) message?.focus({ preventScroll: true })
   }, [guide])
-  const jumpToPending = (direction: 1 | -1) => {
-    if (!pending.length) return
-    const next = (pendingIndex + direction + pending.length) % pending.length
-    setPendingIndex(next)
-    const message = document.getElementById(`message-${pending[next].id}`)
-    message?.scrollIntoView({ block: 'center' })
-    message?.focus({ preventScroll: true })
+  const focusPending = (index: number) => {
+    const message = pending[index]
+    if (!message) return
+    setPendingIndex(index)
+    const element = document.getElementById(`message-${message.id}`)
+    element?.scrollIntoView({ block: 'center' })
+    element?.focus({ preventScroll: true })
   }
+  const openPending = () => {
+    if (!pending.length) return
+    if (activePanel === 'pending') {
+      setActivePanel(null)
+      return
+    }
+    setActivePanel('pending')
+    requestAnimationFrame(() => focusPending(0))
+  }
+  const openMemory = () => {
+    setActivePanel((current) => (current === 'memory' ? null : 'memory'))
+  }
+  const memoryPanelId = 'agent-memory-panel'
+  const pendingPanelId = 'agent-pending-panel'
   return (
     <section
       className="conversation agent-chat"
       aria-label="Conversation with Amber"
     >
-      <header className="conversation-header agent-header">
-        <span className="message-avatar">
-          <Icon name="spark" />
-        </span>
-        <div>
-          <h1>Amber</h1>
-          <p>One private conversation across your posts.</p>
-        </div>
-        {pending.length > 0 ? (
-          <fieldset className="pending-navigation">
-            <legend className="visually-hidden">Pending requests</legend>
-            <button
-              type="button"
-              onClick={() => jumpToPending(-1)}
-              aria-label="Previous pending request"
-            >
-              <Icon name="chevron" />
-            </button>
-            <button
-              className="unaddressed-jump"
-              type="button"
-              onClick={() => jumpToPending(1)}
-              aria-label={`Next pending request (${pending.length} open)`}
-            >
-              {pending.length} pending
-            </button>
-            <button
-              type="button"
-              onClick={() => jumpToPending(1)}
-              aria-label="Next pending request"
-            >
-              <Icon name="chevron" />
-            </button>
-          </fieldset>
-        ) : null}
-        <button
-          className="memory-button"
-          type="button"
-          onClick={() => setMemoryOpen(true)}
-        >
-          Memory<span>{agent.memories.length}</span>
-        </button>
-      </header>
       {!agent.messages.length ? (
         <div className="agent-welcome">
           <h2>What would you like to work on?</h2>
@@ -166,7 +150,7 @@ function AgentChat({
           if (nearBottom.current) setNewBelow(false)
         }}
       >
-        {agent.messages.map((message) => (
+        {messages.map((message) => (
           <article
             key={message.id}
             id={`message-${message.id}`}
@@ -211,7 +195,7 @@ function AgentChat({
             {reit(message.memoryEvents) ? (
               <MemoryReceipt
                 events={message.memoryEvents ?? []}
-                onOpen={() => setMemoryOpen(true)}
+                onOpen={() => setActivePanel('memory')}
               />
             ) : null}
             {message.usedMemories?.length || message.usedHistory?.length ? (
@@ -257,7 +241,6 @@ function AgentChat({
         {agent.run ? (
           <AgentProgress run={agent.run} expanded={guide?.revealProgress} />
         ) : null}
-        {guide?.revealMemory ? <GuideMemoryEvidence agent={agent} /> : null}
         {postId ? (
           <div className="agent-post-context">
             {context ? (
@@ -284,16 +267,90 @@ function AgentChat({
             </button>
           </div>
         ) : null}
-        <ReplyComposer
-          key={`${user}-${state.scenarioRevision}-${agent.revision}`}
-          postId={context?.id}
-          draft={agent.draft}
-          blocked={isAgentBusy(agent.run)}
-        />
+        {activePanel === 'pending' ? (
+          <section
+            className="composer-panel pending-panel"
+            id={pendingPanelId}
+            aria-label="Pending requests"
+          >
+            <span>Pending requests</span>
+            <output aria-live="polite">
+              {pending.length
+                ? `${pendingIndex + 1} of ${pending.length}`
+                : 'None'}
+            </output>
+            <div className="pending-panel-actions">
+              <button
+                type="button"
+                aria-label="Previous pending message"
+                title="Previous pending message"
+                disabled={pendingIndex === 0}
+                onClick={() => focusPending(pendingIndex - 1)}
+              >
+                <Icon name="chevron" />
+              </button>
+              <button
+                type="button"
+                aria-label="Next pending message"
+                title="Next pending message"
+                disabled={pendingIndex >= pending.length - 1}
+                onClick={() => focusPending(pendingIndex + 1)}
+              >
+                <Icon name="chevron" />
+              </button>
+            </div>
+          </section>
+        ) : null}
+        {activePanel === 'memory' ? (
+          <AgentMemoryPanel id={memoryPanelId} />
+        ) : null}
+        <div className="composer-row">
+          <ReplyComposer
+            key={`${user}-${state.scenarioRevision}-${agent.revision}`}
+            postId={context?.id}
+            draft={agent.draft}
+            blocked={isAgentBusy(agent.run)}
+          />
+          <div
+            className="composer-tools"
+            role="toolbar"
+            aria-label="Conversation tools"
+          >
+            <button
+              type="button"
+              className="composer-tool pending-tool"
+              aria-label={
+                pending.length
+                  ? `${activePanel === 'pending' ? 'Close' : 'Open'} pending messages (${pending.length})`
+                  : 'No pending messages'
+              }
+              title={
+                pending.length ? 'Pending messages' : 'No pending messages'
+              }
+              aria-controls={pendingPanelId}
+              aria-expanded={activePanel === 'pending'}
+              disabled={!pending.length}
+              onClick={openPending}
+            >
+              <Icon name="flag" />
+              <span className="pending-count" aria-hidden="true">
+                {pending.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="composer-tool"
+              aria-label={`${activePanel === 'memory' ? 'Close' : 'Open'} memory (${agent.memories.length} saved)`}
+              title="Memory"
+              aria-controls={memoryPanelId}
+              aria-expanded={activePanel === 'memory'}
+              onClick={openMemory}
+            >
+              <Icon name="memory" />
+            </button>
+          </div>
+        </div>
       </div>
-      {memoryOpen ? (
-        <AgentMemoryDialog onClose={() => setMemoryOpen(false)} />
-      ) : null}
     </section>
   )
 }
@@ -442,30 +499,6 @@ function AppliedChanges({
         />
       ))}
     </section>
-  )
-}
-
-function GuideMemoryEvidence({ agent }: { agent: AgentConversation }) {
-  return (
-    <details className="guide-memory-evidence" open>
-      <summary>Memory used and saved</summary>
-      <div>
-        <p>
-          <strong>Current</strong>{' '}
-          {agent.memories.map((memory) => memory.text).join(' · ')}
-        </p>
-        <ol aria-label="Memory history">
-          {agent.memoryHistory.map((event) => (
-            <li
-              key={`${event.id}-${event.kind}-${event.before ?? ''}-${event.after ?? ''}`}
-            >
-              <strong>{memoryEventLabel(event)}</strong>
-              <span>{event.after ?? event.before}</span>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </details>
   )
 }
 

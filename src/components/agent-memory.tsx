@@ -3,95 +3,132 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { MemoryForm } from '../domain/forms'
 import { usePreview } from '../preview/provider'
 import type { AgentMemory } from '../preview/state'
-import { Dialog } from './dialog'
+import { Icon } from './icon'
 
-export function AgentMemoryDialog({ onClose }: { onClose: () => void }) {
+export function AgentMemoryPanel({ id }: { id: string }) {
   const { agent, dispatch } = usePreview()
   const [editing, setEditing] = useState<AgentMemory | 'new' | null>(null)
+  const [query, setQuery] = useState('')
   const addButton = useRef<HTMLButtonElement>(null)
   if (!agent) return null
+  const normalizedQuery = query.trim().toLocaleLowerCase()
+  const memories = normalizedQuery
+    ? agent.memories.filter((memory) =>
+        memory.text.toLocaleLowerCase().includes(normalizedQuery),
+      )
+    : agent.memories
   const finish = () => {
     setEditing(null)
     requestAnimationFrame(() => addButton.current?.focus())
   }
   return (
-    <Dialog title="Memory" onClose={onClose}>
-      <p className="dialog-copy">What Amber remembers across your posts.</p>
-      {editing ? (
-        <MemoryEditor
-          key={editing === 'new' ? 'new' : editing.id}
-          memory={editing === 'new' ? undefined : editing}
-          onDone={finish}
-        />
-      ) : (
-        <>
-          <div className="memory-list">
-            {agent.memories.map((memory) => (
-              <div className="memory-entry" key={memory.id}>
-                <p>{memory.text}</p>
-                <div className="memory-actions">
-                  <button
-                    type="button"
-                    onClick={() => setEditing(memory)}
-                    aria-label={`Edit memory: ${memory.text}`}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      dispatch({ type: 'forgetMemory', id: memory.id })
-                      requestAnimationFrame(() => addButton.current?.focus())
-                    }}
-                    aria-label={`Forget memory: ${memory.text}`}
-                  >
-                    Forget
-                  </button>
+    <section
+      className="composer-panel memory-panel"
+      id={id}
+      aria-labelledby={`${id}-title`}
+    >
+      <div className="memory-panel-header">
+        <div>
+          <h2 id={`${id}-title`}>Memory</h2>
+          <p>{agent.memories.length} saved</p>
+        </div>
+        {!editing ? (
+          <label className="memory-search">
+            <span className="visually-hidden">Search memory</span>
+            <Icon name="search" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search memory"
+            />
+          </label>
+        ) : null}
+      </div>
+      <div className="memory-panel-content">
+        {editing ? (
+          <MemoryEditor
+            key={editing === 'new' ? 'new' : editing.id}
+            memory={editing === 'new' ? undefined : editing}
+            onDone={finish}
+          />
+        ) : (
+          <>
+            <div className="memory-list">
+              {memories.map((memory) => (
+                <div className="memory-entry" key={memory.id}>
+                  <p>{memory.text}</p>
+                  <div className="memory-actions">
+                    <button
+                      type="button"
+                      onClick={() => setEditing(memory)}
+                      aria-label={`Edit memory: ${memory.text}`}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        dispatch({ type: 'forgetMemory', id: memory.id })
+                        requestAnimationFrame(() => addButton.current?.focus())
+                      }}
+                      aria-label={`Forget memory: ${memory.text}`}
+                    >
+                      Forget
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-            {!agent.memories.length && (
-              <p className="memory-empty">No saved preferences yet.</p>
-            )}
-          </div>
-          {agent.memoryHistory.length > 0 && (
-            <details className="memory-history">
-              <summary>Recent memory changes</summary>
-              <ol>
-                {[...agent.memoryHistory].reverse().map((event) => (
-                  <li
-                    key={`${event.id}-${event.kind}-${event.before ?? ''}-${event.after ?? ''}`}
-                  >
-                    <strong>
-                      {event.kind === 'created'
-                        ? 'Created'
-                        : event.kind === 'replaced'
-                          ? 'Replaced'
-                          : 'Deleted'}
-                    </strong>
-                    {event.kind === 'replaced' ? (
-                      <span>
-                        {event.before} → {event.after}
-                      </span>
-                    ) : (
-                      <span>{event.after ?? event.before}</span>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </details>
-          )}
-          <button
-            type="button"
-            ref={addButton}
-            className="button secondary"
-            onClick={() => setEditing('new')}
-          >
-            Add preference
-          </button>
-        </>
-      )}
-    </Dialog>
+              ))}
+              {!agent.memories.length ? (
+                <p className="memory-empty">No saved preferences yet.</p>
+              ) : null}
+              {agent.memories.length > 0 && !memories.length ? (
+                <p className="memory-empty">
+                  No preferences match your search.
+                </p>
+              ) : null}
+            </div>
+            {agent.memoryHistory.length > 0 && !normalizedQuery ? (
+              <details className="memory-history">
+                <summary>Recent memory changes</summary>
+                <ol>
+                  {[...agent.memoryHistory].reverse().map((event) => (
+                    <li
+                      key={`${event.id}-${event.kind}-${event.before ?? ''}-${event.after ?? ''}`}
+                    >
+                      <strong>
+                        {event.kind === 'created'
+                          ? 'Created'
+                          : event.kind === 'replaced'
+                            ? 'Replaced'
+                            : 'Deleted'}
+                      </strong>
+                      {event.kind === 'replaced' ? (
+                        <span>
+                          {event.before} → {event.after}
+                        </span>
+                      ) : (
+                        <span>{event.after ?? event.before}</span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            ) : null}
+          </>
+        )}
+      </div>
+      {!editing ? (
+        <button
+          type="button"
+          ref={addButton}
+          className="memory-add"
+          onClick={() => setEditing('new')}
+        >
+          Add preference
+        </button>
+      ) : null}
+    </section>
   )
 }
 

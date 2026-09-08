@@ -69,9 +69,10 @@ test('walks the recorded extraction and messaging guide without typing or waitin
   await expect(
     page.getByRole('region', { name: 'Changes to Noted' }),
   ).toBeVisible()
-  await expect(
-    page.getByText('Memory used and saved', { exact: true }),
-  ).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Memory' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Memory' })).toContainText(
+    'Keep my posts short and factual. No hype.',
+  )
   await expect(page.getByText(/Atlas|Clipwise|Aurora/)).toHaveCount(0)
 
   await next.click()
@@ -167,9 +168,171 @@ test('resets the labeled developer scenarios', async ({ page }) => {
     page.getByRole('heading', { name: 'What would you like to work on?' }),
   ).toBeVisible()
   const composer = page.getByRole('textbox', { name: 'Message Amber' })
+  await expect(
+    page.getByRole('button', { name: 'No pending messages' }),
+  ).toBeDisabled()
+  await page.getByRole('button', { name: 'Open memory (0 saved)' }).click()
+  await expect(page.getByRole('region', { name: 'Memory' })).toContainText(
+    'No saved preferences yet.',
+  )
   await composer.fill('Local draft.')
   await page.getByRole('button', { name: 'Reset' }).click()
   await expect(composer).toHaveValue('')
+})
+
+test('moves through multiple pending messages and keeps panels mutually exclusive', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    ;(
+      window as typeof window & {
+        __amberTestMessages: Array<{
+          id: string
+          sender: 'amber'
+          text: string
+          needsReply: boolean
+        }>
+      }
+    ).__amberTestMessages = [
+      {
+        id: 'e2e-pending-one',
+        sender: 'amber',
+        text: 'First test-only pending message.',
+        needsReply: true,
+      },
+      {
+        id: 'e2e-pending-two',
+        sender: 'amber',
+        text: 'Second test-only pending message.',
+        needsReply: true,
+      },
+      {
+        id: 'e2e-pending-three',
+        sender: 'amber',
+        text: 'Third test-only pending message.',
+        needsReply: true,
+      },
+    ]
+  })
+  await page.goto('/agent')
+  await selectPreviewAccount(page, 'author')
+
+  const pendingToggle = page.getByRole('button', {
+    name: 'Open pending messages (3)',
+  })
+  await pendingToggle.click()
+  const pendingPanel = page.getByRole('region', { name: 'Pending requests' })
+  await expect(pendingPanel).toContainText('1 of 3')
+  await expect(page.locator('#message-e2e-pending-one')).toBeFocused()
+  await expect(
+    pendingPanel.getByRole('button', { name: 'Previous pending message' }),
+  ).toBeDisabled()
+
+  const next = pendingPanel.getByRole('button', {
+    name: 'Next pending message',
+  })
+  await next.click()
+  await expect(pendingPanel).toContainText('2 of 3')
+  await expect(page.locator('#message-e2e-pending-two')).toBeFocused()
+  await next.click()
+  await expect(pendingPanel).toContainText('3 of 3')
+  await expect(page.locator('#message-e2e-pending-three')).toBeFocused()
+  await expect(next).toBeDisabled()
+
+  await pendingPanel
+    .getByRole('button', { name: 'Previous pending message' })
+    .click()
+  await expect(pendingPanel).toContainText('2 of 3')
+  await expect(page.locator('#message-e2e-pending-two')).toBeFocused()
+
+  await page.getByRole('button', { name: 'Open memory (1 saved)' }).click()
+  await expect(pendingPanel).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Memory' })).toBeVisible()
+})
+
+test('filters and collapses the inline memory panel', async ({ page }) => {
+  await page.goto('/agent')
+  await selectPreviewAccount(page, 'author')
+  const memoryToggle = page.getByRole('button', {
+    name: 'Open memory (1 saved)',
+  })
+  await memoryToggle.click()
+  const memory = page.getByRole('region', { name: 'Memory' })
+  const search = memory.getByRole('searchbox', { name: 'Search memory' })
+  await expect(memory).toContainText(
+    'Keep my posts short and factual. No hype.',
+  )
+  await search.fill('missing preference')
+  await expect(memory).toContainText('No preferences match your search.')
+  await expect(memory).not.toContainText(
+    'Keep my posts short and factual. No hype.',
+  )
+  await search.fill('short and factual')
+  await expect(memory).toContainText(
+    'Keep my posts short and factual. No hype.',
+  )
+
+  const closeMemory = page.getByRole('button', {
+    name: 'Close memory (1 saved)',
+  })
+  await expect(closeMemory).toHaveAttribute('aria-expanded', 'true')
+  await closeMemory.click()
+  await expect(page.getByRole('region', { name: 'Memory' })).toHaveCount(0)
+  await expect(memoryToggle).toHaveAttribute('aria-expanded', 'false')
+})
+
+test('keeps the expanded memory panel above a usable composer on desktop and mobile', async ({
+  page,
+  isMobile,
+}) => {
+  await page.goto('/agent')
+  await selectPreviewAccount(page, 'author')
+  const moreControls = page.locator('.preview-more')
+  await moreControls.getByText('More controls', { exact: true }).click()
+  await expect(moreControls).not.toHaveAttribute('open', '')
+  await page.getByRole('button', { name: 'Open memory (1 saved)' }).click()
+
+  const memory = page.getByRole('region', { name: 'Memory' })
+  const composer = page.locator('.reply-composer')
+  const tools = page.locator('.composer-tools')
+  const guide = guideFor(page)
+  await expect(memory).toBeInViewport()
+  await expect(composer).toBeInViewport()
+  const [memoryBounds, composerBounds, toolsBounds, guideBounds] =
+    await Promise.all([
+      memory.boundingBox(),
+      composer.boundingBox(),
+      tools.boundingBox(),
+      guide.boundingBox(),
+    ])
+  expect(
+    (memoryBounds?.y ?? 0) + (memoryBounds?.height ?? 0),
+  ).toBeLessThanOrEqual(composerBounds?.y ?? 0)
+  expect(toolsBounds?.x ?? 0).toBeGreaterThanOrEqual(
+    (composerBounds?.x ?? 0) + (composerBounds?.width ?? 0),
+  )
+  expect(memoryBounds?.height ?? 999).toBeLessThanOrEqual(isMobile ? 250 : 280)
+  expect(
+    (composerBounds?.y ?? 0) + (composerBounds?.height ?? 0),
+  ).toBeLessThanOrEqual(guideBounds?.y ?? 0)
+  await expect
+    .poll(() =>
+      page.locator('.conversation-history').evaluate((element) => {
+        return getComputedStyle(element).overflowY
+      }),
+    )
+    .toBe('auto')
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true)
+  await page.screenshot({
+    path: isMobile
+      ? '/private/tmp/amber-composer-mobile.png'
+      : '/private/tmp/amber-composer-desktop.png',
+    fullPage: true,
+  })
 })
 
 test('keeps the auto-revealed source, guide and composer usable on desktop and mobile', async ({
