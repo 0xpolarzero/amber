@@ -230,7 +230,8 @@ test('moves through multiple pending messages and keeps panels mutually exclusiv
   await page
     .getByRole('textbox', { name: 'Message Amber', exact: true })
     .focus()
-  await expect(selected).toHaveCSS('outline-style', 'solid')
+  await expect(selected).toHaveCSS('border-left-color', 'rgb(138, 98, 28)')
+  await expect(selected).toHaveCSS('outline-style', 'none')
   await expect(
     pendingPanel.getByRole('button', { name: 'Previous pending message' }),
   ).toBeDisabled()

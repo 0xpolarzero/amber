@@ -2380,14 +2380,16 @@ dialog::backdrop {
 .chat-message.unaddressed .chat-bubble {
   background: #fff9ed;
 }
-.chat-message:focus-visible,
-.chat-message[aria-current="true"] {
+.chat-message:focus-visible {
   outline: 2px solid #b7a17a;
   outline-offset: 4px;
   border-radius: 8px;
 }
-.chat-message[aria-current="true"] .chat-bubble {
-  background: #fff0cc;
+.chat-message[aria-current="true"] {
+  border-left-color: #8a621c;
+  border-radius: 0;
+  box-shadow: -1px 0 #8a621c;
+  outline: none;
 }
 .agent-progress {
   border: 1px solid var(--line);
