@@ -6,8 +6,14 @@ export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ context, params }) => {
     const feed = await context.queryClient.ensureQueryData(feedQuery)
     const post = feed.posts.find((post) => post.id === params.postId)
-    if (!post) throw notFound()
-    return { title: post.title }
+    if (
+      !post &&
+      !['atlas-preview', 'aurora-preview', 'clipwise-preview'].includes(
+        params.postId,
+      )
+    )
+      throw notFound()
+    return { title: post?.title ?? 'Post' }
   },
   head: ({ loaderData }) => ({
     meta: [{ title: `${loaderData?.title ?? 'Post'} · Amber` }],

@@ -128,16 +128,18 @@ function PreviewRunClock({
   dispatch: Dispatch<PreviewAction>
 }) {
   useEffect(() => {
-    if (!run || !isAgentBusy(run)) return
+    if (!run || !isAgentBusy(run) || !run.autoPlay) return
     const timer = setTimeout(
       () =>
         dispatch({
           type: 'advanceRun',
           userId,
           messageId: run.messageId,
-          step: run.step,
+          stage: run.stage,
+          memory: run.memory,
+          addressing: run.addressing,
         }),
-      run.step === 4 ? 1600 : 700,
+      run.stage === 'background' ? 1400 : 850,
     )
     return () => clearTimeout(timer)
   }, [userId, run, dispatch])

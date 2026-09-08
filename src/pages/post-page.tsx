@@ -14,7 +14,9 @@ import { usePreview } from '../preview/provider'
 
 export function PostPage({ postId }: { postId: string }) {
   const { state, user, dispatch, openDialog, notify } = usePreview()
-  const post = state.posts.find((post) => post.id === postId)
+  const post = [...state.posts, ...state.agentPosts].find(
+    (post) => post.id === postId,
+  )
   if (!post)
     return (
       <EmptyState title="This post is no longer here.">

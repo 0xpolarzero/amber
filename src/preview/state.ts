@@ -1,57 +1,125 @@
 import { Schema } from 'effect'
 import { AnswerText, CommentText, EditPost, MemoryText } from '../domain/forms'
-import type { Feed } from '../domain/post'
-import { agentExampleActions } from './agent-example'
+import type { Feed, Post } from '../domain/post'
+import {
+  type AgentScenarioId,
+  applyFixturePostChanges,
+  buildAgentScenario,
+  illustrativeRun,
+} from './agent-example'
 
 export type PreviewRole = 'visitor' | 'member' | 'author'
-export type PostUpdate = {
+export type PostFieldChange = {
   field: 'title' | 'summary' | 'detail'
   before: string
   after: string
 }
-export type AgentMemory = { id: string; text: string; sourceMessageId?: string }
+export type PostChange = {
+  kind: 'updated' | 'created'
+  postId: string
+  project: string
+  fields: readonly PostFieldChange[]
+  fromVersion?: number
+  toVersion: number
+  post?: Post
+}
+export type PostUpdate = PostFieldChange
+export type AgentMemory = {
+  id: string
+  text: string
+  version: number
+  sourceMessageId?: string
+}
+export type AgentMemoryEvent = {
+  kind: 'created' | 'replaced' | 'deleted'
+  id: string
+  before?: string
+  after?: string
+}
 export type AgentMessage = {
   id: string
   sender: 'amber' | 'user'
   text: string
   postId?: string
-  update?: PostUpdate
-  sourceMessageId?: string
-  memorySaved?: AgentMemory
-  usedMemories?: readonly AgentMemory[]
+  intent?: 'question' | 'request' | 'suggestion' | 'informational'
   needsReply?: boolean
   addressedBy?: string
+  resolution?: 'answered' | 'ignored'
+  deferred?: boolean
+  changes?: readonly PostChange[]
+  candidate?: {
+    name: string
+    status: 'pending' | 'clarification' | 'published'
+  }
+  memoryEvents?: readonly AgentMemoryEvent[]
+  usedMemories?: readonly AgentMemory[]
+  usedHistory?: readonly string[]
 }
 export const isUnaddressed = (message: AgentMessage) =>
   message.sender === 'amber' &&
   Boolean(message.needsReply) &&
-  !message.addressedBy
+  !message.resolution
 
-// Timed illustration of the proposed workflow, not live agent execution.
-export type AgentRun = { messageId: string; step: number }
-export const isAgentBusy = (run?: AgentRun) => Boolean(run && run.step < 6)
+export type AgentRunStage =
+  | 'planning'
+  | 'retrieving'
+  | 'generating'
+  | 'publishing'
+  | 'background'
+  | 'complete'
+export type BackgroundStatus =
+  | 'queued'
+  | 'running'
+  | 'done'
+  | 'failed'
+  | 'exhausted'
+export type TurnOutcome = {
+  responseId: string
+  text: string
+  changes: readonly PostChange[]
+  memoryEvents: readonly AgentMemoryEvent[]
+  addressIds: readonly string[]
+}
+export type AgentRun = {
+  messageId: string
+  stage: AgentRunStage
+  status: 'running' | 'complete' | 'failed'
+  published: boolean
+  autoPlay: boolean
+  memory: BackgroundStatus
+  addressing: BackgroundStatus
+  memoryAttempts: number
+  addressingAttempts: number
+  maxAttempts: number
+  outcome?: TurnOutcome
+  error?: string
+  stale?: boolean
+}
+export const isAgentBusy = (run?: AgentRun) => run?.status === 'running'
 
 export type AgentConversation = {
   draft: string
   messages: readonly AgentMessage[]
   memories: readonly AgentMemory[]
+  memoryHistory: readonly AgentMemoryEvent[]
   readThrough: number
+  revision: number
   run?: AgentRun
 }
 export type PreviewState = Feed & {
   role: PreviewRole
   savedByUser: Record<string, readonly string[]>
   agentByUser: Record<string, AgentConversation>
+  fixtureFeed: Feed
+  scenarioId: AgentScenarioId
+  scenarioRevision: number
+  agentPosts: readonly Post[]
 }
 export type PreviewAction =
   | { type: 'role'; role: PreviewRole }
+  | { type: 'loadScenario'; id: AgentScenarioId }
   | { type: 'save'; postId: string }
   | { type: 'readAgent' }
-  | {
-      type: 'markAnswered'
-      messageIds: readonly string[]
-      userMessageId: string
-    }
   | { type: 'draftMessage'; text: string }
   | { type: 'saveMemory'; id: string; text: string; sourceMessageId?: string }
   | { type: 'forgetMemory'; id: string }
@@ -72,120 +140,239 @@ export type PreviewAction =
       text: string
       previewRun?: boolean
     }
-  | { type: 'advanceRun'; userId: string; messageId: string; step: number }
   | {
-      type: 'agentMessage'
-      postId?: string
-      id: string
-      text: string
-      memorySavedId?: string
-      needsReply?: boolean
-      memoryIds?: readonly string[]
+      type: 'advanceRun'
+      userId: string
+      messageId: string
+      stage: AgentRunStage
+      memory?: BackgroundStatus
+      addressing?: BackgroundStatus
     }
-  | {
-      type: 'applyPostUpdate'
-      postId: string
-      id: string
-      sourceMessageId: string
-      text: string
-      update: PostUpdate
-      memoryIds?: readonly string[]
-    }
+  | { type: 'setRunPlaying'; playing: boolean }
+  | { type: 'retryBackground'; task: 'memory' | 'addressing' }
 
 export const currentUser = (role: PreviewRole) =>
   role === 'visitor' ? null : role === 'author' ? 'alex' : 'you'
-export function createPreviewState(feed: Feed): PreviewState {
-  let state: PreviewState = {
-    ...feed,
-    role: 'author',
-    savedByUser: {},
-    agentByUser: Object.fromEntries(
-      Object.keys(feed.people).map((id) => [
-        id,
-        { draft: '', messages: [], memories: [], readThrough: 0 },
-      ]),
-    ),
-  }
-  for (const action of agentExampleActions(feed))
-    state = previewReducer(state, action)
-  const agent = state.agentByUser.alex
+
+const emptyConversation = (): AgentConversation => ({
+  draft: '',
+  messages: [],
+  memories: [],
+  memoryHistory: [],
+  readThrough: 0,
+  revision: 0,
+})
+
+export function createPreviewState(
+  feed: Feed,
+  scenarioId?: AgentScenarioId,
+): PreviewState {
+  const selected = scenarioId ?? 'rich-complete'
+  const scenario = buildAgentScenario(feed, selected)
+  const agentByUser = Object.fromEntries(
+    Object.keys(feed.people).map((id) => [id, emptyConversation()]),
+  )
+  agentByUser.alex = scenario.conversation
   return {
-    ...state,
-    role: 'visitor',
-    agentByUser: agent
-      ? {
-          ...state.agentByUser,
-          alex: {
-            ...agent,
-            readThrough: Math.max(0, agent.messages.length - 1),
-          },
-        }
-      : state.agentByUser,
+    ...feed,
+    posts: scenarioId ? scenario.posts : feed.posts,
+    role: scenarioId ? scenario.role : 'visitor',
+    savedByUser: {},
+    agentByUser,
+    fixtureFeed: feed,
+    scenarioId: selected,
+    scenarioRevision: 0,
+    agentPosts: scenario.posts,
   }
 }
 
-// Disposable browser state. Server authorization and durable agent memory come later.
+function applyMemoryEvents(
+  conversation: AgentConversation,
+  events: readonly AgentMemoryEvent[],
+): AgentConversation {
+  let memories = [...conversation.memories]
+  for (const event of events) {
+    const existing = memories.find((memory) => memory.id === event.id)
+    if (event.kind === 'deleted') {
+      memories = memories.filter((memory) => memory.id !== event.id)
+      continue
+    }
+    if (!event.after) continue
+    const memory: AgentMemory = {
+      id: event.id,
+      text: event.after,
+      version: (existing?.version ?? 0) + 1,
+      sourceMessageId: existing?.sourceMessageId,
+    }
+    memories = existing
+      ? memories.map((item) => (item.id === event.id ? memory : item))
+      : [...memories, memory]
+  }
+  return {
+    ...conversation,
+    memories,
+    memoryHistory: [...conversation.memoryHistory, ...events],
+    messages: conversation.messages.map((message) =>
+      message.id === conversation.run?.outcome?.responseId
+        ? { ...message, memoryEvents: events }
+        : message,
+    ),
+  }
+}
+
+function finishAddressing(
+  conversation: AgentConversation,
+  ids: readonly string[],
+): AgentConversation {
+  return {
+    ...conversation,
+    messages: conversation.messages.map((message) =>
+      ids.includes(message.id) && isUnaddressed(message)
+        ? {
+            ...message,
+            resolution: 'answered' as const,
+            addressedBy: conversation.run?.messageId,
+          }
+        : message,
+    ),
+  }
+}
+
+function advanceRun(state: PreviewState, userId: string): PreviewState {
+  const conversation = state.agentByUser[userId]
+  const run = conversation?.run
+  if (!conversation || !run || run.status !== 'running') return state
+  let nextConversation = conversation
+  let posts = state.posts
+  let agentPosts = state.agentPosts
+  let nextRun = run
+  if (run.stage === 'planning') nextRun = { ...run, stage: 'retrieving' }
+  else if (run.stage === 'retrieving') nextRun = { ...run, stage: 'generating' }
+  else if (run.stage === 'generating') nextRun = { ...run, stage: 'publishing' }
+  else if (run.stage === 'publishing') {
+    const result = run.outcome
+    if (!result) {
+      nextRun = {
+        ...run,
+        status: 'failed',
+        error: 'I couldn’t prepare a supported answer. Nothing was published.',
+      }
+    } else {
+      posts = applyFixturePostChanges(posts, result.changes)
+      agentPosts = applyFixturePostChanges(agentPosts, result.changes)
+      const response: AgentMessage = {
+        id: result.responseId,
+        sender: 'amber',
+        text: result.text,
+        changes: result.changes,
+      }
+      nextConversation = {
+        ...nextConversation,
+        messages: nextConversation.messages.some(
+          (message) => message.id === response.id,
+        )
+          ? nextConversation.messages
+          : [...nextConversation.messages, response],
+      }
+      nextRun = {
+        ...run,
+        stage: 'background',
+        published: true,
+        memory: 'running',
+        addressing: 'running',
+      }
+    }
+  } else if (run.stage === 'background') {
+    const outcome = run.outcome
+    if (run.memory === 'running') {
+      nextConversation = applyMemoryEvents(
+        nextConversation,
+        outcome?.memoryEvents ?? [],
+      )
+      nextRun = { ...run, memory: 'done' }
+    } else if (run.addressing === 'running') {
+      nextConversation = finishAddressing(
+        nextConversation,
+        outcome?.addressIds ?? [],
+      )
+      nextRun = { ...run, addressing: 'done' }
+    }
+    if (nextRun.memory !== 'running' && nextRun.addressing !== 'running')
+      nextRun = {
+        ...nextRun,
+        stage: 'complete',
+        status: 'complete',
+        autoPlay: false,
+      }
+  }
+  nextConversation = { ...nextConversation, run: nextRun }
+  return {
+    ...state,
+    posts,
+    agentPosts,
+    agentByUser: { ...state.agentByUser, [userId]: nextConversation },
+  }
+}
+
 export function previewReducer(
   state: PreviewState,
   action: PreviewAction,
 ): PreviewState {
+  if (action.type === 'loadScenario') {
+    const next = createPreviewState(state.fixtureFeed, action.id)
+    return { ...next, scenarioRevision: state.scenarioRevision + 1 }
+  }
   if (action.type === 'role') return { ...state, role: action.role }
   if (action.type === 'advanceRun') {
     const conversation = state.agentByUser[action.userId]
     const run = conversation?.run
     if (
       !run ||
-      !isAgentBusy(run) ||
       run.messageId !== action.messageId ||
-      run.step !== action.step
+      run.stage !== action.stage ||
+      (action.memory && run.memory !== action.memory) ||
+      (action.addressing && run.addressing !== action.addressing)
     )
       return state
-    return {
-      ...state,
-      agentByUser: {
-        ...state.agentByUser,
-        [action.userId]: {
-          ...conversation,
-          run: { ...run, step: run.step + 1 },
-        },
-      },
-    }
+    return advanceRun(state, action.userId)
   }
-  const user = currentUser(state.role)
-  if (!user) return state
-  const agent = state.agentByUser[user]
+  const userId = currentUser(state.role)
+  if (!userId) return state
+  const agent = state.agentByUser[userId]
   if (!agent) return state
-  if (action.type === 'sendMessage' && isAgentBusy(agent.run)) return state
-  const withAgent = (next: AgentConversation): PreviewState => ({
+  const withAgent = (conversation: AgentConversation): PreviewState => ({
     ...state,
-    agentByUser: { ...state.agentByUser, [user]: next },
+    agentByUser: { ...state.agentByUser, [userId]: conversation },
   })
+  if (action.type === 'setRunPlaying') {
+    if (agent.run?.status !== 'running') return state
+    return withAgent({
+      ...agent,
+      run: { ...agent.run, autoPlay: action.playing },
+    })
+  }
+  if (action.type === 'retryBackground') {
+    const run = agent.run
+    if (!run || run.stale) return state
+    const status = run[action.task]
+    const attempts =
+      action.task === 'memory' ? run.memoryAttempts : run.addressingAttempts
+    if (status !== 'failed' || attempts >= run.maxAttempts) return state
+    const nextRun: AgentRun = {
+      ...run,
+      stage: 'background',
+      status: 'running',
+      autoPlay: false,
+      [action.task]: 'running',
+      ...(action.task === 'memory'
+        ? { memoryAttempts: attempts + 1 }
+        : { addressingAttempts: attempts + 1 }),
+    }
+    return withAgent({ ...agent, run: nextRun })
+  }
   if (action.type === 'readAgent') {
     if (agent.readThrough === agent.messages.length) return state
     return withAgent({ ...agent, readThrough: agent.messages.length })
-  }
-  if (action.type === 'markAnswered') {
-    const replyIndex = agent.messages.findIndex(
-      (message) =>
-        message.id === action.userMessageId && message.sender === 'user',
-    )
-    if (replyIndex < 0) return state
-    const targets = agent.messages.filter(
-      (message, index) =>
-        action.messageIds.includes(message.id) &&
-        index < replyIndex &&
-        isUnaddressed(message),
-    )
-    if (!targets.length || targets.length !== new Set(action.messageIds).size)
-      return state
-    return withAgent({
-      ...agent,
-      messages: agent.messages.map((message) =>
-        action.messageIds.includes(message.id)
-          ? { ...message, addressedBy: action.userMessageId }
-          : message,
-      ),
-    })
   }
   if (action.type === 'draftMessage') {
     if (action.text.length > 1000 || action.text === agent.draft) return state
@@ -193,130 +380,74 @@ export function previewReducer(
   }
   if (action.type === 'saveMemory') {
     if (!Schema.is(MemoryText)(action.text)) return state
-    if (
-      action.sourceMessageId &&
-      !agent.messages.some(
-        (message) =>
-          message.id === action.sourceMessageId && message.sender === 'user',
-      )
-    )
-      return state
     const existing = agent.memories.find((memory) => memory.id === action.id)
-    const memory = {
+    const text = action.text.trim()
+    if (existing?.text === text) return state
+    const memory: AgentMemory = {
       id: action.id,
-      text: action.text.trim(),
+      text,
+      version: (existing?.version ?? 0) + 1,
       sourceMessageId: action.sourceMessageId ?? existing?.sourceMessageId,
     }
+    const event: AgentMemoryEvent = existing
+      ? { kind: 'replaced', id: action.id, before: existing.text, after: text }
+      : { kind: 'created', id: action.id, after: text }
     return withAgent({
       ...agent,
       memories: existing
         ? agent.memories.map((item) => (item.id === action.id ? memory : item))
         : [...agent.memories, memory],
+      memoryHistory: [...agent.memoryHistory, event],
     })
   }
   if (action.type === 'forgetMemory') {
-    if (!agent.memories.some((memory) => memory.id === action.id)) return state
+    const existing = agent.memories.find((memory) => memory.id === action.id)
+    if (!existing) return state
     return withAgent({
       ...agent,
       memories: agent.memories.filter((memory) => memory.id !== action.id),
+      memoryHistory: [
+        ...agent.memoryHistory,
+        { kind: 'deleted', id: existing.id, before: existing.text },
+      ],
     })
   }
-  const post = state.posts.find((post) => post.id === action.postId)
-  if (
-    action.type === 'sendMessage' ||
-    action.type === 'agentMessage' ||
-    action.type === 'applyPostUpdate'
-  ) {
+  if (action.type === 'sendMessage') {
     if (
+      isAgentBusy(agent.run) ||
       !Schema.is(AnswerText)(action.text) ||
-      agent.messages.some((message) => message.id === action.id) ||
-      (action.postId && !post)
+      agent.messages.some((message) => message.id === action.id)
     )
       return state
-    const memoryIds = 'memoryIds' in action ? (action.memoryIds ?? []) : []
-    const usedMemories = agent.memories.filter((memory) =>
-      memoryIds.includes(memory.id),
-    )
-    if (new Set(memoryIds).size !== usedMemories.length) return state
-    const memorySaved =
-      action.type === 'agentMessage' && action.memorySavedId
-        ? agent.memories.find((memory) => memory.id === action.memorySavedId)
-        : undefined
-    if (action.type === 'agentMessage' && action.memorySavedId && !memorySaved)
-      return state
-    if (action.type === 'applyPostUpdate') {
-      if (
-        !post ||
-        post.author !== user ||
-        post[action.update.field] !== action.update.before ||
-        action.update.before === action.update.after ||
-        !Schema.is(EditPost)({
-          ...post,
-          [action.update.field]: action.update.after,
-        })
-      )
-        return state
-      if (
-        !agent.messages.some(
-          (message) =>
-            message.id === action.sourceMessageId && message.sender === 'user',
-        )
-      )
-        return state
-      if (
-        agent.messages.some(
-          (message) =>
-            message.update &&
-            message.sourceMessageId === action.sourceMessageId &&
-            message.postId === post.id,
-        )
-      )
-        return state
-    }
     const message: AgentMessage = {
       id: action.id,
-      sender: action.type === 'sendMessage' ? 'user' : 'amber',
+      sender: 'user',
       text: action.text.trim(),
       ...(action.postId ? { postId: action.postId } : {}),
-      ...(usedMemories.length ? { usedMemories } : {}),
-      ...(memorySaved ? { memorySaved } : {}),
-      ...(action.type === 'agentMessage' && action.needsReply
-        ? { needsReply: true }
-        : {}),
-      ...(action.type === 'applyPostUpdate'
-        ? { update: action.update, sourceMessageId: action.sourceMessageId }
-        : {}),
     }
-    const next = withAgent({
+    return withAgent({
       ...agent,
-      draft: action.type === 'sendMessage' ? '' : agent.draft,
+      draft: '',
       messages: [...agent.messages, message],
-      ...(action.type === 'sendMessage' && action.previewRun
-        ? { run: { messageId: action.id, step: 0 } }
+      revision: agent.revision + 1,
+      ...(action.previewRun
+        ? { run: illustrativeRun(state.fixtureFeed, action.id) }
         : {}),
     })
-    if (action.type !== 'applyPostUpdate') return next
-    return {
-      ...next,
-      posts: next.posts.map((item) => {
-        if (item.id !== action.postId) return item
-        const { question: _question, ...rest } = item
-        return { ...rest, [action.update.field]: action.update.after }
-      }),
-    }
   }
+  const post = state.posts.find((item) => item.id === action.postId)
   if (!post) return state
-  const replace = (next: typeof post): PreviewState => ({
+  const replace = (next: Post): PreviewState => ({
     ...state,
     posts: state.posts.map((item) => (item.id === post.id ? next : item)),
   })
   if (action.type === 'save') {
-    const saved = state.savedByUser[user] ?? []
+    const saved = state.savedByUser[userId] ?? []
     return {
       ...state,
       savedByUser: {
         ...state.savedByUser,
-        [user]: saved.includes(post.id)
+        [userId]: saved.includes(post.id)
           ? saved.filter((id) => id !== post.id)
           : [...saved, post.id],
       },
@@ -334,7 +465,7 @@ export function previewReducer(
         ...post.comments,
         {
           id: action.id,
-          author: user,
+          author: userId,
           text: action.text.trim(),
           time: 'Just now',
         },
@@ -344,7 +475,8 @@ export function previewReducer(
   if (action.type === 'deleteComment') {
     if (
       !post.comments.some(
-        (comment) => comment.id === action.commentId && comment.author === user,
+        (comment) =>
+          comment.id === action.commentId && comment.author === userId,
       )
     )
       return state
@@ -355,7 +487,7 @@ export function previewReducer(
       ),
     })
   }
-  if (post.author !== user) return state
+  if (post.author !== userId) return state
   if (action.type === 'remove')
     return {
       ...state,

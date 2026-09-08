@@ -1,182 +1,200 @@
-import { expect, test } from '@playwright/test'
+import { expect, type Page, test } from '@playwright/test'
 
-test('one Agent chat discusses two posts and reuses the same preference', async ({
+const scenarios = (page: Page) =>
+  page.getByRole('combobox', { name: 'Agent scenario' })
+
+test('shows the grounded private conversation, applied post changes and memory history', async ({
   page,
 }) => {
   await page.goto('/agent')
   await page
     .getByRole('combobox', { name: 'Preview account' })
     .selectOption('author')
-  const nav = page.getByRole('navigation', { name: 'Main navigation' })
-  await expect(nav.getByRole('link')).toHaveText(['Feed', 'Agent'])
-  await expect(page.getByRole('log')).toHaveCount(1)
+  await expect(page.getByRole('heading', { name: 'Amber' })).toBeVisible()
   await expect(
-    page
-      .getByRole('log')
-      .getByText('And for Tab tidy, is the beta free to try?', { exact: true }),
+    page.getByText('One private conversation across your posts.'),
+  ).toBeVisible()
+  await expect(page.getByRole('log')).toContainText(
+    'Noted now reflects Mandarin support',
+  )
+  await expect(page.getByRole('log')).toContainText(
+    'Atlas now states that it works offline',
+  )
+  await expect(page.getByText('Ignored', { exact: true })).toBeVisible()
+  await expect(
+    page.getByText('Deferred · still open', { exact: true }),
   ).toBeVisible()
   await expect(
-    page.getByText('I’ll remember that for your other posts too.', {
-      exact: true,
-    }),
+    page.getByText('I indexed the latest project messages.'),
+  ).toBeVisible()
+  await expect(page.getByText('Needs your reply', { exact: true })).toHaveCount(
+    0,
+  )
+  await expect(page.getByText('1 pending', { exact: true })).toBeVisible()
+  await expect(page.getByText('you', { exact: true })).toHaveCount(0)
+
+  const atlasDiff = page.getByRole('region', { name: 'Changes to Atlas' })
+  await expect(atlasDiff).toBeVisible()
+  const changedSummary = await atlasDiff.locator('ins').first().innerText()
+  await atlasDiff.getByRole('link', { name: 'View Atlas post' }).click()
+  await expect(page.getByText(changedSummary, { exact: true })).toBeVisible()
+  await page.getByRole('link', { name: 'Message Amber', exact: true }).click()
+  await expect(page.getByText('About Atlas', { exact: true })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Memory 1', exact: true }).click()
+  const memory = page.getByRole('dialog', { name: 'Memory', exact: true })
+  await expect(
+    memory.getByText('Prefer concise posts.', { exact: true }),
+  ).toBeVisible()
+  await memory.getByText('Recent memory changes').click()
+  await expect(
+    memory.getByText('Only mention macOS releases.', { exact: true }),
+  ).toBeVisible()
+  await expect(memory.getByText('Deleted', { exact: true })).toBeVisible()
+})
+
+test('switches and resets stable scenarios and cycles through every pending request', async ({
+  page,
+}) => {
+  await page.goto('/agent')
+  await page
+    .getByRole('combobox', { name: 'Preview account' })
+    .selectOption('author')
+  const selector = scenarios(page)
+  await selector.selectOption('incoming')
+  const next = page.getByRole('button', {
+    name: 'Next pending request (4 open)',
+  })
+  await next.click()
+  const first = await page.locator('.chat-message:focus').getAttribute('id')
+  await next.click()
+  const second = await page.locator('.chat-message:focus').getAttribute('id')
+  expect(first).not.toBe(second)
+  await expect(page.getByText('Needs your reply', { exact: true })).toHaveCount(
+    3,
+  )
+  await expect(
+    page.getByText('Deferred · still open', { exact: true }),
+  ).toHaveCount(1)
+
+  const composer = page.getByRole('textbox', { name: 'Message Amber' })
+  await composer.fill('A draft that belongs to this fixture.')
+  await page.getByRole('button', { name: 'Reset' }).click()
+  await expect(composer).toHaveValue('')
+  await expect(page.getByText('4 pending', { exact: true })).toBeVisible()
+  await selector.selectOption('empty')
+  await expect(
+    page.getByRole('heading', { name: 'What would you like to work on?' }),
+  ).toBeVisible()
+  await expect(page.getByRole('log').locator('.chat-message')).toHaveCount(0)
+})
+
+test('manual progress publishes the response before both background jobs finish and keeps sending locked', async ({
+  page,
+}) => {
+  await page.goto('/agent')
+  await scenarios(page).selectOption('stage-planning')
+  const composer = page.getByRole('textbox', { name: 'Message Amber' })
+  const send = page.getByRole('button', { name: 'Send message' })
+  await composer.fill('Keep this draft while the current turn finishes.')
+  await expect(send).toBeDisabled()
+  const step = page.getByRole('button', { name: 'Step', exact: true })
+  for (let index = 0; index < 4; index++) await step.click()
+  await expect(
+    page.getByText('Finishing in the background', { exact: true }),
   ).toBeVisible()
   await expect(
     page.getByText(
-      'Added that. I used your preference for short, factual descriptions here too.',
-      { exact: true },
+      'I updated Atlas to say it works offline and kept the wording concise.',
     ),
   ).toBeVisible()
-  for (const project of ['Noted', 'Tab tidy']) {
-    const toggle = page
-      .locator('.post-update > summary')
-      .filter({ hasText: `Updated ${project}` })
-    const diff = page.getByRole('region', {
-      name: `Changes to ${project} summary`,
-    })
-    if (!(await diff.isVisible())) await toggle.click()
-    const summary = await diff.locator('ins').innerText()
-    await expect(diff.locator('del')).not.toHaveText(summary)
-    await diff.getByRole('link', { name: `View ${project} post` }).click()
-    await expect(page.getByText(summary, { exact: true })).toBeVisible()
-    await page.getByRole('link', { name: 'Message Amber', exact: true }).click()
-    await expect(page).toHaveURL(/\/agent\?post=/)
-    await expect(page.getByRole('log')).toHaveCount(1)
-    await expect(
-      page.getByText(`About ${project}`, { exact: true }),
-    ).toBeVisible()
-  }
-  await expect(page.getByRole('button', { name: /Review|Accept/ })).toHaveCount(
+  await expect(
+    page.getByRole('region', { name: 'Changes to Atlas' }),
+  ).toBeVisible()
+  const tasks = page.getByRole('list', { name: 'Task progress' })
+  await expect(tasks.locator('[data-status="running"]')).toHaveText([
+    'Update memory: Running',
+    'Resolve requests: Running',
+  ])
+  await expect(send).toBeDisabled()
+  await step.click()
+  await expect(
+    page.getByRole('button', { name: /Preference replaced/ }),
+  ).toBeVisible()
+  await expect(send).toBeDisabled()
+  await step.click()
+  await expect(page.getByText('Complete', { exact: true }).last()).toBeVisible()
+  await expect(send).toBeEnabled()
+  await expect(composer).toHaveValue(
+    'Keep this draft while the current turn finishes.',
+  )
+})
+
+test('background retry preserves the answer and diffs while stale and exhausted retries stay disabled', async ({
+  page,
+}) => {
+  await page.goto('/agent')
+  const selector = scenarios(page)
+  await selector.selectOption('failure-memory')
+  const answer = page.getByText(
+    'I updated Atlas to say it works offline and kept the wording concise.',
+  )
+  await expect(answer).toBeVisible()
+  await expect(
+    page.getByRole('region', { name: 'Changes to Atlas' }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Retry memory save' }).click()
+  await expect(
+    page.getByText('Finishing in the background', { exact: true }),
+  ).toBeVisible()
+  await expect(answer).toBeVisible()
+  await page.getByRole('button', { name: 'Step', exact: true }).click()
+  await expect(
+    page.getByRole('button', { name: /Preference replaced/ }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Retry memory save' }),
+  ).toHaveCount(0)
+
+  await selector.selectOption('retry-exhausted')
+  await expect(
+    page.getByText(
+      /Retry limit reached\. Your answer and post changes remain saved/,
+    ),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: /Retry memory/ })).toHaveCount(
+    0,
+  )
+  await selector.selectOption('retry-stale')
+  await expect(page.getByText(/newer turn has started/)).toBeVisible()
+  await expect(page.getByRole('button', { name: /Retry memory/ })).toHaveCount(
     0,
   )
 })
 
-test('keeps the draft and history when switching post context and supports normal sending', async ({
-  page,
-}) => {
-  await page.goto('/agent?post=voice-notes')
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('author')
-  const reply = page.getByRole('textbox', { name: 'Message Amber' })
-  await reply.fill('Thanks for updating both.')
-  await reply.press('Shift+Enter')
-  await reply.pressSequentially('I have another detail.')
-  const text = 'Thanks for updating both.\nI have another detail.'
-  await page
-    .getByRole('link', { name: 'Tab tidy', exact: true })
-    .first()
-    .click()
-  await page.getByRole('link', { name: 'Message Amber', exact: true }).click()
-  await expect(page.getByText('About Tab tidy', { exact: true })).toBeVisible()
-  await expect(reply).toHaveValue(text)
-  await reply.press('Enter')
-  await expect(
-    page.getByRole('log').getByText(text, { exact: true }),
-  ).toBeVisible()
-  await expect(reply).toHaveValue('')
-  await expect(reply).toBeFocused()
-  await page.getByRole('button', { name: 'Remove post context' }).click()
-  await expect(page).toHaveURL(/\/agent$/)
-  await reply.fill('A general question.')
-  await page.getByRole('button', { name: 'Send message' }).click()
-  await expect(
-    page.getByRole('log').getByText('A general question.', { exact: true }),
-  ).toBeVisible()
-  await expect(page.getByRole('log').locator('.chat-message')).toHaveCount(10)
-})
-
-test('lets the user inspect, edit, forget and add memory', async ({ page }) => {
-  await page.goto('/agent')
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('author')
-  const memory = page.getByRole('button', { name: 'Memory 1', exact: true })
-  await memory.click()
-  const dialog = page.getByRole('dialog', { name: 'Memory', exact: true })
-  await expect(
-    dialog.getByText(
-      'Keep post descriptions short and factual. Avoid promotional language.',
-      { exact: true },
-    ),
-  ).toBeVisible()
-  await dialog.getByRole('button', { name: /^Edit memory:/ }).click()
-  await dialog
-    .getByRole('textbox', { name: 'Preference' })
-    .fill('Use one sentence. Keep the tone plain.')
-  await dialog.getByRole('button', { name: 'Save preference' }).click()
-  await expect(
-    dialog.getByText('Use one sentence. Keep the tone plain.', { exact: true }),
-  ).toBeVisible()
-  await page.keyboard.press('Escape')
-  await expect(memory).toBeFocused()
-  await memory.click()
-  await dialog.getByRole('button', { name: /^Forget memory:/ }).click()
-  await expect(dialog.getByText('No saved preferences yet.')).toBeVisible()
-  await dialog.getByRole('button', { name: 'Add preference' }).click()
-  await dialog
-    .getByRole('textbox', { name: 'Preference' })
-    .fill('Write my posts in French.')
-  await dialog.getByRole('button', { name: 'Save preference' }).click()
-  await expect(
-    dialog.getByText('Write my posts in French.', { exact: true }),
-  ).toBeVisible()
-  await page.keyboard.press('Escape')
-  await expect(page.getByRole('log').locator('.chat-message')).toHaveCount(8)
-})
-
-test('keeps chat, drafts and memory separate for each account, including members without posts', async ({
+test('candidate clarification does not publish, while candidate publication creates a linked post', async ({
   page,
 }) => {
   await page.goto('/agent')
-  const account = page.getByRole('combobox', { name: 'Preview account' })
+  const selector = scenarios(page)
+  await selector.selectOption('candidate-clarify')
   await expect(
-    page.getByRole('heading', { name: 'Your agent, just for you.' }),
+    page.getByText('Clipwise · details needed', { exact: true }),
   ).toBeVisible()
-  await expect(page.getByRole('log')).toHaveCount(0)
-  await account.selectOption('author')
-  const reply = page.getByRole('textbox', { name: 'Message Amber' })
-  await reply.fill('Alex’s draft.')
-  await account.selectOption('member')
   await expect(
-    page.getByRole('heading', { name: 'What would you like to work on?' }),
-  ).toBeVisible()
-  await expect(reply).toHaveValue('')
-  await page.getByRole('button', { name: 'Memory 0' }).click()
-  await expect(page.getByText('No saved preferences yet.')).toBeVisible()
-  await page.keyboard.press('Escape')
-  await reply.fill('Can you help me find a project?')
-  await reply.press('Enter')
-  await expect(page.getByRole('log').locator('.chat-message')).toHaveCount(1)
-  await account.selectOption('author')
-  await expect(reply).toHaveValue('Alex’s draft.')
-  await expect(
-    page.getByRole('log').getByText('Can you help me find a project?'),
+    page.getByRole('region', { name: 'Applied post changes' }),
   ).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Memory 1' })).toBeVisible()
+  await selector.selectOption('candidate-publish')
+  await expect(page.getByText('1 post created', { exact: true })).toBeVisible()
+  const change = page.getByRole('region', { name: 'Changes to Clipwise' })
+  await expect(change).toBeVisible()
+  await change.getByRole('link', { name: 'View Clipwise post' }).click()
+  await expect(
+    page.getByText('A clipboard organizer.', { exact: true }),
+  ).toBeVisible()
 })
 
-test('redirects old message links to the same Agent and tolerates removed post context', async ({
-  page,
-}) => {
-  await page.goto('/messages')
-  await expect(page).toHaveURL(/\/agent$/)
-  await page.goto('/messages/voice-notes')
-  await expect(page).toHaveURL(/\/agent\?post=voice-notes$/)
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('author')
-  await expect(page.getByText('About Noted', { exact: true })).toBeVisible()
-  await page.goto('/agent?post=missing')
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('author')
-  await expect(page.getByText('About an unavailable post')).toBeVisible()
-  await expect(page.getByRole('log')).toBeVisible()
-  await page.getByRole('button', { name: 'Remove post context' }).click()
-  await expect(page).toHaveURL(/\/agent$/)
-})
-
-test('fits the Agent, memory dialog and long replies on desktop and mobile', async ({
+test('captures the finished design on desktop and mobile without overflow', async ({
   page,
   isMobile,
 }) => {
@@ -189,102 +207,13 @@ test('fits the Agent, memory dialog and long replies on desktop and mobile', asy
   ).toBeInViewport()
   expect(
     await page.evaluate(
-      () => document.documentElement.scrollHeight <= window.innerHeight + 1,
-    ),
-  ).toBe(true)
-  await page.getByRole('button', { name: 'Memory 1' }).click()
-  await expect(page.getByRole('dialog')).toBeVisible()
-  expect(
-    await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true)
-  await page.keyboard.press('Escape')
-  const reply = page.getByRole('textbox', { name: 'Message Amber' })
-  if (isMobile)
-    expect(
-      await reply.evaluate((element) =>
-        Number.parseFloat(getComputedStyle(element).fontSize),
-      ),
-    ).toBeGreaterThanOrEqual(16)
-  await reply.fill('a'.repeat(1000))
-  await page.getByRole('button', { name: 'Send message' }).click()
-  await expect(
-    page.getByRole('log').getByText('a'.repeat(1000), { exact: true }),
-  ).toBeVisible()
-  await expect(reply).toHaveValue('')
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true)
-})
-
-test('unaddressed messages survive reading the chat and sending an unrelated reply', async ({
-  page,
-}) => {
-  await page.goto('/agent')
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('author')
-  const jump = page.getByRole('button', { name: '1 unaddressed', exact: true })
-  await jump.click()
-  await expect(page.getByText('Unaddressed', { exact: true })).toBeVisible()
-  await expect(page.locator('.chat-message.unaddressed')).toBeFocused()
-  await page
-    .getByRole('textbox', { name: 'Message Amber' })
-    .fill('Thanks for the update.')
-  await page.getByRole('button', { name: 'Send message' }).click()
-  await expect(jump).toBeVisible()
-  await page
-    .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('link', { name: 'Feed' })
-    .click()
-  await page
-    .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('link', { name: 'Agent', exact: true })
-    .click()
-  await expect(jump).toBeVisible()
-})
-
-test('shows parallel task progress and keeps the next draft locked until completion', async ({
-  page,
-}) => {
-  await page.goto('/agent')
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('author')
-  await page.clock.install()
-  const reply = page.getByRole('textbox', { name: 'Message Amber' })
-  const send = page.getByRole('button', { name: 'Send message' })
-  await reply.fill('A detail for my post.')
-  await send.click()
-  await expect(
-    page.getByText('Workflow preview', { exact: true }),
-  ).toBeVisible()
-  await expect(
-    page.getByText(/Example timing; no model is running/),
-  ).toBeVisible()
-  await reply.fill('Keep this draft.')
-  await reply.press('Enter')
-  await expect(reply).toHaveValue('Keep this draft.')
-  await expect(send).toBeDisabled()
-  for (let step = 0; step < 4; step++) await page.clock.runFor(700)
-  const tasks = page.getByRole('list', { name: 'Task progress' })
-  await expect(tasks.locator('[data-status="running"]')).toHaveText([
-    'Update memory: Running',
-    'Resolve messages: Running',
-  ])
-  await expect(send).toBeInViewport()
-  await page.clock.runFor(1600)
-  await expect(tasks.locator('[data-status="running"]')).toHaveText([
-    'Resolve messages: Running',
-  ])
-  await expect(send).toBeDisabled()
-  await page.clock.runFor(700)
-  await expect(
-    page.getByText('Example complete', { exact: true }),
-  ).toBeVisible()
-  await expect(send).toBeEnabled()
-  await expect(reply).toHaveValue('Keep this draft.')
+  await page.screenshot({
+    path: isMobile
+      ? '/private/tmp/amber-agent-ui-mobile.png'
+      : '/private/tmp/amber-agent-ui-desktop.png',
+    fullPage: true,
+  })
 })

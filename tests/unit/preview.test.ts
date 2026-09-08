@@ -1,327 +1,211 @@
 import { describe, expect, it } from 'vitest'
 import {
   createPreviewState,
+  isAgentBusy,
   isUnaddressed,
+  type PreviewState,
   previewReducer,
 } from '../../src/preview/state'
 import fixtures from '../../src/server/fixtures.json'
 
-const initial = () => createPreviewState(fixtures)
-const author = () => previewReducer(initial(), { type: 'role', role: 'author' })
+const scenario = (id: Parameters<typeof createPreviewState>[1]) =>
+  createPreviewState(fixtures, id)
 
-describe('sample interactions', () => {
-  it('keeps one agent conversation and read position per account', () => {
-    const state = author()
-    const read = previewReducer(state, { type: 'readAgent' })
-    expect(read.agentByUser.alex.readThrough).toBe(
-      read.agentByUser.alex.messages.length,
-    )
-    expect(previewReducer(read, { type: 'readAgent' })).toBe(read)
-    const member = previewReducer(read, { type: 'role', role: 'member' })
-    expect(member.agentByUser.you.messages).toEqual([])
-    expect(member.agentByUser.alex.readThrough).toBe(
-      read.agentByUser.alex.readThrough,
-    )
-    expect(previewReducer(initial(), { type: 'readAgent' }).role).toBe(
-      'visitor',
-    )
+function tick(state: PreviewState) {
+  const run = state.agentByUser.alex.run
+  if (!run) throw new Error('Expected a run')
+  return previewReducer(state, {
+    type: 'advanceRun',
+    userId: 'alex',
+    messageId: run.messageId,
+    stage: run.stage,
+    memory: run.memory,
+    addressing: run.addressing,
   })
-  it('rejects visitor writes and edits to someone else’s post', () => {
-    const state = initial()
-    expect(previewReducer(state, { type: 'save', postId: 'voice-notes' })).toBe(
-      state,
-    )
-    const member = previewReducer(state, { type: 'role', role: 'member' })
-    expect(
-      previewReducer(member, { type: 'remove', postId: 'voice-notes' }),
-    ).toBe(member)
-    expect(
-      previewReducer(member, {
-        type: 'edit',
-        postId: 'voice-notes',
-        title: 'Changed',
-        summary: 'Changed',
-        detail: '',
-      }),
-    ).toBe(member)
-  })
-  it('keeps saved posts separate for each sample account', () => {
-    const saved = previewReducer(author(), {
-      type: 'save',
-      postId: 'voice-notes',
-    })
-    const member = previewReducer(saved, { type: 'role', role: 'member' })
-    expect(member.savedByUser.alex).toEqual(['voice-notes'])
-    expect(member.savedByUser.you ?? []).toEqual([])
-  })
-  it('trims comments, rejects blanks, and only deletes your own comments', () => {
-    const state = author()
-    expect(
-      previewReducer(state, {
-        type: 'comment',
-        postId: 'voice-notes',
-        id: 'new',
-        text: '   ',
-      }),
-    ).toBe(state)
-    const commented = previewReducer(state, {
-      type: 'comment',
-      postId: 'voice-notes',
-      id: 'new',
-      text: '  Ready to try.  ',
-    })
-    expect(commented.posts[0].comments.at(-1)?.text).toBe('Ready to try.')
-    expect(
-      previewReducer(commented, {
-        type: 'deleteComment',
-        postId: 'voice-notes',
-        commentId: '1',
-      }),
-    ).toBe(commented)
-    expect(
-      previewReducer(commented, {
-        type: 'deleteComment',
-        postId: 'voice-notes',
-        commentId: 'new',
-      }).posts[0].comments,
-    ).toHaveLength(3)
-  })
-  it('shares a draft across posts but never across accounts', () => {
-    const state = author()
-    const drafted = previewReducer(state, {
-      type: 'draftMessage',
-      text: 'Keep descriptions short.',
-    })
-    expect(drafted.agentByUser.alex.draft).toBe('Keep descriptions short.')
-    expect(drafted.posts).toBe(state.posts)
-    const member = previewReducer(drafted, { type: 'role', role: 'member' })
-    const memberDraft = previewReducer(member, {
-      type: 'draftMessage',
-      text: 'My own draft.',
-    })
-    expect(memberDraft.agentByUser.you.draft).toBe('My own draft.')
-    expect(memberDraft.agentByUser.alex.draft).toBe('Keep descriptions short.')
-    expect(
-      previewReducer(drafted, { type: 'draftMessage', text: 'x'.repeat(1001) }),
-    ).toBe(drafted)
-  })
-  it('keeps discussion about different posts in the same history', () => {
-    const state = author()
-    const sent = previewReducer(state, {
-      type: 'sendMessage',
-      postId: 'voice-notes',
-      id: 'first',
-      text: '  Thanks!  ',
-    })
-    const next = previewReducer(sent, {
-      type: 'sendMessage',
-      postId: 'tab-tidy',
-      id: 'second',
-      text: 'This one is free too.',
-    })
-    expect(
-      next.agentByUser.alex.messages.slice(-2).map((message) => message.postId),
-    ).toEqual(['voice-notes', 'tab-tidy'])
-    expect(next.agentByUser.alex.messages.at(-2)?.text).toBe('Thanks!')
-    expect(next.posts).toBe(state.posts)
-    expect(
-      previewReducer(next, {
-        type: 'sendMessage',
-        id: 'second',
-        text: 'Replay',
-      }),
-    ).toBe(next)
-    expect(
-      previewReducer(next, { type: 'sendMessage', id: 'blank', text: '   ' }),
-    ).toBe(next)
-  })
-  it('records a preference once and reuses it on two applied post updates', () => {
-    const state = initial()
+}
+
+describe('agent fixtures', () => {
+  it('grounds the default in the accepted two-turn result with consistent post changes', () => {
+    const state = scenario('rich-complete')
     const agent = state.agentByUser.alex
-    expect(agent.memories).toHaveLength(1)
-    const updates = agent.messages.filter((message) => message.update)
-    expect(updates.map((message) => message.postId)).toEqual([
-      'voice-notes',
-      'tab-tidy',
+    expect(state.role).toBe('author')
+    expect(agent.messages.filter(isUnaddressed).map(({ id }) => id)).toEqual([
+      'request-exports',
     ])
-    for (const message of updates) {
-      expect(message.usedMemories?.[0].id).toBe(agent.memories[0].id)
-      expect(message.update?.before).toBe(
-        fixtures.posts.find((post) => post.id === message.postId)?.summary,
-      )
-      expect(message.update?.after).toBe(
-        state.posts.find((post) => post.id === message.postId)?.summary,
-      )
+    expect(
+      agent.messages.find(({ id }) => id === 'information-only')?.needsReply,
+    ).toBeUndefined()
+    expect(
+      agent.messages.find(({ id }) => id === 'request-team')?.resolution,
+    ).toBe('ignored')
+    expect(
+      agent.messages.find(({ id }) => id === 'request-language')?.resolution,
+    ).toBe('answered')
+    expect(
+      state.posts.find(({ project }) => project === 'Clipwise'),
+    ).toMatchObject({
+      detail: expect.stringContaining('MIT license'),
+    })
+    expect(
+      state.posts.find(({ project }) => project === 'Atlas')?.summary,
+    ).toContain('offline')
+    expect(agent.memories).toEqual([
+      expect.objectContaining({ text: 'Prefer concise posts.', version: 3 }),
+    ])
+    expect(agent.memoryHistory.map(({ kind }) => kind)).toEqual([
+      'created',
+      'replaced',
+      'deleted',
+      'replaced',
+    ])
+  })
+
+  it('keeps every actionable incoming request pending, including one deferred once', () => {
+    const state = scenario('incoming')
+    const pending = state.agentByUser.alex.messages.filter(isUnaddressed)
+    expect(pending).toHaveLength(4)
+    expect(pending.find(({ id }) => id === 'request-exports')?.deferred).toBe(
+      true,
+    )
+    expect(pending.some(({ id }) => id === 'information-only')).toBe(false)
+  })
+
+  it('resets scenario data, drafts, progress, errors and account state together', () => {
+    let state = scenario('failure-memory')
+    state = previewReducer(state, {
+      type: 'draftMessage',
+      text: 'Keep this only here.',
+    })
+    state = previewReducer(state, { type: 'role', role: 'visitor' })
+    const reset = previewReducer(state, {
+      type: 'loadScenario',
+      id: 'failure-memory',
+    })
+    expect(reset.role).toBe('author')
+    expect(reset.agentByUser.alex.draft).toBe('')
+    expect(reset.agentByUser.alex.run?.memory).toBe('failed')
+    expect(reset.agentByUser.you.messages).toEqual([])
+    expect(reset.scenarioRevision).toBe(1)
+  })
+
+  it('applies every field in a multi-post response to the feed snapshot', () => {
+    const state = scenario('multi-diff')
+    const response = state.agentByUser.alex.messages.at(-1)
+    expect(response?.changes).toHaveLength(3)
+    for (const change of response?.changes ?? []) {
+      const post = state.posts.find(({ id }) => id === change.postId)
+      expect(post).toBeDefined()
+      for (const field of change.fields)
+        expect(post?.[field.field]).toBe(field.after)
     }
   })
-  it('lets the user edit or forget memories without losing the conversation', () => {
-    const state = author()
-    const edited = previewReducer(state, {
-      type: 'saveMemory',
-      id: 'writing-style',
-      text: 'Use one sentence.',
-    })
-    expect(edited.agentByUser.alex.memories[0].text).toBe('Use one sentence.')
-    const forgotten = previewReducer(edited, {
-      type: 'forgetMemory',
-      id: 'writing-style',
-    })
-    expect(forgotten.agentByUser.alex.memories).toEqual([])
-    expect(forgotten.agentByUser.alex.messages).toBe(
-      state.agentByUser.alex.messages,
-    )
-    const member = previewReducer(state, { type: 'role', role: 'member' })
-    expect(
-      previewReducer(member, { type: 'forgetMemory', id: 'writing-style' }),
-    ).toBe(member)
-    const ownMemory = previewReducer(member, {
-      type: 'saveMemory',
-      id: 'writing-style',
-      text: 'Use French.',
-    })
-    expect(ownMemory.agentByUser.you.memories[0].text).toBe('Use French.')
-    expect(ownMemory.agentByUser.alex.memories).toBe(
-      state.agentByUser.alex.memories,
-    )
-  })
-  it('keeps memories and shared history when one post is removed', () => {
-    const state = author()
-    const removed = previewReducer(state, {
-      type: 'remove',
-      postId: 'voice-notes',
-    })
-    expect(removed.posts.some((post) => post.id === 'voice-notes')).toBe(false)
-    expect(removed.agentByUser.alex).toBe(state.agentByUser.alex)
-  })
-  it('guards automatic updates against other owners, stale posts and forgotten memories', () => {
-    const state = previewReducer(author(), {
-      type: 'sendMessage',
-      postId: 'voice-notes',
-      id: 'correction',
-      text: 'The demo is now on Windows.',
-    })
-    const action = {
-      type: 'applyPostUpdate',
-      postId: 'voice-notes',
-      id: 'new-update',
-      sourceMessageId: 'correction',
-      text: 'Added Windows availability.',
-      memoryIds: ['writing-style'],
-      update: {
-        field: 'summary',
-        before: state.posts[0].summary,
-        after: 'A voice note app with a free demo for Mac and Windows.',
-      },
-    } as const
-    const updated = previewReducer(state, action)
-    expect(updated.posts[0].summary).toBe(action.update.after)
-    expect(
-      updated.agentByUser.alex.messages.at(-1)?.usedMemories?.[0].text,
-    ).toBe(state.agentByUser.alex.memories[0].text)
-    expect(previewReducer(updated, action)).toBe(updated)
-    const edited = previewReducer(state, {
-      type: 'edit',
-      postId: 'voice-notes',
-      title: state.posts[0].title,
-      summary: 'A newer summary.',
-      detail: state.posts[0].detail,
-    })
-    expect(previewReducer(edited, action)).toBe(edited)
-    const forgotten = previewReducer(state, {
-      type: 'forgetMemory',
-      id: 'writing-style',
-    })
-    expect(previewReducer(forgotten, action)).toBe(forgotten)
-    const member = previewReducer(state, { type: 'role', role: 'member' })
-    expect(previewReducer(member, action)).toBe(member)
-  })
 })
 
-describe('unaddressed agent messages', () => {
-  it('only resolves an earlier question using a received message from the same account', () => {
-    const state = author()
-    const read = previewReducer(state, { type: 'readAgent' })
-    expect(
-      read.agentByUser.alex.messages.filter(isUnaddressed).map((m) => m.id),
-    ).toEqual(['noted-follow-up'])
-    const sent = previewReducer(read, {
-      type: 'sendMessage',
-      id: 'offline-answer',
-      text: 'Yes, transcription works offline.',
-    })
-    expect(sent.agentByUser.alex.messages.filter(isUnaddressed)).toHaveLength(1)
-    const action = {
-      type: 'markAnswered',
-      messageIds: ['noted-follow-up'],
-      userMessageId: 'offline-answer',
-    } as const
-    expect(
-      previewReducer(sent, { ...action, userMessageId: 'noted-reply' }),
-    ).toBe(sent)
-    const member = previewReducer(sent, { type: 'role', role: 'member' })
-    expect(previewReducer(member, action)).toBe(member)
-    const answered = previewReducer(sent, action)
-    expect(answered.agentByUser.alex.messages.filter(isUnaddressed)).toEqual([])
-    expect(answered.agentByUser.alex.messages.at(-2)?.addressedBy).toBe(
-      'offline-answer',
-    )
-    expect(previewReducer(answered, action)).toBe(answered)
-  })
-})
-
-describe('Agent workflow progress preview', () => {
-  it('keeps sending locked through both final tasks while preserving the next draft', () => {
-    let state = previewReducer(author(), {
-      type: 'sendMessage',
-      id: 'turn',
-      text: 'An update.',
-      previewRun: true,
-    })
+describe('turn progress and admission', () => {
+  it('locks sends through both background jobs while preserving a draft', () => {
+    let state = scenario('stage-planning')
     state = previewReducer(state, {
       type: 'draftMessage',
       text: 'My next message.',
     })
-    const send = {
+    const duplicate = {
       type: 'sendMessage' as const,
-      id: 'next',
+      id: 'blocked',
       text: 'My next message.',
       previewRun: true,
     }
-    for (let step = 0; step < 6; step++) {
-      expect(previewReducer(state, send)).toBe(state)
-      state = previewReducer(state, {
-        type: 'advanceRun',
-        userId: 'alex',
-        messageId: 'turn',
-        step,
-      })
+    for (let index = 0; index < 4; index++) {
+      expect(previewReducer(state, duplicate)).toBe(state)
+      state = tick(state)
       expect(state.agentByUser.alex.draft).toBe('My next message.')
     }
-    const next = previewReducer(state, send)
-    expect(next.agentByUser.alex.messages.at(-1)?.id).toBe('next')
-    expect(next.agentByUser.alex.draft).toBe('')
+    const published = state.agentByUser.alex
+    expect(published.run).toMatchObject({
+      stage: 'background',
+      memory: 'running',
+      addressing: 'running',
+    })
+    expect(published.messages.at(-1)).toMatchObject({
+      sender: 'amber',
+      changes: expect.arrayContaining([
+        expect.objectContaining({ project: 'Atlas' }),
+      ]),
+    })
+    expect(
+      state.posts.find(({ project }) => project === 'Atlas')?.summary,
+    ).toContain('offline')
+    expect(previewReducer(state, duplicate)).toBe(state)
+    state = tick(state)
+    expect(state.agentByUser.alex.run).toMatchObject({
+      memory: 'done',
+      addressing: 'running',
+    })
+    expect(isAgentBusy(state.agentByUser.alex.run)).toBe(true)
+    expect(state.agentByUser.alex.messages.at(-1)?.memoryEvents).toHaveLength(1)
+    state = tick(state)
+    expect(isAgentBusy(state.agentByUser.alex.run)).toBe(false)
+    expect(state.agentByUser.alex.draft).toBe('My next message.')
+    const sent = previewReducer(state, duplicate)
+    expect(sent.agentByUser.alex.messages.at(-1)?.id).toBe('blocked')
+    expect(sent.agentByUser.alex.draft).toBe('')
   })
 
-  it('continues the correct account’s run after switching accounts and ignores stale ticks', () => {
-    const started = previewReducer(author(), {
-      type: 'sendMessage',
-      id: 'turn',
-      text: 'An update.',
-      previewRun: true,
+  it('supports either parallel job finishing first', () => {
+    const memoryLast = tick(scenario('stage-background-memory'))
+    expect(memoryLast.agentByUser.alex.run).toMatchObject({
+      status: 'complete',
+      memory: 'done',
+      addressing: 'done',
     })
-    const member = previewReducer(started, { type: 'role', role: 'member' })
-    const tick = {
-      type: 'advanceRun' as const,
-      userId: 'alex',
-      messageId: 'turn',
-      step: 0,
-    }
-    const advanced = previewReducer(member, tick)
-    expect(advanced.agentByUser.alex.run?.step).toBe(1)
-    expect(advanced.agentByUser.you).toBe(member.agentByUser.you)
-    expect(previewReducer(advanced, tick)).toBe(advanced)
+    expect(memoryLast.agentByUser.alex.memoryHistory.at(-1)?.kind).toBe(
+      'replaced',
+    )
+    const addressingLast = tick(scenario('stage-background-addressing'))
+    expect(addressingLast.agentByUser.alex.run).toMatchObject({
+      status: 'complete',
+      memory: 'done',
+      addressing: 'done',
+    })
+  })
+})
+
+describe('background retry', () => {
+  it('retries only the failed job and preserves the visible answer and applied diff', () => {
+    const failed = scenario('failure-memory')
+    const messages = failed.agentByUser.alex.messages
+    const posts = failed.posts
+    const retrying = previewReducer(failed, {
+      type: 'retryBackground',
+      task: 'memory',
+    })
+    expect(retrying.agentByUser.alex.run).toMatchObject({
+      stage: 'background',
+      status: 'running',
+      memory: 'running',
+      addressing: 'done',
+      memoryAttempts: 2,
+    })
+    expect(retrying.agentByUser.alex.messages).toBe(messages)
+    expect(retrying.posts).toBe(posts)
+    const finished = tick(retrying)
+    expect(finished.agentByUser.alex.run).toMatchObject({
+      status: 'complete',
+      memory: 'done',
+    })
+    expect(finished.posts).toBe(posts)
+    expect(finished.agentByUser.alex.messages.at(-1)?.changes).toEqual(
+      messages.at(-1)?.changes,
+    )
+  })
+
+  it('bounds retries and rejects a stale retry after a newer turn', () => {
+    const exhausted = scenario('retry-exhausted')
     expect(
-      previewReducer(advanced, { ...tick, messageId: 'old', step: 1 }),
-    ).toBe(advanced)
+      previewReducer(exhausted, { type: 'retryBackground', task: 'memory' }),
+    ).toBe(exhausted)
+    const stale = scenario('retry-stale')
+    expect(
+      previewReducer(stale, { type: 'retryBackground', task: 'memory' }),
+    ).toBe(stale)
   })
 })

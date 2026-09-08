@@ -54,6 +54,33 @@ export function AgentMemoryDialog({ onClose }: { onClose: () => void }) {
               <p className="memory-empty">No saved preferences yet.</p>
             )}
           </div>
+          {agent.memoryHistory.length > 0 && (
+            <details className="memory-history">
+              <summary>Recent memory changes</summary>
+              <ol>
+                {[...agent.memoryHistory].reverse().map((event) => (
+                  <li
+                    key={`${event.id}-${event.kind}-${event.before ?? ''}-${event.after ?? ''}`}
+                  >
+                    <strong>
+                      {event.kind === 'created'
+                        ? 'Created'
+                        : event.kind === 'replaced'
+                          ? 'Replaced'
+                          : 'Deleted'}
+                    </strong>
+                    {event.kind === 'replaced' ? (
+                      <span>
+                        {event.before} → {event.after}
+                      </span>
+                    ) : (
+                      <span>{event.after ?? event.before}</span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </details>
+          )}
           <button
             type="button"
             ref={addButton}

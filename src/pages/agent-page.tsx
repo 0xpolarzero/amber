@@ -7,9 +7,11 @@ import { ReplyComposer } from '../components/reply-composer'
 import { usePreview } from '../preview/provider'
 import {
   type AgentConversation,
+  type AgentMemoryEvent,
   isAgentBusy,
   isUnaddressed,
-  type PostUpdate,
+  type PostChange,
+  type PostFieldChange,
 } from '../preview/state'
 
 export function AgentPage({ postId }: { postId?: string }) {
@@ -46,19 +48,42 @@ function AgentChat({
   const { state, dispatch } = usePreview()
   const navigate = useNavigate()
   const [memoryOpen, setMemoryOpen] = useState(false)
+  const [pendingIndex, setPendingIndex] = useState(-1)
+  const [newBelow, setNewBelow] = useState(false)
   const history = useRef<HTMLDivElement>(null)
-  const unaddressed = agent.messages.filter(isUnaddressed)
-  const context = state.posts.find((post) => post.id === postId)
+  const nearBottom = useRef(true)
+  const previousCount = useRef(0)
+  const pending = agent.messages.filter(isUnaddressed)
+  const context = [...state.posts, ...state.agentPosts].find(
+    (post) => post.id === postId,
+  )
   useEffect(() => {
     if (agent.messages.length > agent.readThrough)
       dispatch({ type: 'readAgent' })
   }, [agent.messages.length, agent.readThrough, dispatch])
   useLayoutEffect(() => {
-    if (agent.messages.length && history.current)
-      history.current.scrollTop = history.current.scrollHeight
-  }, [agent.messages.length])
-  const lastUpdateId = agent.messages
-    .filter((message) => message.update)
+    const element = history.current
+    if (!element || agent.messages.length === previousCount.current) return
+    const latest = agent.messages.at(-1)
+    const userSent = latest?.sender === 'user'
+    if (nearBottom.current || userSent || previousCount.current === 0) {
+      element.scrollTop = element.scrollHeight
+      setNewBelow(false)
+    } else {
+      setNewBelow(true)
+    }
+    previousCount.current = agent.messages.length
+  }, [agent.messages])
+  const jumpToPending = (direction: 1 | -1) => {
+    if (!pending.length) return
+    const next = (pendingIndex + direction + pending.length) % pending.length
+    setPendingIndex(next)
+    const message = document.getElementById(`message-${pending[next].id}`)
+    message?.scrollIntoView({ block: 'center' })
+    message?.focus({ preventScroll: true })
+  }
+  const latestChangeMessage = agent.messages
+    .filter((message) => message.changes?.length)
     .at(-1)?.id
   return (
     <section
@@ -71,23 +96,35 @@ function AgentChat({
         </span>
         <div>
           <h1>Amber</h1>
-          <p>Your agent, across your posts.</p>
+          <p>One private conversation across your posts.</p>
         </div>
-        {unaddressed.length > 0 && (
-          <button
-            className="unaddressed-jump"
-            type="button"
-            onClick={() => {
-              const message = document.getElementById(
-                `message-${unaddressed[0].id}`,
-              )
-              message?.scrollIntoView({ block: 'center' })
-              message?.focus({ preventScroll: true })
-            }}
-          >
-            {unaddressed.length} unaddressed
-          </button>
-        )}
+        {pending.length > 0 ? (
+          <fieldset className="pending-navigation">
+            <legend className="visually-hidden">Pending requests</legend>
+            <button
+              type="button"
+              onClick={() => jumpToPending(-1)}
+              aria-label="Previous pending request"
+            >
+              <Icon name="chevron" />
+            </button>
+            <button
+              className="unaddressed-jump"
+              type="button"
+              onClick={() => jumpToPending(1)}
+              aria-label={`Next pending request (${pending.length} open)`}
+            >
+              {pending.length} pending
+            </button>
+            <button
+              type="button"
+              onClick={() => jumpToPending(1)}
+              aria-label="Next pending request"
+            >
+              <Icon name="chevron" />
+            </button>
+          </fieldset>
+        ) : null}
         <button
           className="memory-button"
           type="button"
@@ -96,78 +133,98 @@ function AgentChat({
           Memory<span>{agent.memories.length}</span>
         </button>
       </header>
-      {!agent.messages.length && (
+      {!agent.messages.length ? (
         <div className="agent-welcome">
           <h2>What would you like to work on?</h2>
           <p>Ask about a post, or tell me how you like things written.</p>
         </div>
-      )}
+      ) : null}
       <div
         className="conversation-history"
         ref={history}
         role="log"
         aria-label="Conversation history"
+        aria-live="polite"
         aria-relevant="additions"
+        onScroll={(event) => {
+          const element = event.currentTarget
+          nearBottom.current =
+            element.scrollHeight - element.scrollTop - element.clientHeight < 72
+          if (nearBottom.current) setNewBelow(false)
+        }}
       >
         {agent.messages.map((message) => (
-          <div
+          <article
             key={message.id}
             id={`message-${message.id}`}
             tabIndex={-1}
             className={`chat-message ${message.sender === 'user' ? 'outgoing' : ''} ${isUnaddressed(message) ? 'unaddressed' : ''}`}
           >
-            <span className="chat-sender">
-              {message.sender === 'amber' ? 'Amber' : state.people[user].name}
-            </span>
-            {message.postId && !message.update && (
+            {message.sender === 'amber' ? (
+              <span className="chat-sender">Amber</span>
+            ) : null}
+            {message.postId && !message.changes?.length ? (
               <PostReference postId={message.postId} />
-            )}
-            {isUnaddressed(message) && (
-              <span className="unaddressed-label">Unaddressed</span>
-            )}
+            ) : null}
+            {message.candidate ? (
+              <span className={`candidate-context ${message.candidate.status}`}>
+                {message.candidate.name} ·{' '}
+                {message.candidate.status === 'clarification'
+                  ? 'details needed'
+                  : message.candidate.status}
+              </span>
+            ) : null}
+            <MessageState message={message} />
             <p className="chat-bubble">{message.text}</p>
-            {message.memorySaved && (
-              <button
-                type="button"
-                className="memory-saved"
-                onClick={() => setMemoryOpen(true)}
-              >
-                <Icon name="check" />
-                <span>
-                  <strong>
-                    {agent.memories.some(
-                      (memory) => memory.id === message.memorySaved?.id,
-                    )
-                      ? 'Saved to memory'
-                      : 'Memory forgotten'}
-                  </strong>
-                  <span>{message.memorySaved.text}</span>
-                </span>
-              </button>
-            )}
-            {message.update && message.postId && (
-              <PostUpdateDiff
-                postId={message.postId}
-                update={message.update}
-                expanded={message.id === lastUpdateId}
+            {message.changes?.length ? (
+              <AppliedChanges
+                changes={message.changes}
+                expanded={message.id === latestChangeMessage}
               />
-            )}
-            {Boolean(message.usedMemories?.length) && (
-              <details className="memory-used">
-                <summary>
-                  Used {message.usedMemories?.length} saved preference
-                </summary>
+            ) : null}
+            {reit(message.memoryEvents) ? (
+              <MemoryReceipt
+                events={message.memoryEvents ?? []}
+                onOpen={() => setMemoryOpen(true)}
+              />
+            ) : null}
+            {message.usedMemories?.length || message.usedHistory?.length ? (
+              <details className="context-used">
+                <summary>Context used</summary>
                 {message.usedMemories?.map((memory) => (
-                  <p key={memory.id}>{memory.text}</p>
+                  <p key={memory.id}>
+                    <strong>Preference</strong>
+                    {memory.text}
+                  </p>
+                ))}
+                {message.usedHistory?.map((text) => (
+                  <p key={text}>
+                    <strong>Earlier message</strong>
+                    {text}
+                  </p>
                 ))}
               </details>
-            )}
-          </div>
+            ) : null}
+          </article>
         ))}
       </div>
+      {newBelow ? (
+        <button
+          className="new-message-jump"
+          type="button"
+          onClick={() => {
+            if (history.current)
+              history.current.scrollTop = history.current.scrollHeight
+            nearBottom.current = true
+            setNewBelow(false)
+          }}
+        >
+          New message ↓
+        </button>
+      ) : null}
       <div className="conversation-footer">
-        {agent.run && <AgentProgress run={agent.run} />}
-        {postId && (
+        {agent.run ? <AgentProgress run={agent.run} /> : null}
+        {postId ? (
           <div className="agent-post-context">
             <span>About {context?.project ?? 'an unavailable post'}</span>
             <button
@@ -186,22 +243,83 @@ function AgentChat({
               <Icon name="close" />
             </button>
           </div>
-        )}
+        ) : null}
         <ReplyComposer
+          key={`${user}-${state.scenarioRevision}-${agent.revision}`}
           postId={context?.id}
           draft={agent.draft}
           blocked={isAgentBusy(agent.run)}
         />
       </div>
-      {memoryOpen && <AgentMemoryDialog onClose={() => setMemoryOpen(false)} />}
+      {memoryOpen ? (
+        <AgentMemoryDialog onClose={() => setMemoryOpen(false)} />
+      ) : null}
     </section>
   )
 }
 
+function reit<T>(items: readonly T[] | undefined) {
+  return Boolean(items?.length)
+}
+
+function MessageState({
+  message,
+}: {
+  message: AgentConversation['messages'][number]
+}) {
+  if (message.resolution)
+    return (
+      <span className={`request-state ${message.resolution}`}>
+        {message.resolution === 'answered' ? 'Answered' : 'Ignored'}
+      </span>
+    )
+  if (isUnaddressed(message))
+    return (
+      <span className="unaddressed-label">
+        {message.deferred ? 'Deferred · still open' : 'Needs your reply'}
+      </span>
+    )
+  return null
+}
+
+function MemoryReceipt({
+  events,
+  onOpen,
+}: {
+  events: readonly AgentMemoryEvent[]
+  onOpen: () => void
+}) {
+  return (
+    <button type="button" className="memory-saved" onClick={onOpen}>
+      <Icon name="check" />
+      <span>
+        <strong>
+          {events.length === 1
+            ? memoryEventLabel(events[0])
+            : `${events.length} memory changes saved`}
+        </strong>
+        <span>{events.map(memoryEventText).join(' · ')}</span>
+      </span>
+    </button>
+  )
+}
+
+const memoryEventLabel = (event: AgentMemoryEvent) =>
+  event.kind === 'created'
+    ? 'Preference created'
+    : event.kind === 'replaced'
+      ? 'Preference replaced'
+      : 'Preference deleted'
+const memoryEventText = (event: AgentMemoryEvent) =>
+  event.after ?? event.before ?? ''
+
 function PostReference({ postId }: { postId: string }) {
   const { state } = usePreview()
-  const post = state.posts.find((post) => post.id === postId)
-  if (!post) return <span className="agent-post-reference">Post removed</span>
+  const post = [...state.posts, ...state.agentPosts].find(
+    (item) => item.id === postId,
+  )
+  if (!post)
+    return <span className="agent-post-reference">Post unavailable</span>
   return (
     <Link
       className="agent-post-reference"
@@ -216,57 +334,111 @@ function PostReference({ postId }: { postId: string }) {
   )
 }
 
-function PostUpdateDiff({
-  postId,
-  update,
+function AppliedChanges({
+  changes,
   expanded,
 }: {
-  postId: string
-  update: PostUpdate
+  changes: readonly PostChange[]
+  expanded: boolean
+}) {
+  return (
+    <section className="applied-changes" aria-label="Applied post changes">
+      <p className="applied-summary">
+        <Icon name="check" />
+        {changes.length === 1
+          ? changes[0].kind === 'created'
+            ? '1 post created'
+            : '1 post updated'
+          : `${changes.length} posts changed`}
+      </p>
+      {changes.map((change) => (
+        <PostChangeDiff
+          key={change.postId}
+          change={change}
+          expanded={expanded}
+        />
+      ))}
+    </section>
+  )
+}
+
+function PostChangeDiff({
+  change,
+  expanded,
+}: {
+  change: PostChange
   expanded: boolean
 }) {
   const { state } = usePreview()
-  const post = state.posts.find((post) => post.id === postId)
-  const field =
-    update.field === 'detail'
-      ? 'Details'
-      : update.field === 'summary'
-        ? 'Summary'
-        : 'Title'
+  const post = [...state.posts, ...state.agentPosts].find(
+    (item) => item.id === change.postId,
+  )
   return (
     <details className="post-update" open={expanded}>
       <summary>
-        <Icon name="check" />
-        <span>Updated {post?.project ?? 'removed post'}</span>
+        <span>
+          {change.kind === 'created' ? 'Created' : 'Updated'} {change.project}
+        </span>
+        <span className="post-version">v{change.toVersion}</span>
         <Icon name="chevronDown" />
       </summary>
-      <section
-        aria-label={`Changes to ${post?.project ?? 'removed post'} ${field.toLowerCase()}`}
-      >
+      <section aria-label={`Changes to ${change.project}`}>
         <div className="post-update-header">
-          <h2>{field}</h2>
-          {post && (
+          <span>
+            {change.fields.length}{' '}
+            {change.fields.length === 1 ? 'field' : 'fields'}
+          </span>
+          {post ? (
             <Link
               to="/posts/$postId"
-              params={{ postId }}
-              aria-label={`View ${post.project} post`}
+              params={{ postId: post.id }}
+              aria-label={`View ${change.project} post`}
             >
               View post
               <Icon name="chevron" />
             </Link>
-          )}
+          ) : null}
         </div>
+        {change.fields.map((field) => (
+          <FieldDiff
+            key={field.field}
+            field={field}
+            created={change.kind === 'created'}
+          />
+        ))}
+      </section>
+    </details>
+  )
+}
+
+function FieldDiff({
+  field,
+  created,
+}: {
+  field: PostFieldChange
+  created: boolean
+}) {
+  const label =
+    field.field === 'detail'
+      ? 'Details'
+      : field.field === 'summary'
+        ? 'Summary'
+        : 'Title'
+  return (
+    <div className="field-diff">
+      <h2>{label}</h2>
+      {!created ? (
         <div className="diff-line removed">
           <span aria-hidden="true">−</span>
           <span className="visually-hidden">Removed: </span>
-          <del>{update.before}</del>
+          <del>{field.before}</del>
         </div>
-        <div className="diff-line added">
-          <span aria-hidden="true">+</span>
-          <span className="visually-hidden">Added: </span>
-          <ins>{update.after}</ins>
-        </div>
-      </section>
-    </details>
+      ) : null}
+      <div className="diff-line added">
+        <span aria-hidden="true">+</span>
+        <span className="visually-hidden">Added: </span>
+        <ins>{field.after}</ins>
+      </div>
+    </div>
   )
 }
