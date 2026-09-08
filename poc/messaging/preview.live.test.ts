@@ -4,7 +4,11 @@ import { readFile, writeFile } from 'node:fs/promises'
 import * as Action from '@smthrs/flow/Action'
 import { Effect, Layer } from 'effect'
 import { expect, it } from 'vitest'
-import { type PreviewProjectionCapture, projectPreviewTrace } from '../preview-projection'
+import {
+  type PreviewProjectionCapture,
+  projectPreviewTrace,
+  projectReplyTrace,
+} from '../preview-projection'
 import { antigravity, modelId } from '../shared/antigravity'
 import { testEngine } from '../shared/test-engine'
 import { telegramLayers } from '../telegram/agents'
@@ -224,7 +228,11 @@ it('captures the guided preview from one real extraction batch and one real mess
   }
   const projection = {
     ...baseProjection,
-    version: 2,
+    version: 3,
+    messaging: {
+      ...baseProjection.messaging,
+      trace: projectReplyTrace(artifact as unknown as PreviewProjectionCapture),
+    },
     trace: projectPreviewTrace(artifact as unknown as PreviewProjectionCapture),
   }
   artifact.projection = projection
@@ -268,4 +276,18 @@ it('captures the guided preview from one real extraction batch and one real mess
   })
   expect(afterTurn.addressing['preview-extracted-question-1']?.outcome).toBe('answered')
   expect(afterTurn.memories.some(({ text }) => /concise|short/i.test(text))).toBe(true)
+  expect(projection.messaging.trace.planner.queries).toEqual([])
+  expect(projection.messaging.trace.context).toMatchObject({
+    linkedRequestPostIds: ['batch-1:0'],
+    userMessages: [],
+    assistantMessages: [],
+  })
+  expect(projection.messaging.trace.context.posts).toHaveLength(1)
+  expect(projection.messaging.trace.memory.operations).toEqual([])
+  expect(projection.messaging.trace.addressing.resolutions).toEqual([
+    expect.objectContaining({
+      requestMessageId: 'preview-extracted-question-1',
+      outcome: 'answered',
+    }),
+  ])
 }, 750_000)

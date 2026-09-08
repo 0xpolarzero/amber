@@ -36,6 +36,84 @@ type RecordedRequest = {
   linkedPostId: string | null
 }
 
+type RecordedMessage = RecordedRequest & {
+  role: 'user' | 'assistant'
+}
+
+type MessagingQuery = {
+  resource: 'posts' | 'user_messages' | 'assistant_messages'
+  terms: readonly string[]
+  limit: number
+}
+
+type QueryPlannerCall = {
+  task: 'query-planner'
+  input: {
+    pendingRequests: readonly RecordedMessage[]
+  }
+  output: { queries: readonly MessagingQuery[] }
+}
+
+type ResponderCall = {
+  task: 'responder'
+  input: {
+    queryResults: {
+      posts: readonly RecordedPost[]
+      userMessages: readonly RecordedMessage[]
+      assistantMessages: readonly RecordedMessage[]
+      linkedRequestPostIds: readonly string[]
+    }
+    memories: readonly RecordedMemory[]
+    unaddressed: readonly RecordedMessage[]
+  }
+  output: {
+    classification: string
+    intent: string
+    text: string
+    pendingOutcome: { kind: string }
+    postChanges: readonly {
+      postId: string
+      expectedVersion: number
+      title: string
+      summary: string
+      detail: string
+      evidence: readonly {
+        kind: string
+        id?: string
+        version?: number
+        url?: string
+      }[]
+    }[]
+  }
+}
+
+type MemoryCall = {
+  task: 'memory'
+  input: { memories: readonly RecordedMemory[] }
+  output: {
+    operations: readonly {
+      kind: string
+      id: string
+      text?: string
+      expectedVersion?: number
+    }[]
+  }
+}
+
+type AddressingCall = {
+  task: 'addressing'
+  input: { unaddressedSnapshot: readonly RecordedMessage[] }
+  output: {
+    resolutions: readonly {
+      requestMessageId: string
+      outcome: 'answered' | 'ignored'
+      reason: string
+    }[]
+  }
+}
+
+type MessagingCall = QueryPlannerCall | ResponderCall | MemoryCall | AddressingCall
+
 type SelectionCall = {
   task: 'selection'
   output: {
@@ -86,6 +164,9 @@ export type PreviewProjectionCapture = {
       }
     }[]
   }
+  messaging: {
+    calls: readonly MessagingCall[]
+  }
   projection: {
     version: number
     disclosure: string
@@ -115,6 +196,71 @@ const publishedPost = ({ id, title, summary, detail }: RecordedPost) => ({
   summary,
   detail,
 })
+
+const recordedMessage = ({ id, text, linkedPostId }: RecordedMessage) => ({
+  id,
+  text,
+  linkedPostId,
+})
+
+const messagingCall = <Task extends MessagingCall['task']>(
+  calls: PreviewProjectionCapture['messaging']['calls'],
+  task: Task,
+) => calls.find((call): call is Extract<MessagingCall, { task: Task }> => call.task === task)
+
+/** Project the recorded messaging calls into concise browser-safe evidence. */
+export function projectReplyTrace(capture: PreviewProjectionCapture) {
+  const planner = messagingCall(capture.messaging.calls, 'query-planner')
+  const responder = messagingCall(capture.messaging.calls, 'responder')
+  const memory = messagingCall(capture.messaging.calls, 'memory')
+  const addressing = messagingCall(capture.messaging.calls, 'addressing')
+  if (!planner || !responder || !memory || !addressing)
+    throw new Error('The reply trace is missing a recorded messaging call.')
+
+  return {
+    planner: {
+      pendingRequests: planner.input.pendingRequests.map(recordedMessage),
+      queries: planner.output.queries,
+    },
+    context: {
+      posts: responder.input.queryResults.posts.map(({ id, version, title, summary, detail }) => ({
+        id,
+        version,
+        title,
+        summary,
+        detail,
+      })),
+      userMessages: responder.input.queryResults.userMessages.map(recordedMessage),
+      assistantMessages: responder.input.queryResults.assistantMessages.map(recordedMessage),
+      linkedRequestPostIds: responder.input.queryResults.linkedRequestPostIds,
+      memories: responder.input.memories.map(({ id, text, version }) => ({
+        id,
+        text,
+        version,
+      })),
+      unaddressed: responder.input.unaddressed.map(recordedMessage),
+    },
+    response: {
+      classification: responder.output.classification,
+      intent: responder.output.intent,
+      text: responder.output.text,
+      pendingOutcome: responder.output.pendingOutcome,
+      postChanges: responder.output.postChanges,
+    },
+    memory: {
+      existing: memory.input.memories.map(({ id, text, version }) => ({
+        id,
+        text,
+        version,
+      })),
+      operations: memory.output.operations,
+    },
+    addressing: {
+      requests: addressing.input.unaddressedSnapshot.map(recordedMessage),
+      resolutions: addressing.output.resolutions,
+    },
+  }
+}
 
 const postCallFor = (calls: PreviewProjectionCapture['extraction']['calls'], authorId: string) =>
   calls.find(

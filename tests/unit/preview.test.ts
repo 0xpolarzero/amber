@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   type PreviewProjectionCapture,
   projectPreviewTrace,
+  projectReplyTrace,
 } from '../../poc/preview-projection'
 import artifact from '../../poc/preview-result.json'
 import { AGENT_GUIDE } from '../../src/preview/agent-example'
@@ -33,7 +34,19 @@ function tick(state: PreviewState) {
 
 describe('recorded preview projection', () => {
   it('is the deterministic compact projection stored in the full live artifact', () => {
-    expect(projection).toEqual(artifact.projection)
+    expect(projection).toEqual({
+      ...artifact.projection,
+      version: 3,
+      messaging: {
+        ...artifact.projection.messaging,
+        trace: projectReplyTrace(
+          artifact as unknown as PreviewProjectionCapture,
+        ),
+      },
+      trace: projectPreviewTrace(
+        artifact as unknown as PreviewProjectionCapture,
+      ),
+    })
   })
 
   it('derives the primary and related branches by identity after reordering', () => {
@@ -78,6 +91,80 @@ describe('recorded preview projection', () => {
         outcome: 'answered',
       }),
     ])
+    const planner = artifact.messaging.calls.find(
+      ({ task }) => task === 'query-planner',
+    )
+    const responder = artifact.messaging.calls.find(
+      ({ task }) => task === 'responder',
+    )
+    const memory = artifact.messaging.calls.find(
+      ({ task }) => task === 'memory',
+    )
+    const addressing = artifact.messaging.calls.find(
+      ({ task }) => task === 'addressing',
+    )
+    if (
+      !planner?.output.queries ||
+      !responder?.input.queryResults ||
+      !responder.input.memories ||
+      !responder.input.unaddressed ||
+      !memory?.input.memories ||
+      !addressing?.input.unaddressedSnapshot
+    )
+      throw new Error('Missing recorded messaging trace call')
+    expect(projection.messaging.trace.planner.queries).toEqual(
+      planner.output.queries,
+    )
+    expect(projection.messaging.trace.planner.queries).toEqual([])
+    const projectMessage = ({
+      id,
+      text,
+      linkedPostId,
+    }: {
+      id: string
+      text: string
+      linkedPostId: string | null
+    }) => ({ id, text, linkedPostId })
+    expect(projection.messaging.trace.context).toMatchObject({
+      posts: responder.input.queryResults.posts.map(
+        ({ id, version, title, summary, detail }) => ({
+          id,
+          version,
+          title,
+          summary,
+          detail,
+        }),
+      ),
+      userMessages:
+        responder.input.queryResults.userMessages.map(projectMessage),
+      assistantMessages:
+        responder.input.queryResults.assistantMessages.map(projectMessage),
+      linkedRequestPostIds: responder.input.queryResults.linkedRequestPostIds,
+      memories: responder.input.memories.map(({ id, text, version }) => ({
+        id,
+        text,
+        version,
+      })),
+      unaddressed: responder.input.unaddressed.map(projectMessage),
+    })
+    expect(projection.messaging.trace.response).toEqual(responder.output)
+    expect(projection.messaging.trace.memory).toEqual({
+      existing: memory.input.memories.map(({ id, text, version }) => ({
+        id,
+        text,
+        version,
+      })),
+      operations: [],
+    })
+    expect(projection.messaging.trace.addressing).toEqual({
+      requests: addressing.input.unaddressedSnapshot.map(projectMessage),
+      resolutions: addressing.output.resolutions,
+    })
+    expect(projection.messaging.trace.addressing.resolutions[0]).toEqual({
+      requestMessageId: 'preview-extracted-question-1',
+      outcome: 'answered',
+      reason: 'The user directly confirmed that Noted supports Mandarin.',
+    })
     const selection = artifact.extraction.calls.find(
       ({ task }) => task === 'selection',
     )
@@ -146,6 +233,41 @@ describe('recorded preview projection', () => {
       /accessToken|authorization|runtimeInventory|refreshToken|sessionCookie/i,
     )
     expect(JSON.stringify(projection)).not.toMatch(/Atlas|Clipwise|Aurora/)
+  })
+
+  it('projects nonempty query plans and results from test-only records', () => {
+    const testOnly = JSON.parse(JSON.stringify(artifact))
+    const planner = testOnly.messaging.calls.find(
+      ({ task }: { task: string }) => task === 'query-planner',
+    )
+    const responder = testOnly.messaging.calls.find(
+      ({ task }: { task: string }) => task === 'responder',
+    )
+    if (!planner || !responder)
+      throw new Error('Missing messaging calls for test-only projection')
+    planner.output.queries = [
+      { resource: 'posts', terms: ['TEST ONLY', 'Noted'], limit: 2 },
+    ]
+    responder.input.queryResults.posts.push({
+      ...responder.input.queryResults.posts[0],
+      id: 'test-only-query-result',
+      title: 'TEST ONLY query result',
+    })
+
+    const trace = projectReplyTrace(
+      testOnly as unknown as PreviewProjectionCapture,
+    )
+    expect(trace.planner.queries).toEqual([
+      { resource: 'posts', terms: ['TEST ONLY', 'Noted'], limit: 2 },
+    ])
+    expect(trace.context.posts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'test-only-query-result',
+          title: 'TEST ONLY query result',
+        }),
+      ]),
+    )
   })
 })
 
@@ -288,4 +410,21 @@ describe('guided preview', () => {
     expect(reset.agentByUser.alex.run?.addressing).toBe('failed')
     expect(reset.agentByUser.you.messages).toEqual([])
   })
+})
+
+it('keeps the previous reply trace when a new turn starts', () => {
+  const before = scenario('rich-complete')
+  const previousRun = before.agentByUser.alex.run
+  const after = previewReducer(before, {
+    type: 'sendMessage',
+    id: 'later-turn',
+    text: 'Thanks.',
+    previewRun: true,
+  })
+  expect(after.agentByUser.alex.run?.messageId).toBe('later-turn')
+  expect(
+    after.agentByUser.alex.messages.find(
+      ({ id }) => id === previousRun?.outcome?.responseId,
+    )?.replyRun,
+  ).toEqual(previousRun)
 })
