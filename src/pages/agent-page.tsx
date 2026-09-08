@@ -376,6 +376,7 @@ function TelegramSourceDisclosure({
       >
         <Icon name="telegram" />
         <span>Source Telegram messages</span>
+        <Icon name="chevronDown" className="telegram-source-caret" />
       </summary>
       <p className="telegram-source-disclosure">{source.disclosure}</p>
       <p className="telegram-source-batch">
