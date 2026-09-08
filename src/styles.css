@@ -2296,7 +2296,7 @@ dialog::backdrop {
   margin: 0;
 }
 .memory-entry {
-  padding: 12px 0;
+  padding: 7px 0;
   border-top: 1px solid var(--line);
 }
 .memory-entry:first-child {
@@ -2313,9 +2313,9 @@ dialog::backdrop {
   margin-top: 4px;
 }
 .memory-actions button {
-  padding: 8px 0;
-  min-height: 36px;
-  font-size: 12px;
+  padding: 4px 0;
+  min-height: 28px;
+  font-size: 11px;
   color: var(--secondary);
 }
 .memory-actions button:hover {
@@ -2332,7 +2332,7 @@ dialog::backdrop {
     font-size: 16px;
   }
   .memory-actions button {
-    min-height: 44px;
+    min-height: 32px;
   }
 }
 
@@ -2501,50 +2501,56 @@ dialog::backdrop {
   position: absolute;
   right: 8px;
   bottom: 8px;
+  width: 32px;
+  height: 32px;
+}
+.composer-row .message-send svg {
+  width: 16px;
+  height: 16px;
 }
 .composer-tools {
   display: flex;
   align-self: flex-start;
   flex-shrink: 0;
-  gap: 6px;
+  gap: 4px;
   overflow: visible;
 }
 .composer-tool {
   position: relative;
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   place-items: center;
   overflow: visible;
   border: 1px solid transparent;
-  border-radius: 14px;
-  background: var(--paper);
+  border-radius: 8px;
+  background: transparent;
   color: var(--secondary);
 }
 .composer-tool:hover:not(:disabled),
 .composer-tool[aria-expanded="true"] {
-  border-color: #cfcfcb;
+  border-color: transparent;
   background: var(--soft);
   color: var(--ink);
 }
 .composer-tool svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 .pending-count {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: -2px;
+  right: -2px;
   display: grid;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
   place-items: center;
-  border: 2px solid var(--paper);
+  border: 1px solid var(--paper);
   border-radius: 999px;
   background: #8a621c;
   color: white;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 650;
   line-height: 1;
 }
@@ -2554,16 +2560,15 @@ dialog::backdrop {
 .composer-panel {
   margin-bottom: 8px;
   border: 1px solid #dededb;
-  border-radius: 14px;
+  border-radius: 10px;
   background: var(--paper);
-  box-shadow: 0 8px 30px rgba(32, 32, 32, 0.07);
 }
 .pending-panel {
   display: flex;
-  min-height: 48px;
+  min-height: 28px;
   align-items: center;
   gap: 10px;
-  padding: 5px 7px 5px 14px;
+  padding: 2px 6px 2px 10px;
   color: var(--secondary);
   font-size: 12px;
 }
@@ -2578,8 +2583,8 @@ dialog::backdrop {
 }
 .pending-panel-actions button {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   place-items: center;
   border-radius: 10px;
 }
@@ -2595,7 +2600,7 @@ dialog::backdrop {
 }
 .memory-panel {
   display: flex;
-  max-height: min(280px, 38dvh);
+  max-height: min(220px, 32dvh);
   flex-direction: column;
   overflow: hidden;
 }
@@ -2604,7 +2609,7 @@ dialog::backdrop {
   flex-shrink: 0;
   align-items: center;
   gap: 12px;
-  padding: 10px 11px 9px 14px;
+  padding: 5px 8px 5px 10px;
   border-bottom: 1px solid var(--line);
 }
 .memory-panel-header > div {
@@ -2644,7 +2649,7 @@ dialog::backdrop {
 .memory-search input {
   width: 100%;
   min-width: 0;
-  height: 34px;
+  height: 28px;
   padding: 0;
   border: 0;
   outline: 0;
@@ -2654,15 +2659,15 @@ dialog::backdrop {
 }
 .memory-panel-content {
   min-height: 0;
-  padding: 0 14px;
+  padding: 0 10px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
 }
 .memory-add {
-  min-height: 40px;
+  min-height: 30px;
   flex-shrink: 0;
-  padding: 0 14px;
+  padding: 0 10px;
   border-top: 1px solid var(--line);
   color: var(--secondary);
   text-align: left;
@@ -3104,12 +3109,12 @@ main.guide-active ~ .toast {
     gap: 4px;
   }
   .composer-tool {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
   }
   .memory-panel {
-    max-height: min(250px, 36dvh);
+    max-height: min(220px, 32dvh);
   }
   .memory-panel-header {
     gap: 8px;
