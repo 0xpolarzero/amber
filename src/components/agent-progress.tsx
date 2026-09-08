@@ -120,7 +120,8 @@ export function AgentProgress({
         </p>
       ) : null}
       <p className="agent-progress-disclosure">
-        Illustrative design preview. No model is running.
+        Recorded model output. Progress and failure states are replayed
+        simulations; no model is running in the browser.
       </p>
     </details>
   )

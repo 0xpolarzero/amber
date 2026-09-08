@@ -2673,6 +2673,61 @@ dialog::backdrop {
   font-size: 10px;
   font-weight: 550;
 }
+.telegram-source {
+  width: min(100%, 540px);
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfbf9;
+  color: var(--secondary);
+  font-size: 10px;
+}
+.telegram-source > summary {
+  min-height: 24px;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 550;
+}
+.telegram-source-disclosure {
+  margin: 4px 0;
+  line-height: 1.45;
+}
+.telegram-source-batch {
+  color: var(--quiet);
+  font-variant-numeric: tabular-nums;
+}
+.telegram-source ol {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+.telegram-source li {
+  padding-left: 8px;
+  border-left: 1px solid var(--line);
+}
+.telegram-source li > span {
+  color: var(--quiet);
+  font-size: 9px;
+}
+.telegram-source li p {
+  margin-top: 2px;
+  color: var(--ink);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.telegram-source-outcomes {
+  display: grid;
+  gap: 3px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+}
+.telegram-source-outcomes p {
+  overflow-wrap: anywhere;
+}
 .new-message-jump {
   align-self: center;
   margin: -4px 0 6px;

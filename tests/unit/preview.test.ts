@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import artifact from '../../poc/preview-result.json'
 import { AGENT_GUIDE } from '../../src/preview/agent-example'
+import projection from '../../src/preview/generated/amber-real-preview'
 import {
   createPreviewState,
   isAgentBusy,
@@ -25,236 +27,171 @@ function tick(state: PreviewState) {
   })
 }
 
-describe('agent fixtures', () => {
-  it('loads every guide checkpoint deterministically and recovers through the existing retry path', () => {
+describe('recorded preview projection', () => {
+  it('is the deterministic compact projection stored in the full live artifact', () => {
+    expect(projection).toEqual(artifact.projection)
+  })
+
+  it('contains the exact grounded extraction and messaging evidence', () => {
+    expect(projection.mode).toBe('recorded-real-model')
+    expect(projection.model).toBe('gemini-3.8-flash-medium')
+    expect(projection.telegram.questions).toHaveLength(1)
+    expect(projection.telegram.questions[0].text).toMatch(/Mandarin/i)
+    expect(
+      projection.telegram.ignored.map(({ messageId }) => messageId),
+    ).toContain('101')
+    expect(projection.telegram.posts.map(({ authorId }) => authorId)).toEqual([
+      'alex',
+      'bea',
+    ])
+    expect(projection.telegram.diffs).toHaveLength(1)
+    expect(projection.messaging.diffs).toHaveLength(1)
+    expect(projection.messaging.diffs[0].before.authorId).toBe('alex')
+    expect(projection.messaging.diffs[0].after.detail).toMatch(/Mandarin/i)
+    expect(projection.messaging.addressing).toEqual([
+      expect.objectContaining({
+        requestMessageId: projection.telegram.questions[0].id,
+        outcome: 'answered',
+      }),
+    ])
+    expect(JSON.stringify(projection)).not.toMatch(/Atlas|Clipwise|Aurora/)
+  })
+})
+
+describe('guided preview', () => {
+  it('loads six focused checkpoints and recovers only the simulated request task', () => {
     let state = createPreviewState(fixtures)
     expect(state.role).toBe('visitor')
-    expect(state.guideStep).toBeNull()
-    expect(AGENT_GUIDE).toHaveLength(10)
+    expect(AGENT_GUIDE).toHaveLength(6)
     for (let step = 0; step < AGENT_GUIDE.length; step++) {
       state = previewReducer(state, { type: 'loadGuideStep', step })
       expect(state.role).toBe('author')
       expect(state.guideStep).toBe(step)
-      expect(state.agentByUser.alex.draft).toBe(AGENT_GUIDE[step].draft ?? '')
     }
     expect(state.agentByUser.alex.run).toMatchObject({
       status: 'complete',
       memory: 'done',
       addressing: 'done',
-      memoryAttempts: 2,
+      addressingAttempts: 2,
     })
     expect(
       state.agentByUser.alex.messages.filter(
-        ({ id }) => id === 'preview-turn:assistant',
+        ({ id }) => id === projection.messaging.assistant.id,
       ),
     ).toHaveLength(1)
+  })
+
+  it('shows the fake source batch and its recorded ownership boundary', () => {
+    const state = scenario('extracted')
+    const message = state.agentByUser.alex.messages[0]
+    expect(message.text).toBe(projection.telegram.questions[0].text)
     expect(
-      state.posts.find(({ project }) => project === 'Atlas')?.summary,
-    ).toContain('offline')
+      message.source?.messages.find(({ id }) => id === '105'),
+    ).toMatchObject({
+      authorId: 'carl',
+      replyToId: '102',
+    })
+    expect(message.source?.outcomes.posts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          authorId: 'alex',
+          outcome: 'created',
+          questionCount: 1,
+        }),
+        expect.objectContaining({
+          authorId: 'bea',
+          outcome: 'updated',
+          questionCount: 0,
+        }),
+      ]),
+    )
+    expect(message.source?.outcomes.ignored).toEqual(
+      expect.arrayContaining([expect.objectContaining({ messageId: '101' })]),
+    )
+    expect(state.posts.find(({ id }) => id === message.postId)?.detail).toBe(
+      projection.telegram.posts.find(({ id }) => id === message.postId)?.detail,
+    )
   })
 
-  it('resets guide state on Back, completion, Replay and raw scenario selection', () => {
-    let state = createPreviewState(fixtures)
-    state = previewReducer(state, { type: 'loadGuideStep', step: 1 })
-    state = previewReducer(state, {
-      type: 'draftMessage',
-      text: 'Discard this stale draft.',
-    })
-    state = previewReducer(state, { type: 'loadGuideStep', step: 0 })
-    expect(state.agentByUser.alex.draft).toBe('')
-    state = previewReducer(state, {
-      type: 'loadGuideStep',
-      step: AGENT_GUIDE.length - 1,
-    })
-    state = previewReducer(state, { type: 'completeGuide' })
-    expect(state.guideComplete).toBe(true)
-    state = previewReducer(state, { type: 'loadGuideStep', step: 0 })
-    expect(state.guideComplete).toBe(false)
-    state = previewReducer(state, { type: 'loadScenario', id: 'empty' })
-    expect(state.guideStep).toBeNull()
-  })
-
-  it('grounds the default in the accepted two-turn result with consistent post changes', () => {
+  it('replays the exact answer, post diff, addressed question and memory', () => {
     const state = scenario('rich-complete')
     const agent = state.agentByUser.alex
-    expect(state.role).toBe('author')
-    expect(agent.messages.filter(isUnaddressed).map(({ id }) => id)).toEqual([
-      'request-exports',
-    ])
-    expect(
-      agent.messages.find(({ id }) => id === 'information-only')?.needsReply,
-    ).toBeUndefined()
-    expect(
-      agent.messages.find(({ id }) => id === 'request-team')?.resolution,
-    ).toBe('ignored')
-    expect(
-      agent.messages.find(({ id }) => id === 'request-language')?.resolution,
-    ).toBe('answered')
-    expect(
-      state.posts.find(({ project }) => project === 'Clipwise'),
-    ).toMatchObject({
-      detail: expect.stringContaining('MIT license'),
-    })
-    expect(
-      state.posts.find(({ project }) => project === 'Atlas')?.summary,
-    ).toContain('offline')
-    expect(agent.memories).toEqual([
-      expect.objectContaining({ text: 'Prefer concise posts.', version: 3 }),
-    ])
-    expect(agent.memoryHistory.map(({ kind }) => kind)).toEqual([
-      'created',
-      'replaced',
-      'deleted',
-      'replaced',
-    ])
-  })
-
-  it('keeps every actionable incoming request pending, including one deferred once', () => {
-    const state = scenario('incoming')
-    const pending = state.agentByUser.alex.messages.filter(isUnaddressed)
-    expect(pending).toHaveLength(4)
-    expect(pending.find(({ id }) => id === 'request-exports')?.deferred).toBe(
-      true,
+    expect(agent.messages.at(-1)?.text).toBe(
+      projection.messaging.assistant.text,
     )
-    expect(pending.some(({ id }) => id === 'information-only')).toBe(false)
+    expect(agent.messages.filter(isUnaddressed)).toEqual([])
+    expect(agent.messages[0]).toMatchObject({ resolution: 'answered' })
+    expect(agent.memories).toEqual(
+      projection.messaging.finalMemories.map(({ id, text, version }) => ({
+        id,
+        text,
+        version,
+      })),
+    )
+    const post = state.posts.find(
+      ({ id }) => id === projection.messaging.diffs[0].postId,
+    )
+    for (const field of ['title', 'summary', 'detail'] as const)
+      expect(post?.[field]).toBe(projection.messaging.diffs[0].after[field])
   })
 
-  it('resets scenario data, drafts, progress, errors and account state together', () => {
-    let state = scenario('failure-memory')
-    state = previewReducer(state, {
-      type: 'draftMessage',
-      text: 'Keep this only here.',
-    })
-    state = previewReducer(state, { type: 'role', role: 'visitor' })
-    const reset = previewReducer(state, {
-      type: 'loadScenario',
-      id: 'failure-memory',
-    })
-    expect(reset.role).toBe('author')
-    expect(reset.agentByUser.alex.draft).toBe('')
-    expect(reset.agentByUser.alex.run?.memory).toBe('failed')
-    expect(reset.agentByUser.you.messages).toEqual([])
-    expect(reset.scenarioRevision).toBe(1)
-  })
-
-  it('applies every field in a multi-post response to the feed snapshot', () => {
-    const state = scenario('multi-diff')
-    const response = state.agentByUser.alex.messages.at(-1)
-    expect(response?.changes).toHaveLength(3)
-    for (const change of response?.changes ?? []) {
-      const post = state.posts.find(({ id }) => id === change.postId)
-      expect(post).toBeDefined()
-      for (const field of change.fields)
-        expect(post?.[field.field]).toBe(field.after)
-    }
-  })
-})
-
-describe('turn progress and admission', () => {
-  it('locks sends through both background jobs while preserving a draft', () => {
+  it('publishes the recorded response before both replayed background tasks finish', () => {
     let state = scenario('stage-planning')
-    state = previewReducer(state, {
-      type: 'draftMessage',
-      text: 'My next message.',
-    })
-    const duplicate = {
-      type: 'sendMessage' as const,
-      id: 'blocked',
-      text: 'My next message.',
-      previewRun: true,
-    }
-    for (let index = 0; index < 4; index++) {
-      expect(previewReducer(state, duplicate)).toBe(state)
-      state = tick(state)
-      expect(state.agentByUser.alex.draft).toBe('My next message.')
-    }
-    const published = state.agentByUser.alex
-    expect(published.run).toMatchObject({
+    const responseText = projection.messaging.assistant.text
+    for (let index = 0; index < 4; index++) state = tick(state)
+    expect(state.agentByUser.alex.run).toMatchObject({
       stage: 'background',
       memory: 'running',
       addressing: 'running',
     })
-    expect(published.messages.at(-1)).toMatchObject({
-      sender: 'amber',
-      changes: expect.arrayContaining([
-        expect.objectContaining({ project: 'Atlas' }),
-      ]),
-    })
-    expect(
-      state.posts.find(({ project }) => project === 'Atlas')?.summary,
-    ).toContain('offline')
-    expect(previewReducer(state, duplicate)).toBe(state)
-    state = tick(state)
-    expect(state.agentByUser.alex.run).toMatchObject({
-      memory: 'done',
-      addressing: 'running',
-    })
+    expect(state.agentByUser.alex.messages.at(-1)?.text).toBe(responseText)
     expect(isAgentBusy(state.agentByUser.alex.run)).toBe(true)
-    expect(state.agentByUser.alex.messages.at(-1)?.memoryEvents).toHaveLength(1)
+    state = tick(state)
+    expect(state.agentByUser.alex.run?.memory).toBe('done')
     state = tick(state)
     expect(isAgentBusy(state.agentByUser.alex.run)).toBe(false)
-    expect(state.agentByUser.alex.draft).toBe('My next message.')
-    const sent = previewReducer(state, duplicate)
-    expect(sent.agentByUser.alex.messages.at(-1)?.id).toBe('blocked')
-    expect(sent.agentByUser.alex.draft).toBe('')
+    expect(state.agentByUser.alex.messages[0].resolution).toBe('answered')
   })
 
-  it('supports either parallel job finishing first', () => {
-    const memoryLast = tick(scenario('stage-background-memory'))
-    expect(memoryLast.agentByUser.alex.run).toMatchObject({
-      status: 'complete',
-      memory: 'done',
-      addressing: 'done',
-    })
-    expect(memoryLast.agentByUser.alex.memoryHistory.at(-1)?.kind).toBe(
-      'replaced',
-    )
-    const addressingLast = tick(scenario('stage-background-addressing'))
-    expect(addressingLast.agentByUser.alex.run).toMatchObject({
-      status: 'complete',
-      memory: 'done',
-      addressing: 'done',
-    })
-  })
-})
-
-describe('background retry', () => {
-  it('retries only the failed job and preserves the visible answer and applied diff', () => {
-    const failed = scenario('failure-memory')
+  it('retries only simulated addressing while preserving exact recorded output', () => {
+    const failed = scenario('failure-addressing')
     const messages = failed.agentByUser.alex.messages
     const posts = failed.posts
     const retrying = previewReducer(failed, {
       type: 'retryBackground',
-      task: 'memory',
+      task: 'addressing',
     })
     expect(retrying.agentByUser.alex.run).toMatchObject({
       stage: 'background',
       status: 'running',
-      memory: 'running',
-      addressing: 'done',
-      memoryAttempts: 2,
+      memory: 'done',
+      addressing: 'running',
+      addressingAttempts: 2,
     })
     expect(retrying.agentByUser.alex.messages).toBe(messages)
     expect(retrying.posts).toBe(posts)
     const finished = tick(retrying)
-    expect(finished.agentByUser.alex.run).toMatchObject({
-      status: 'complete',
-      memory: 'done',
-    })
-    expect(finished.posts).toBe(posts)
-    expect(finished.agentByUser.alex.messages.at(-1)?.changes).toEqual(
-      messages.at(-1)?.changes,
+    expect(finished.agentByUser.alex.messages.at(-1)?.text).toBe(
+      projection.messaging.assistant.text,
     )
+    expect(finished.agentByUser.alex.messages[0].resolution).toBe('answered')
+    expect(finished.posts).toBe(posts)
   })
 
-  it('bounds retries and rejects a stale retry after a newer turn', () => {
-    const exhausted = scenario('retry-exhausted')
-    expect(
-      previewReducer(exhausted, { type: 'retryBackground', task: 'memory' }),
-    ).toBe(exhausted)
-    const stale = scenario('retry-stale')
-    expect(
-      previewReducer(stale, { type: 'retryBackground', task: 'memory' }),
-    ).toBe(stale)
+  it('resets guide state, account and drafts together', () => {
+    let state = scenario('failure-addressing')
+    state = previewReducer(state, {
+      type: 'draftMessage',
+      text: 'Local draft.',
+    })
+    state = previewReducer(state, { type: 'role', role: 'visitor' })
+    const reset = previewReducer(state, {
+      type: 'loadScenario',
+      id: 'failure-addressing',
+    })
+    expect(reset.role).toBe('author')
+    expect(reset.agentByUser.alex.draft).toBe('')
+    expect(reset.agentByUser.alex.run?.addressing).toBe('failed')
+    expect(reset.agentByUser.you.messages).toEqual([])
   })
 })

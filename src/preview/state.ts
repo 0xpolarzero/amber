@@ -37,6 +37,26 @@ export type AgentMemoryEvent = {
   before?: string
   after?: string
 }
+export type TelegramSource = {
+  disclosure: string
+  batchId: string
+  groupId: string
+  messages: readonly {
+    id: string
+    authorId: string | null
+    text: string
+    replyToId: string | null
+  }[]
+  outcomes: {
+    posts: readonly {
+      authorId: string
+      title: string
+      outcome: 'created' | 'updated'
+      questionCount: number
+    }[]
+    ignored: readonly { messageId: string; reason: string }[]
+  }
+}
 export type AgentMessage = {
   id: string
   sender: 'amber' | 'user'
@@ -55,6 +75,7 @@ export type AgentMessage = {
   memoryEvents?: readonly AgentMemoryEvent[]
   usedMemories?: readonly AgentMemory[]
   usedHistory?: readonly string[]
+  source?: TelegramSource
 }
 export const isUnaddressed = (message: AgentMessage) =>
   message.sender === 'amber' &&
@@ -346,10 +367,10 @@ export function previewReducer(
         },
       }
     }
-    if (checkpoint.recovery === 'memory') {
+    if (checkpoint.recovery) {
       next = previewReducer(next, {
         type: 'retryBackground',
-        task: 'memory',
+        task: checkpoint.recovery,
       })
       const run = next.agentByUser.alex.run
       if (run)

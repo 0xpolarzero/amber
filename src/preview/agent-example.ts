@@ -1,8 +1,8 @@
 import type { Feed, Post } from '../domain/post'
+import captured from './generated/amber-real-preview'
 import type {
   AgentConversation,
   AgentMemory,
-  AgentMemoryEvent,
   AgentMessage,
   AgentRun,
   AgentRunStage,
@@ -11,32 +11,15 @@ import type {
 } from './state'
 
 export const AGENT_SCENARIOS = [
-  ['rich-complete', 'Grounded two-turn result'],
-  ['empty', 'Empty conversation'],
-  ['incoming', 'Incoming requests'],
-  ['resolved', 'Deferred and ignored'],
-  ['answer-only', 'Answer, no post changes'],
-  ['single-diff', 'Single post change'],
-  ['multi-diff', 'Multiple post changes'],
-  ['candidate-clarify', 'Candidate needs clarification'],
-  ['candidate-publish', 'Candidate published'],
-  ['memory-create', 'Preference created'],
-  ['memory-update', 'Preference replaced'],
-  ['memory-delete', 'Preference deleted'],
-  ['history-memory', 'Older history and memory used'],
-  ['stage-planning', 'Active: planning queries'],
-  ['stage-retrieving', 'Active: retrieving context'],
-  ['stage-generating', 'Active: generating answer'],
-  ['stage-publishing', 'Active: atomic update'],
-  ['stage-background-both', 'Active: both background jobs'],
-  ['stage-background-memory', 'Active: memory remaining'],
-  ['stage-background-addressing', 'Active: addressing remaining'],
-  ['failure-before-publication', 'Failure before publication'],
-  ['failure-memory', 'Memory failed, addressing done'],
-  ['failure-addressing', 'Addressing failed, memory done'],
-  ['failure-both', 'Both background jobs failed'],
-  ['retry-exhausted', 'Background retry exhausted'],
-  ['retry-stale', 'Retry superseded by newer turn'],
+  ['rich-complete', 'Recorded Gemini result'],
+  ['extracted', 'Recorded extraction'],
+  ['empty', 'Developer fixture: empty'],
+  ['stage-planning', 'Simulation: planning'],
+  ['stage-background-both', 'Simulation: background work'],
+  ['failure-before-publication', 'Simulation: foreground failure'],
+  ['failure-addressing', 'Simulation: request task failed'],
+  ['retry-exhausted', 'Simulation: retry exhausted'],
+  ['retry-stale', 'Simulation: stale retry'],
 ] as const
 
 export type AgentScenarioId = (typeof AGENT_SCENARIOS)[number][0]
@@ -50,98 +33,82 @@ export type AgentGuideCheckpoint = {
   draft?: string
   revealProgress?: boolean
   revealMemory?: boolean
+  revealSource?: boolean
   revealContext?: boolean
   expandedChangePostId?: string
-  recovery?: 'memory'
+  recovery?: 'memory' | 'addressing'
 }
+
+function required<T>(value: T | undefined, label: string): T {
+  if (!value) throw new Error(`The recorded Amber preview has no ${label}.`)
+  return value
+}
+
+const extractedQuestion = required(captured.telegram.questions[0], 'question')
+const recordedPost = required(
+  captured.telegram.posts.find(({ id }) => id === extractedQuestion?.postId),
+  'question post',
+)
+const recordedDiff = required(
+  captured.messaging.diffs.find(
+    ({ postId }) => postId === extractedQuestion?.postId,
+  ),
+  'messaging diff',
+)
 
 export const AGENT_GUIDE: readonly AgentGuideCheckpoint[] = [
   {
-    title: 'New requests',
+    title: 'Invented Telegram source',
     notice:
-      'Unanswered questions are highlighted; informational messages need no reply.',
-    scenarioId: 'incoming',
-    targetMessageId: 'request-license',
+      'Inspect the fictional batch, including Carl’s reply, Bea’s separate post update, and ignored news chatter.',
+    scenarioId: 'extracted',
+    targetMessageId: extractedQuestion.id,
+    focusMessage: true,
+    revealSource: true,
+  },
+  {
+    title: 'Actual extraction',
+    notice:
+      'Gemini created the linked Noted post and asked one factual question that follows from Carl’s message.',
+    scenarioId: 'extracted',
+    targetMessageId: extractedQuestion.id,
     focusMessage: true,
   },
   {
-    title: 'A turn starts',
+    title: 'Maker answers',
     notice:
-      'The task list exposes planning, retrieval, generation, and publication while your next draft stays editable.',
+      'The fake maker reply answers the extracted question and repeats the concise, factual writing preference.',
     scenarioId: 'stage-planning',
-    targetMessageId: 'preview-turn:user',
-    draft: 'I can draft the next message while this turn finishes.',
+    targetMessageId: `${captured.messaging.input.turnId}:user`,
     revealProgress: true,
   },
   {
-    title: 'Answer first',
+    title: 'Recorded Gemini reply',
     notice:
-      'The answer and Atlas edit are visible while memory and request resolution finish in the background.',
-    scenarioId: 'stage-background-both',
-    targetMessageId: 'preview-turn:assistant',
-    draft: 'I can draft the next message while this turn finishes.',
-    revealProgress: true,
-    expandedChangePostId: 'atlas-preview',
-  },
-  {
-    title: 'One reply, several outcomes',
-    notice:
-      'Amber answers two requests, skips a question, updates Noted, and creates Clipwise; the export question stays open.',
+      'The real messaging workflow updates Alex’s post, addresses the source question, and leaves Bea’s post untouched.',
     scenarioId: 'rich-complete',
-    targetMessageId: 'live-turn-1:assistant',
-    expandedChangePostId: 'clipwise-preview',
-  },
-  {
-    title: 'Context carries forward',
-    notice:
-      'The follow-up changes three posts and shows the saved preference, its full history, and the older message Amber retrieved.',
-    scenarioId: 'rich-complete',
-    targetMessageId: 'live-turn-2:assistant',
+    targetMessageId: captured.messaging.assistant.id,
     revealMemory: true,
-    revealContext: true,
-    expandedChangePostId: 'atlas-preview',
+    expandedChangePostId: recordedDiff.postId,
   },
   {
-    title: 'Missing evidence',
+    title: 'Simulated background failure',
     notice:
-      'Amber asks for the missing license instead of publishing an unsupported candidate.',
-    scenarioId: 'candidate-clarify',
-    targetMessageId: 'clarify:assistant',
-  },
-  {
-    title: 'Candidate published',
-    notice:
-      'Once the facts are sufficient, Amber publishes the new Clipwise post without a separate approval step.',
-    scenarioId: 'candidate-publish',
-    targetMessageId: 'change:assistant',
-    expandedChangePostId: 'clipwise-preview',
-  },
-  {
-    title: 'Safe foreground failure',
-    notice:
-      'Your message stays in the chat, but no answer or post changes are published.',
-    scenarioId: 'failure-before-publication',
-    targetMessageId: 'preview-turn:user',
+      'Simulation: the recorded answer and post diff stay visible while only request resolution needs a retry.',
+    scenarioId: 'failure-addressing',
+    targetMessageId: captured.messaging.assistant.id,
     revealProgress: true,
-  },
-  {
-    title: 'Background failure',
-    notice:
-      'The answer and edit stay saved, and Retry offers only the unfinished memory task.',
-    scenarioId: 'failure-memory',
-    targetMessageId: 'preview-turn:assistant',
-    revealProgress: true,
-    expandedChangePostId: 'atlas-preview',
+    expandedChangePostId: recordedDiff.postId,
   },
   {
     title: 'Recovered safely',
     notice:
-      'The same retry path completes memory without repeating the answer, post edit, or finished request task.',
-    scenarioId: 'failure-memory',
-    targetMessageId: 'preview-turn:assistant',
+      'Simulation: retrying request resolution reuses the exact recorded answer and post diff without publishing twice.',
+    scenarioId: 'failure-addressing',
+    targetMessageId: captured.messaging.assistant.id,
     revealProgress: true,
-    expandedChangePostId: 'atlas-preview',
-    recovery: 'memory',
+    expandedChangePostId: recordedDiff.postId,
+    recovery: 'addressing',
   },
 ]
 
@@ -151,43 +118,9 @@ export type AgentScenario = {
   posts: readonly Post[]
 }
 
-const styleShort: AgentMemory = {
-  id: 'style',
-  text: 'Keep posts short and factual.',
-  version: 1,
-}
-const styleDetailed: AgentMemory = {
-  id: 'style',
-  text: 'Prefer detailed factual posts.',
-  version: 2,
-}
-const styleConcise: AgentMemory = {
-  id: 'style',
-  text: 'Prefer concise posts.',
-  version: 3,
-}
-const platform: AgentMemory = {
-  id: 'platform',
-  text: 'Only mention macOS releases.',
-  version: 3,
-}
-
-const memoryHistory: readonly AgentMemoryEvent[] = [
-  { kind: 'created', id: 'style', after: styleShort.text },
-  {
-    kind: 'replaced',
-    id: 'style',
-    before: styleShort.text,
-    after: styleDetailed.text,
-  },
-  { kind: 'deleted', id: 'platform', before: platform.text },
-  {
-    kind: 'replaced',
-    id: 'style',
-    before: styleDetailed.text,
-    after: styleConcise.text,
-  },
-]
+const recordedMemory: AgentMemory[] = captured.messaging.finalMemories.map(
+  ({ id, text, version }) => ({ id, text, version }),
+)
 
 const amber = (
   id: string,
@@ -202,317 +135,162 @@ const user = (
 
 function projectPost(
   source: Post,
-  id: string,
-  project: string,
-  mark: string,
-  summary: string,
-  detail: string,
+  value: {
+    id: string
+    authorId: string
+    title: string
+    summary: string
+    detail: string
+  },
 ): Post {
   return {
     ...source,
-    id,
-    project,
-    mark,
-    title: project,
-    summary,
-    detail,
-    time: 'Just now',
+    id: value.id,
+    author: value.authorId,
+    time: 'Recorded run',
+    title: value.title,
+    summary: value.summary,
+    detail: value.detail,
+    project: value.title.startsWith('Noted') ? 'Noted' : value.title,
+    domain: 'Extracted from invented Telegram messages',
+    mark: 'n.',
+    question: undefined,
     comments: [],
   }
 }
 
-function fixturePosts(feed: Feed) {
-  const noted =
-    feed.posts.find((post) => post.id === 'voice-notes') ?? feed.posts[0]
-  const source = feed.posts.find((post) => post.author === 'alex') ?? noted
-  if (!noted || !source)
-    return {
-      initial: feed.posts,
-      final: feed.posts,
-      byId: {} as Record<string, Post>,
-    }
-  const initial = [
-    ...feed.posts,
-    projectPost(
-      source,
-      'atlas-preview',
-      'Atlas',
-      'a.',
-      'A visual workspace for research.',
-      'Atlas connects notes and sources.',
-    ),
-    projectPost(
-      source,
-      'aurora-preview',
-      'Aurora',
-      'au.',
-      'A collaborative planning tool in public beta.',
-      'Aurora helps teams plan launches. Public beta access is available.',
-    ),
-  ]
-  const clipwise = projectPost(
-    source,
-    'clipwise-preview',
-    'Clipwise',
-    'c.',
-    'A clipboard organizer.',
-    'Clipwise is a free clipboard organizer licensed under the MIT license.',
+function posts(feed: Feed) {
+  const source =
+    feed.posts.find(({ author }) => author === recordedPost.authorId) ??
+    feed.posts[0]
+  if (!source) return { before: feed.posts, after: feed.posts, post: undefined }
+  const withoutAuthoredNoted = feed.posts.filter(
+    ({ project }) => project !== 'Noted',
   )
+  const before = projectPost(source, recordedDiff.before)
+  const after = projectPost(source, recordedDiff.after)
   return {
-    initial,
-    final: initial,
-    byId: Object.fromEntries(
-      [...initial, clipwise].map((post) => [post.id, post]),
-    ),
-    clipwise,
+    before: [...withoutAuthoredNoted, before],
+    after: [...withoutAuthoredNoted, after],
+    post: before,
   }
 }
 
-function changed(
-  postId: string,
-  project: string,
-  fields: PostChange['fields'],
-  fromVersion: number,
-  toVersion: number,
-): PostChange {
-  return { kind: 'updated', postId, project, fields, fromVersion, toVersion }
-}
+const changeFields = (['title', 'summary', 'detail'] as const)
+  .filter((field) => recordedDiff.before[field] !== recordedDiff.after[field])
+  .map((field) => ({
+    field,
+    before: recordedDiff.before[field],
+    after: recordedDiff.after[field],
+  }))
 
-function created(post: Post): PostChange {
+function recordedChange(feed: Feed): PostChange {
+  const result = posts(feed)
+  if (!result.post) throw new Error('The base feed has no post template.')
   return {
-    kind: 'created',
-    postId: post.id,
-    project: post.project,
-    fields: [
-      { field: 'summary', before: '', after: post.summary },
-      { field: 'detail', before: '', after: post.detail },
-    ],
-    toVersion: 1,
-    post,
+    kind: 'updated',
+    postId: recordedDiff.postId,
+    project: result.post.project,
+    fields: changeFields,
+    fromVersion: recordedDiff.before.version,
+    toVersion: recordedDiff.after.version,
   }
 }
 
-function applyChanges(posts: readonly Post[], changes: readonly PostChange[]) {
-  let next = [...posts]
-  for (const change of changes) {
-    if (change.kind === 'created' && change.post) {
-      if (!next.some((post) => post.id === change.postId))
-        next.push(change.post)
-      continue
-    }
-    next = next.map((post) => {
-      if (post.id !== change.postId) return post
-      const patch = Object.fromEntries(
-        change.fields.map((field) => [field.field, field.after]),
-      )
-      const { question: _question, ...rest } = post
-      return { ...rest, ...patch }
-    })
-  }
-  return next
+const sourceMessages = captured.telegram.messages
+  .filter(({ id }) => id !== '90')
+  .map(({ id, authorId, text, replyToId }) => ({
+    id,
+    authorId,
+    text,
+    replyToId,
+  }))
+const sourceOutcomes = {
+  posts: captured.telegram.posts.map((post) => ({
+    authorId: post.authorId,
+    title: post.title,
+    outcome: captured.telegram.diffs.some(({ postId }) => postId === post.id)
+      ? ('updated' as const)
+      : ('created' as const),
+    questionCount: captured.telegram.questions.filter(
+      ({ postId }) => postId === post.id,
+    ).length,
+  })),
+  ignored: captured.telegram.ignored,
 }
 
-function data(feed: Feed) {
-  const posts = fixturePosts(feed)
-  const noted = posts.byId['voice-notes']
-  const atlas = posts.byId['atlas-preview']
-  const aurora = posts.byId['aurora-preview']
-  if (!noted || !atlas || !aurora || !posts.clipwise)
-    return { posts, turnOne: [], turnTwo: [], allChanges: [] }
-  const turnOne: readonly PostChange[] = [
-    changed(
-      noted.id,
-      noted.project,
-      [
-        {
-          field: 'detail',
-          before: noted.detail,
-          after:
-            'Noted transcribes English and Mandarin voice notes on device.',
-        },
-      ],
-      2,
-      3,
-    ),
-    created(posts.clipwise),
-  ]
-  const notedAfterOne =
-    applyChanges(posts.initial, turnOne).find((post) => post.id === noted.id) ??
-    noted
-  const turnTwo: readonly PostChange[] = [
-    changed(
-      atlas.id,
-      atlas.project,
-      [
-        {
-          field: 'summary',
-          before: atlas.summary,
-          after: 'An offline visual workspace for research.',
-        },
-        {
-          field: 'detail',
-          before: atlas.detail,
-          after: 'Atlas connects notes and sources and works offline.',
-        },
-      ],
-      4,
-      5,
-    ),
-    changed(
-      noted.id,
-      noted.project,
-      [
-        {
-          field: 'summary',
-          before: notedAfterOne.summary,
-          after: 'On-device voice transcription for macOS.',
-        },
-        {
-          field: 'detail',
-          before: notedAfterOne.detail,
-          after:
-            'Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.',
-        },
-      ],
-      3,
-      4,
-    ),
-    changed(
-      aurora.id,
-      aurora.project,
-      [
-        {
-          field: 'summary',
-          before: aurora.summary,
-          after: 'An invite-only collaborative planning tool.',
-        },
-        {
-          field: 'detail',
-          before: aurora.detail,
-          after: 'Aurora helps teams plan launches. Access is invite-only.',
-        },
-      ],
-      1,
-      2,
-    ),
-  ]
-  return { posts, turnOne, turnTwo, allChanges: [...turnOne, ...turnTwo] }
-}
-
-function requests(): readonly AgentMessage[] {
-  return [
-    amber('request-license', 'What license does Clipwise use?', {
-      needsReply: true,
-      intent: 'request',
-      candidate: { name: 'Clipwise', status: 'pending' },
-    }),
-    amber('request-language', 'Does Noted support Mandarin?', {
-      needsReply: true,
-      intent: 'question',
-      postId: 'voice-notes',
-    }),
-    amber('request-team', 'Does Atlas already support shared workspaces?', {
-      needsReply: true,
-      intent: 'question',
-      postId: 'atlas-preview',
-    }),
-    amber('request-exports', 'Which export formats are planned for Noted?', {
-      needsReply: true,
-      intent: 'question',
-      postId: 'voice-notes',
-      deferred: true,
-    }),
-    amber('information-only', 'I indexed the latest project messages.', {
-      intent: 'informational',
-    }),
-  ]
-}
-
-function richConversation(feed: Feed): AgentConversation {
-  const { turnOne, turnTwo } = data(feed)
-  const turnOneMemory = memoryHistory.slice(1, 3)
-  const turnTwoMemory = memoryHistory.slice(3)
-  const messages: AgentMessage[] = [
-    user('history-aurora', 'Aurora should remain invite-only.'),
-    amber('history-aurora-answer', 'Recorded for Aurora.'),
-    user('history-style', 'Keep release details factual.'),
-    amber('history-style-answer', 'I’ll keep release details factual.'),
-    ...requests(),
-    user(
-      'live-turn-1:user',
-      'Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Skip the Atlas workspace question. Prefer detailed factual posts and forget my macOS-only preference.',
-    ),
-    amber(
-      'live-turn-1:assistant',
-      'Noted now reflects Mandarin support, and Clipwise is published as free under the MIT license. I left out the Atlas workspace details.',
-      {
-        changes: turnOne,
-        memoryEvents: turnOneMemory,
-        usedMemories: [styleShort, platform],
-      },
-    ),
-    user(
-      'live-turn-2:user',
-      'Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise.',
-    ),
-    amber(
-      'live-turn-2:assistant',
-      'Atlas now states that it works offline. Noted emphasizes on-device transcription and marks PDF export as planned. Aurora is invite-only. I’ll keep posts concise.',
-      {
-        changes: turnTwo,
-        memoryEvents: turnTwoMemory,
-        usedHistory: ['Aurora should remain invite-only.'],
-        usedMemories: [styleDetailed],
-      },
-    ),
-  ]
-  return {
-    draft: '',
-    messages: messages.map((message) => {
-      if (['request-license', 'request-language'].includes(message.id))
-        return {
-          ...message,
-          resolution: 'answered',
-          addressedBy: 'live-turn-1:user',
+function question(resolved = false): AgentMessage {
+  return amber(extractedQuestion.id, extractedQuestion.text, {
+    needsReply: true,
+    intent: 'question',
+    postId: extractedQuestion.postId ?? undefined,
+    ...(resolved
+      ? {
+          resolution: 'answered' as const,
+          addressedBy: `${captured.messaging.input.turnId}:user`,
         }
-      if (message.id === 'request-team')
-        return {
-          ...message,
-          resolution: 'ignored',
-          addressedBy: 'live-turn-1:user',
-        }
-      return message
-    }),
-    memories: [styleConcise],
-    memoryHistory,
-    readThrough: messages.length - 1,
-    revision: 0,
-    run: completeRun('live-turn-2:user'),
-  }
+      : {}),
+    source: {
+      disclosure: captured.disclosure,
+      batchId: captured.telegram.batchId,
+      groupId: captured.telegram.groupId,
+      messages: sourceMessages,
+      outcomes: sourceOutcomes,
+    },
+  })
 }
 
-const outcome = (feed: Feed) => {
-  const { turnTwo } = data(feed)
-  return {
-    responseId: 'preview-turn:assistant',
-    text: 'I updated Atlas to say it works offline and kept the wording concise.',
-    changes: turnTwo.slice(0, 1),
-    memoryEvents: [
-      {
-        kind: 'replaced' as const,
-        id: 'style',
-        before: styleDetailed.text,
-        after: styleConcise.text,
-      },
-    ],
-    addressIds: ['request-offline'],
-  }
+const inputMessage = () =>
+  user(`${captured.messaging.input.turnId}:user`, captured.messaging.input.text)
+
+function response(feed: Feed): AgentMessage {
+  return amber(
+    captured.messaging.assistant.id,
+    captured.messaging.assistant.text,
+    {
+      changes: [recordedChange(feed)],
+      usedMemories: recordedMemory,
+    },
+  )
 }
+
+const completeRun = (messageId: string): AgentRun => ({
+  messageId,
+  stage: 'complete',
+  status: 'complete',
+  published: true,
+  autoPlay: false,
+  memory: 'done',
+  addressing: 'done',
+  memoryAttempts: 1,
+  addressingAttempts: 1,
+  maxAttempts: 2,
+})
+
+const baseConversation = (
+  messages: readonly AgentMessage[],
+  memories: readonly AgentMemory[] = recordedMemory,
+): AgentConversation => ({
+  draft: '',
+  messages,
+  memories,
+  memoryHistory: [],
+  readThrough: messages.length,
+  revision: 0,
+})
+
+const outcome = (feed: Feed) => ({
+  responseId: captured.messaging.assistant.id,
+  text: captured.messaging.assistant.text,
+  changes: [recordedChange(feed)],
+  memoryEvents: [],
+  addressIds: [extractedQuestion.id],
+})
 
 function activeRun(feed: Feed, stage: AgentRunStage): AgentRun {
   const background = stage === 'background'
   return {
-    messageId: 'preview-turn:user',
+    messageId: `${captured.messaging.input.turnId}:user`,
     stage,
     status: 'running',
     published: background,
@@ -526,347 +304,77 @@ function activeRun(feed: Feed, stage: AgentRunStage): AgentRun {
   }
 }
 
-function completeRun(messageId: string): AgentRun {
-  return {
-    messageId,
-    stage: 'complete',
-    status: 'complete',
-    published: true,
-    autoPlay: false,
-    memory: 'done',
-    addressing: 'done',
-    memoryAttempts: 1,
-    addressingAttempts: 1,
-    maxAttempts: 2,
-  }
-}
-
-function baseConversation(
-  messages: readonly AgentMessage[],
-  memories: readonly AgentMemory[] = [styleDetailed],
-): AgentConversation {
-  return {
-    draft: '',
-    messages,
-    memories,
-    memoryHistory: memoryHistory.slice(0, 2),
-    readThrough: messages.length,
-    revision: 0,
-  }
-}
-
 export function buildAgentScenario(
   feed: Feed,
   id: AgentScenarioId,
 ): AgentScenario {
-  const fixture = data(feed)
-  const rich = richConversation(feed)
-  if (id === 'rich-complete')
-    return {
-      role: 'author',
-      conversation: rich,
-      posts: applyChanges(fixture.posts.initial, fixture.allChanges),
-    }
+  const fixture = posts(feed)
   if (id === 'empty')
     return {
       role: 'author',
       conversation: baseConversation([], []),
-      posts: fixture.posts.initial,
+      posts: fixture.before,
     }
-  if (id === 'incoming')
+  if (id === 'extracted')
     return {
       role: 'author',
-      conversation: baseConversation(requests(), [styleShort, platform]),
-      posts: fixture.posts.initial,
+      conversation: baseConversation([question(false)]),
+      posts: fixture.before,
     }
-  if (id === 'resolved') {
-    const messages = requests().map((message) =>
-      message.id === 'request-team'
-        ? {
-            ...message,
-            resolution: 'ignored' as const,
-            addressedBy: 'resolution:user',
-          }
-        : message,
-    )
-    return {
-      role: 'author',
-      conversation: baseConversation(messages),
-      posts: fixture.posts.initial,
-    }
-  }
-  const question = amber('request-language', 'Does Noted support Mandarin?', {
-    needsReply: true,
-    intent: 'question',
-    postId: 'voice-notes',
-  })
-  const offlineQuestion = amber('request-offline', 'Does Atlas work offline?', {
-    needsReply: true,
-    intent: 'question',
-    postId: 'atlas-preview',
-  })
-  const answerOnly = [
-    question,
-    user('answer:user', 'Yes, it supports Mandarin.'),
-    amber('answer:assistant', 'Thanks. Noted supports Mandarin.', {
-      addressedBy: undefined,
-    }),
-  ]
-  if (id === 'answer-only')
-    return {
-      role: 'author',
-      conversation: baseConversation(
-        answerOnly.map((message) =>
-          message.id === question.id
-            ? { ...message, resolution: 'answered', addressedBy: 'answer:user' }
-            : message,
-        ),
-      ),
-      posts: fixture.posts.initial,
-    }
-  const response = (
-    changes: readonly PostChange[],
-    extra: Partial<AgentMessage> = {},
-  ) => [
-    user('change:user', 'Apply these facts to my posts.'),
-    amber('change:assistant', 'Applied the supported changes.', {
-      changes,
-      ...extra,
-    }),
-  ]
-  if (id === 'single-diff')
-    return {
-      role: 'author',
-      conversation: baseConversation(response(fixture.turnOne.slice(0, 1))),
-      posts: applyChanges(fixture.posts.initial, fixture.turnOne.slice(0, 1)),
-    }
-  if (id === 'multi-diff')
-    return {
-      role: 'author',
-      conversation: baseConversation(response(fixture.turnTwo)),
-      posts: applyChanges(fixture.posts.initial, fixture.turnTwo),
-    }
-  if (id === 'candidate-clarify')
-    return {
-      role: 'author',
-      conversation: baseConversation([
-        user('clarify:user', 'Publish Clipwise. It is free.'),
-        amber('clarify:assistant', 'Which license does Clipwise use?', {
-          needsReply: true,
-          intent: 'question',
-          candidate: { name: 'Clipwise', status: 'clarification' },
-        }),
-      ]),
-      posts: fixture.posts.initial,
-    }
-  if (id === 'candidate-publish') {
-    const change = fixture.turnOne.slice(1)
-    return {
-      role: 'author',
-      conversation: baseConversation(
-        response(change, {
-          candidate: { name: 'Clipwise', status: 'published' },
-        }),
-      ),
-      posts: applyChanges(fixture.posts.initial, change),
-    }
-  }
-  const eventById: Record<string, AgentMemoryEvent> = {
-    'memory-create': memoryHistory[0],
-    'memory-update': memoryHistory[1],
-    'memory-delete': memoryHistory[2],
-  }
-  if (id in eventById) {
-    const event = eventById[id]
-    const memories =
-      id === 'memory-delete'
-        ? [styleDetailed]
-        : id === 'memory-update'
-          ? [styleDetailed]
-          : [styleShort]
+  if (id === 'rich-complete')
     return {
       role: 'author',
       conversation: {
-        ...baseConversation(
-          [
-            user(
-              `${id}:user`,
-              id === 'memory-delete'
-                ? 'Forget my macOS-only preference.'
-                : (event.after ?? ''),
-            ),
-            amber(`${id}:assistant`, 'Got it.', { memoryEvents: [event] }),
-          ],
-          memories,
-        ),
-        memoryHistory: [event],
+        ...baseConversation([question(true), inputMessage(), response(feed)]),
+        readThrough: 2,
+        run: completeRun(`${captured.messaging.input.turnId}:user`),
       },
-      posts: fixture.posts.initial,
-    }
-  }
-  if (id === 'history-memory')
-    return {
-      role: 'author',
-      conversation: baseConversation(
-        [
-          user(
-            'history:user',
-            'Keep Aurora consistent with what I said before.',
-          ),
-          amber(
-            'history:assistant',
-            'Aurora remains invite-only, with concise factual copy.',
-            {
-              usedHistory: ['Aurora should remain invite-only.'],
-              usedMemories: [styleConcise],
-            },
-          ),
-        ],
-        [styleConcise],
-      ),
-      posts: fixture.posts.initial,
+      posts: fixture.after,
     }
   if (id.startsWith('stage-')) {
-    const stageMap: Partial<Record<AgentScenarioId, AgentRunStage>> = {
-      'stage-planning': 'planning',
-      'stage-retrieving': 'retrieving',
-      'stage-generating': 'generating',
-      'stage-publishing': 'publishing',
-      'stage-background-both': 'background',
-      'stage-background-memory': 'background',
-      'stage-background-addressing': 'background',
-    }
-    const stage = stageMap[id] ?? 'planning'
+    const stage: AgentRunStage =
+      id === 'stage-background-both' ? 'background' : 'planning'
     const run = activeRun(feed, stage)
-    if (id === 'stage-background-memory') {
-      run.memory = 'running'
-      run.addressing = 'done'
-    }
-    if (id === 'stage-background-addressing') {
-      run.memory = 'done'
-      run.addressing = 'running'
-    }
-    const published = stage === 'background'
-    let messages = [
-      offlineQuestion,
-      user(
-        'preview-turn:user',
-        'Update Atlas to say it works offline and keep posts concise.',
-      ),
-    ]
-    if (published)
-      messages.push(
-        amber('preview-turn:assistant', outcome(feed).text, {
-          changes: outcome(feed).changes,
-        }),
-      )
-    if (run.memory === 'done')
-      messages = messages.map((message) =>
-        message.id === 'preview-turn:assistant'
-          ? { ...message, memoryEvents: outcome(feed).memoryEvents }
-          : message,
-      )
-    if (run.addressing === 'done')
-      messages = messages.map((message) =>
-        message.id === offlineQuestion.id
-          ? {
-              ...message,
-              resolution: 'answered' as const,
-              addressedBy: 'preview-turn:user',
-            }
-          : message,
-      )
-    const conversation = baseConversation(
-      messages,
-      run.memory === 'done' ? [styleConcise] : [styleDetailed],
-    )
     return {
       role: 'author',
       conversation: {
-        ...conversation,
-        memoryHistory:
-          run.memory === 'done'
-            ? [...conversation.memoryHistory, ...outcome(feed).memoryEvents]
-            : conversation.memoryHistory,
+        ...baseConversation([
+          question(false),
+          inputMessage(),
+          ...(stage === 'background' ? [response(feed)] : []),
+        ]),
         run,
       },
-      posts: published
-        ? applyChanges(fixture.posts.initial, outcome(feed).changes)
-        : fixture.posts.initial,
+      posts: stage === 'background' ? fixture.after : fixture.before,
     }
   }
   if (id === 'failure-before-publication') {
     const run = activeRun(feed, 'generating')
     run.status = 'failed'
-    run.error = 'I couldn’t prepare a supported answer. Nothing was published.'
+    run.error = 'Simulated failure. Nothing was published.'
     return {
       role: 'author',
       conversation: {
-        ...baseConversation([
-          user('preview-turn:user', 'Update Atlas with the new detail.'),
-        ]),
+        ...baseConversation([question(false), inputMessage()]),
         run,
       },
-      posts: fixture.posts.initial,
+      posts: fixture.before,
     }
   }
-  const failureRun = activeRun(feed, 'complete')
-  failureRun.status = 'complete'
-  failureRun.published = true
-  failureRun.memory = id === 'failure-addressing' ? 'done' : 'failed'
-  failureRun.addressing = id === 'failure-memory' ? 'done' : 'failed'
-  failureRun.memoryAttempts = id === 'retry-exhausted' ? 2 : 1
-  failureRun.addressingAttempts = id === 'retry-exhausted' ? 2 : 1
-  if (id === 'retry-exhausted') {
-    failureRun.memory = 'exhausted'
-    failureRun.addressing = 'done'
-  }
-  if (id === 'retry-stale') {
-    failureRun.memory = 'failed'
-    failureRun.addressing = 'done'
-    failureRun.stale = true
-  }
-  let failedMessages = [
-    offlineQuestion,
-    user(
-      'preview-turn:user',
-      'Update Atlas to say it works offline and keep posts concise.',
-    ),
-    amber('preview-turn:assistant', outcome(feed).text, {
-      changes: outcome(feed).changes,
-    }),
-  ]
-  if (failureRun.memory === 'done')
-    failedMessages = failedMessages.map((message) =>
-      message.id === 'preview-turn:assistant'
-        ? { ...message, memoryEvents: outcome(feed).memoryEvents }
-        : message,
-    )
-  if (failureRun.addressing === 'done')
-    failedMessages = failedMessages.map((message) =>
-      message.id === offlineQuestion.id
-        ? {
-            ...message,
-            resolution: 'answered' as const,
-            addressedBy: 'preview-turn:user',
-          }
-        : message,
-    )
-  const conversation = baseConversation(
-    failedMessages,
-    failureRun.memory === 'done' ? [styleConcise] : [styleDetailed],
-  )
+  const run = activeRun(feed, 'complete')
+  run.status = 'complete'
+  run.published = true
+  run.memory = 'done'
+  run.addressing = id === 'retry-exhausted' ? 'exhausted' : 'failed'
+  run.addressingAttempts = id === 'retry-exhausted' ? 2 : 1
+  if (id === 'retry-stale') run.stale = true
   return {
     role: 'author',
     conversation: {
-      ...conversation,
-      memoryHistory:
-        failureRun.memory === 'done'
-          ? [...conversation.memoryHistory, ...outcome(feed).memoryEvents]
-          : conversation.memoryHistory,
-      run: failureRun,
+      ...baseConversation([question(false), inputMessage(), response(feed)]),
+      run,
     },
-    posts: applyChanges(fixture.posts.initial, outcome(feed).changes),
+    posts: fixture.after,
   }
 }
 
@@ -878,5 +386,13 @@ export function applyFixturePostChanges(
   posts: readonly Post[],
   changes: readonly PostChange[],
 ) {
-  return applyChanges(posts, changes)
+  return posts.map((post) => {
+    const change = changes.find(({ postId }) => postId === post.id)
+    if (!change) return post
+    const patch = Object.fromEntries(
+      change.fields.map(({ field, after }) => [field, after]),
+    )
+    const { question: _question, ...rest } = post
+    return { ...rest, ...patch }
+  })
 }

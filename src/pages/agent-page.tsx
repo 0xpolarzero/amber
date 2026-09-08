@@ -98,9 +98,6 @@ function AgentChat({
     message?.scrollIntoView({ block: 'center' })
     message?.focus({ preventScroll: true })
   }
-  const latestChangeMessage = agent.messages
-    .filter((message) => message.changes?.length)
-    .at(-1)?.id
   return (
     <section
       className="conversation agent-chat"
@@ -192,16 +189,22 @@ function AgentChat({
             ) : null}
             <MessageState message={message} />
             <p className="chat-bubble">{message.text}</p>
+            {message.source ? (
+              <TelegramSourceDisclosure
+                source={message.source}
+                open={
+                  Boolean(guide?.revealSource) &&
+                  message.id === guide?.targetMessageId
+                }
+              />
+            ) : null}
             {message.changes?.length ? (
               <AppliedChanges
                 changes={message.changes}
                 expandedPostId={
                   message.id === guide?.targetMessageId
                     ? guide.expandedChangePostId
-                    : message.id === latestChangeMessage &&
-                        message.changes.length === 1
-                      ? message.changes[0].postId
-                      : undefined
+                    : undefined
                 }
               />
             ) : null}
@@ -257,7 +260,13 @@ function AgentChat({
         {guide?.revealMemory ? <GuideMemoryEvidence agent={agent} /> : null}
         {postId ? (
           <div className="agent-post-context">
-            <span>About {context?.project ?? 'an unavailable post'}</span>
+            {context ? (
+              <Link to="/posts/$postId" params={{ postId: context.id }}>
+                About {context.project}
+              </Link>
+            ) : (
+              <span>About an unavailable post</span>
+            )}
             <button
               type="button"
               className="icon-button"
@@ -286,6 +295,49 @@ function AgentChat({
         <AgentMemoryDialog onClose={() => setMemoryOpen(false)} />
       ) : null}
     </section>
+  )
+}
+
+function TelegramSourceDisclosure({
+  source,
+  open,
+}: {
+  source: NonNullable<AgentConversation['messages'][number]['source']>
+  open: boolean
+}) {
+  return (
+    <details className="telegram-source" open={open}>
+      <summary>Source Telegram messages</summary>
+      <p className="telegram-source-disclosure">{source.disclosure}</p>
+      <p className="telegram-source-batch">
+        Batch {source.batchId} · group {source.groupId}
+      </p>
+      <ol>
+        {source.messages.map((message) => (
+          <li key={message.id}>
+            <span>
+              <strong>{message.authorId ?? 'unknown'}</strong> · #{message.id}
+              {message.replyToId ? ` · reply to #${message.replyToId}` : ''}
+            </span>
+            <p>{message.text}</p>
+          </li>
+        ))}
+      </ol>
+      <div className="telegram-source-outcomes">
+        {source.outcomes.posts.map((post) => (
+          <p key={`${post.authorId}:${post.title}`}>
+            <strong>{post.authorId}</strong> · {post.outcome} “{post.title}” ·{' '}
+            {post.questionCount} follow-up{' '}
+            {post.questionCount === 1 ? 'question' : 'questions'}
+          </p>
+        ))}
+        {source.outcomes.ignored.map((ignored) => (
+          <p key={ignored.messageId}>
+            <strong>#{ignored.messageId} ignored</strong> · {ignored.reason}
+          </p>
+        ))}
+      </div>
+    </details>
   )
 }
 

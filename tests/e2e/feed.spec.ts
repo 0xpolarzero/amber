@@ -162,7 +162,7 @@ test('lets the author edit a post and open its private conversation', async ({
       .getByRole('log')
       .getByText('The first demo is available to the group.', { exact: true }),
   ).toBeVisible()
-  await page.getByRole('link', { name: 'Noted', exact: true }).first().click()
+  await page.getByRole('link', { name: 'About Noted', exact: true }).click()
   await expect(
     page.getByRole('heading', { name: 'Search your voice notes.' }),
   ).toBeVisible()

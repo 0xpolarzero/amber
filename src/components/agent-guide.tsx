@@ -34,8 +34,8 @@ export function AgentGuide() {
           <span className="guide-kicker">
             {checkpoint
               ? complete
-                ? `${AGENT_GUIDE.length} of ${AGENT_GUIDE.length} · Complete · No live AI`
-                : `${(step ?? 0) + 1} of ${AGENT_GUIDE.length} · Guided fixture · No live AI`
+                ? `${AGENT_GUIDE.length} of ${AGENT_GUIDE.length} · Complete · Recorded Gemini run`
+                : `${(step ?? 0) + 1} of ${AGENT_GUIDE.length} · Recorded Gemini run · Fake Telegram`
               : 'Amber guided preview'}
           </span>
           <strong>
@@ -43,9 +43,9 @@ export function AgentGuide() {
           </strong>
           <p>
             {complete
-              ? 'Replay the ten checkpoints or use More controls to inspect a raw fixture.'
+              ? `Replay the ${AGENT_GUIDE.length} checkpoints or use More controls to inspect labeled simulations.`
               : (checkpoint?.notice ??
-                'See the complete private-agent workflow in ten quick fixture checkpoints; no live AI runs.')}
+                'See a recorded real Gemini workflow over invented Telegram messages; no model runs in the browser.')}
           </p>
         </div>
         <div className="guide-actions">
@@ -86,7 +86,7 @@ export function AgentGuide() {
           )}
         </div>
       </div>
-      {step === 8 ? (
+      {checkpoint?.scenarioId === 'failure-addressing' ? (
         <details className="guide-alternatives">
           <summary>Retry safeguards</summary>
           <div>
