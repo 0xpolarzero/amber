@@ -1,5 +1,7 @@
 import { Schema } from 'effect'
 
+export { Failure } from '../shared/runtime'
+
 const text = (max: number) => Schema.String.check(Schema.isPattern(/\S/), Schema.isMaxLength(max))
 export const Id = text(200)
 export const Version = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0))
@@ -13,10 +15,6 @@ export const Memory = Schema.Struct({ id: Id, text: text(500) })
 export const PostFields = { title: text(140), summary: text(500), detail: text(6000) }
 export const Post = Schema.Struct({ id: Id, authorId: Id, version: Version, ...PostFields })
 export const Receipt = Schema.Struct({ completed: Schema.Boolean })
-export class Failure extends Schema.TaggedError<Failure>()('AgentFailure', {
-  operation: Schema.String,
-  message: Schema.String,
-}) {}
 
 // Telegram IDs stay strings. Usernames are display names, never ownership keys.
 export const Batch = Schema.Struct({ batchId: Id, groupId: Id })

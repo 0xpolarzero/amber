@@ -1,5 +1,6 @@
 /** All model tools are read-only. Database writes are application actions below. */
 import { type Effect, Schema } from 'effect'
+import type { ModelObservation, ModelRequest, NativeToolName } from '../shared/runtime'
 import * as S from './schemas'
 import type * as T from './workflow'
 
@@ -25,24 +26,7 @@ export const tools = {
   },
 } as const
 export type ToolName = keyof typeof tools
-export type NativeToolName = 'search_web' | 'read_url_content'
-export type ModelObservation =
-  | {
-      kind: 'configuration'
-      agent: string
-      model: string
-      declaredTools: readonly string[]
-      runtimeInventory: readonly string[]
-      observedTools: readonly string[]
-      failedTools: readonly string[]
-      controlProvenance: 'antigravity-stream-json-v1'
-    }
-  | {
-      kind: 'native-tool'
-      name: NativeToolName
-      input: unknown
-      output: unknown
-    }
+export type { ModelObservation, NativeToolName }
 export type Scope = { userId?: string; batchId?: string; groupId?: string }
 export type Run<A> = Effect.Effect<A, S.Failure>
 type Handler<A extends { payloadSchema: { Type: unknown }; successSchema: { Type: unknown } }> = (
@@ -56,16 +40,7 @@ export type Ports = {
   // https://www.antigravity.google/docs/subagents/
   // Bound task duration/output and model concurrency (initially two globally). Cancel
   // the CLI process when its Effect scope ends. Provider/model ID is configuration.
-  model: (request: {
-    task: string
-    instruction: string
-    input: unknown
-    outputSchema: unknown
-    tools: readonly { name: ToolName; description: string; inputSchema: unknown }[]
-    nativeTools: readonly NativeToolName[]
-    callTool: (name: string, input: unknown) => Run<unknown>
-    observe: (observation: ModelObservation) => Run<void>
-  }) => Run<unknown>
+  model: (request: ModelRequest) => Run<unknown>
   // Enforce scope here, outside model control. Parameterized database reads; bounded results.
   // Preserve actual source IDs/final URLs and journal tool observations for audit.
   // A successful search is not proof of ownership.

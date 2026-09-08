@@ -9,7 +9,7 @@ import {
   FetchedPageReader,
   modelId,
   readFetchedPageTool,
-} from '../antigravity'
+} from '../../shared/antigravity'
 import type { Ports } from '../tools'
 
 const conversationId = '11111111-1111-1111-1111-111111111111'

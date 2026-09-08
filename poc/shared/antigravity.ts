@@ -1,12 +1,12 @@
 import { spawn } from 'node:child_process'
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { constants } from 'node:fs'
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { delimiter, isAbsolute, join } from 'node:path'
 import { Effect, Semaphore } from 'effect'
 import { type McpTools, serveTools } from './mcp'
 import { fetchedPageFromNativeTool } from './native-web'
-import * as S from './schemas'
-import type { NativeToolName, Ports } from './tools'
+import { Failure, type Model, type ModelRequest, type NativeToolName } from './runtime'
 
 export const modelId = 'gemini-3.8-flash-medium'
 export const nativeWebTools = ['search_web', 'read_url_content'] as const
@@ -283,10 +283,7 @@ export class FetchedPageReader {
   }
 }
 
-export function antigravityMcpTools(
-  request: Parameters<Ports['model']>[0],
-  reader: FetchedPageReader,
-): McpTools {
+export function antigravityMcpTools(request: ModelRequest, reader: FetchedPageReader): McpTools {
   const readerEnabled = request.nativeTools.includes('read_url_content')
   return {
     tools: [...request.tools, ...(readerEnabled ? [readFetchedPageTool] : [])],
@@ -294,11 +291,11 @@ export function antigravityMcpTools(
       if (name !== readFetchedPageTool.name) return request.callTool(name, input)
       if (!readerEnabled)
         return Effect.fail(
-          new S.Failure({ operation: 'read-fetched-page', message: 'Tool is unavailable.' }),
+          new Failure({ operation: 'read-fetched-page', message: 'Tool is unavailable.' }),
         )
       return Effect.tryPromise({
         try: () => reader.read(input),
-        catch: (error) => new S.Failure({ operation: 'read-fetched-page', message: String(error) }),
+        catch: (error) => new Failure({ operation: 'read-fetched-page', message: String(error) }),
       })
     },
   }
@@ -320,7 +317,7 @@ export function successfulAndFailedTools(steps: readonly ToolStep[]) {
   return { successful, failed }
 }
 
-export function capabilityPolicy(request: Parameters<Ports['model']>[0]) {
+export function capabilityPolicy(request: ModelRequest) {
   return {
     tools: ['finish', ...request.nativeTools],
     mcpTools: [
@@ -331,7 +328,7 @@ export function capabilityPolicy(request: Parameters<Ports['model']>[0]) {
 }
 
 export function agentDefinition(
-  request: Parameters<Ports['model']>[0],
+  request: ModelRequest,
   bridge?: Awaited<ReturnType<typeof serveTools>>,
 ) {
   const builtins = ['finish', ...request.nativeTools]
@@ -372,8 +369,9 @@ async function runAntigravityCli(
   bridge?: Awaited<ReturnType<typeof serveTools>>,
 ) {
   const maximumOutputBytes = 4 * 1024 * 1024
+  const executable = await resolveAgyBinary(env)
   return new Promise<string>((resolve, reject) => {
-    const child = spawn(process.env.AGY_BINARY ?? 'agy', args, {
+    const child = spawn(executable, args, {
       cwd,
       env,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -460,10 +458,28 @@ async function runAntigravityCli(
   })
 }
 
+async function resolveAgyBinary(env: NodeJS.ProcessEnv) {
+  const configured = env.AGY_BINARY
+  const candidates = configured
+    ? [configured]
+    : (env.PATH ?? '')
+        .split(delimiter)
+        .filter(Boolean)
+        .map((directory) => join(directory, 'agy'))
+  for (const candidate of candidates) {
+    const path = isAbsolute(candidate) ? candidate : join(process.cwd(), candidate)
+    try {
+      await access(path, constants.X_OK)
+      return path
+    } catch {}
+  }
+  throw new Error('Antigravity executable not found; set AGY_BINARY to its absolute path.')
+}
+
 // Official stream schema and artifact-directory contract:
 // https://www.antigravity.google/docs/cli/headless/
 // https://www.antigravity.google/docs/hooks/
-export const antigravity: Ports['model'] = (request) =>
+export const antigravity: Model = (request) =>
   Effect.tryPromise({
     try: async (signal) => {
       const settings = JSON.parse(
@@ -582,5 +598,5 @@ export const antigravity: Ports['model'] = (request) =>
         await rm(cwd, { recursive: true, force: true })
       }
     },
-    catch: (error) => new S.Failure({ operation: 'antigravity', message: String(error) }),
+    catch: (error) => new Failure({ operation: 'antigravity', message: String(error) }),
   }).pipe(slots.withPermit)

@@ -8,7 +8,7 @@ import {
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js'
 import { Effect } from 'effect'
-import type { Run } from './tools'
+import type { Run } from './runtime'
 
 export type McpTools = {
   tools: readonly {

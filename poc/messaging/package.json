@@ -1,12 +1,11 @@
 {
-  "name": "@amber/telegram-poc",
+  "name": "@amber/messaging-poc",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.1.3",
   "scripts": {
     "test": "vitest run testing",
-    "test:live": "vitest run workflow.test.ts native-web.test.ts --maxWorkers=1",
-    "test:native": "vitest run native-web.test.ts fetched-page.live.test.ts --maxWorkers=1",
+    "test:live": "vitest run workflow.live.test.ts --maxWorkers=1",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

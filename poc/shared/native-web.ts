@@ -1,6 +1,5 @@
 import { isIP } from 'node:net'
-import type * as S from './schemas'
-import type { NativeToolName } from './tools'
+import type { NativeToolName } from './runtime'
 
 const maximumTextLength = 12_000
 
@@ -58,7 +57,7 @@ function searchPages(result: CapturedNativeOutput) {
   const marker = /^Sources:\s*$/im.exec(result.toolOutput)
   if (!marker) return []
   const sourceBlock = result.toolOutput.slice(marker.index + marker[0].length)
-  const pages: (typeof S.WebPage.Type)[] = []
+  const pages: { url: string; title: string; text: string }[] = []
   for (const line of sourceBlock.split('\n')) {
     const match = /^\s*\[\d+\]\s+\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)\s*$/.exec(line)
     if (!match) continue

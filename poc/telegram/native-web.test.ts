@@ -2,9 +2,9 @@
 import { writeFile } from 'node:fs/promises'
 import { Effect, Schema } from 'effect'
 import { expect, it } from 'vitest'
-import { antigravity, inheritanceSentinel, modelId, nativeWebTools } from './antigravity'
+import { antigravity, inheritanceSentinel, modelId, nativeWebTools } from '../shared/antigravity'
+import { pagesFromNativeTool } from '../shared/native-web'
 import { jsonSchema } from './model'
-import { pagesFromNativeTool } from './native-web'
 import nativeWebPrompt from './prompts/native-web.mdx?raw'
 import type { ModelObservation } from './tools'
 

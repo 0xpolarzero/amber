@@ -15,8 +15,13 @@ overrides:
 
 importers:
 
-  .:
+  .: {}
+
+  messaging:
     dependencies:
+      '@amber/poc-shared':
+        specifier: workspace:*
+        version: link:../shared
       '@smthrs/canonical':
         specifier: git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/canonical
         version: https://codeload.github.com/smithersai/smithers/tar.gz/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c#path:packages/smithers/flows/canonical(effect@4.0.0-rc.112)
@@ -42,9 +47,64 @@ importers:
         specifier: 4.0.0-rc.112
         version: 4.0.0-rc.112
     devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vite:
+        specifier: 8.2.2
+        version: 8.2.2(@types/node@24.13.3)
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
+
+  shared:
+    dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.30.0
         version: 1.30.0(zod@4.5.4)
+      '@smthrs/crypto':
+        specifier: git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/crypto
+        version: https://codeload.github.com/smithersai/smithers/tar.gz/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c#path:packages/smithers/flows/crypto(effect@4.0.0-rc.112)
+      '@smthrs/engine':
+        specifier: git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/engine
+        version: https://codeload.github.com/smithersai/smithers/tar.gz/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c#path:packages/smithers/flows/engine(effect@4.0.0-rc.112)
+      effect:
+        specifier: 4.0.0-rc.112
+        version: 4.0.0-rc.112
+
+  telegram:
+    dependencies:
+      '@amber/poc-shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@smthrs/canonical':
+        specifier: git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/canonical
+        version: https://codeload.github.com/smithersai/smithers/tar.gz/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c#path:packages/smithers/flows/canonical(effect@4.0.0-rc.112)
+      '@smthrs/crypto':
+        specifier: git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/crypto
+        version: https://codeload.github.com/smithersai/smithers/tar.gz/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c#path:packages/smithers/flows/crypto(effect@4.0.0-rc.112)
+      '@smthrs/database':
+        specifier: git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/database
+        version: https://codeload.github.com/smithersai/smithers/tar.gz/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c#path:packages/smithers/flows/database(effect@4.0.0-rc.112)
+      '@smthrs/engine':
+        specifier: git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/engine
+        version: https://codeload.github.com/smithersai/smithers/tar.gz/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c#path:packages/smithers/flows/engine(effect@4.0.0-rc.112)
+      '@smthrs/flow':
+        specifier: git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/flow
+        version: https://codeload.github.com/smithersai/smithers/tar.gz/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c#path:packages/smithers/flows/flow(effect@4.0.0-rc.112)
+      '@smthrs/keys':
+        specifier: git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/keys
+        version: https://codeload.github.com/smithersai/smithers/tar.gz/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c#path:packages/smithers/flows/keys(effect@4.0.0-rc.112)
+      '@smthrs/plan':
+        specifier: git+https://github.com/smithersai/smithers.git#6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c&path:packages/smithers/flows/plan
+        version: https://codeload.github.com/smithersai/smithers/tar.gz/6d40cbc3cdae14fc1a8b65c5ecbc0f01966b468c#path:packages/smithers/flows/plan(effect@4.0.0-rc.112)
+      effect:
+        specifier: 4.0.0-rc.112
+        version: 4.0.0-rc.112
+    devDependencies:
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3

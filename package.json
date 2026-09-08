@@ -11,13 +11,14 @@
     "dev": "vite --host 127.0.0.1 --port 3000",
     "build": "vite build",
     "start": "node .output/server/index.mjs",
-    "typecheck": "tsc --noEmit && pnpm --dir poc/telegram typecheck",
+    "typecheck": "tsc --noEmit && pnpm --dir poc typecheck",
     "lint": "biome check .",
     "format": "biome check --write .",
-    "test": "vitest run",
+    "test": "vitest run && pnpm --dir poc test",
     "test:e2e": "playwright test",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
-    "test:telegram": "pnpm --dir poc/telegram test:live"
+    "test:telegram": "pnpm --dir poc test:telegram",
+    "test:messaging": "pnpm --dir poc test:messaging"
   },
   "dependencies": {
     "@tanstack/react-form": "1.33.5",

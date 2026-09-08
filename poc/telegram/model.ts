@@ -1,5 +1,5 @@
 import { Effect, Schema } from 'effect'
-import { pagesFromNativeTool } from './native-web'
+import { pagesFromNativeTool } from '../shared/native-web'
 import * as S from './schemas'
 import {
   type NativeToolName,

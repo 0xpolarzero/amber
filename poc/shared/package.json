@@ -1,0 +1,11 @@
+{
+  "name": "@amber/poc-shared",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@smthrs/crypto": "1.0.0-rc.0",
+    "@smthrs/engine": "1.0.0-rc.0",
+    "effect": "4.0.0-rc.112"
+  }
+}

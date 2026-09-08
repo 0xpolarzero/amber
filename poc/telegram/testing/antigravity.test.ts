@@ -10,8 +10,8 @@ import {
   nativeCallsFromArtifactRoot,
   parseAntigravityStream,
   successfulAndFailedTools,
-} from '../antigravity'
-import { pagesFromNativeTool } from '../native-web'
+} from '../../shared/antigravity'
+import { pagesFromNativeTool } from '../../shared/native-web'
 import type { Ports } from '../tools'
 
 const request = (overrides: Partial<Parameters<Ports['model']>[0]> = {}) =>
