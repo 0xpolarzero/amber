@@ -308,12 +308,12 @@ test('keeps the expanded memory panel above a usable composer on desktop and mob
   expect(
     (memoryBounds?.y ?? 0) + (memoryBounds?.height ?? 0),
   ).toBeLessThanOrEqual(composerBounds?.y ?? 0)
-  expect(toolsBounds?.x ?? 0).toBeGreaterThanOrEqual(
-    (composerBounds?.x ?? 0) + (composerBounds?.width ?? 0),
+  expect(toolsBounds?.y ?? 0).toBeGreaterThanOrEqual(
+    (composerBounds?.y ?? 0) + (composerBounds?.height ?? 0),
   )
   expect(memoryBounds?.height ?? 999).toBeLessThanOrEqual(isMobile ? 250 : 280)
   expect(
-    (composerBounds?.y ?? 0) + (composerBounds?.height ?? 0),
+    (toolsBounds?.y ?? 0) + (toolsBounds?.height ?? 0),
   ).toBeLessThanOrEqual(guideBounds?.y ?? 0)
   await expect
     .poll(() =>

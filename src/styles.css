@@ -2476,16 +2476,29 @@ dialog::backdrop {
 /* Full messaging workflow preview */
 .composer-row {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px;
   min-width: 0;
+  padding: 0 8px 8px;
+  border: 1px solid #dededb;
+  border-radius: 16px;
+  background: var(--paper);
+}
+.composer-row:focus-within {
+  border-color: #999;
 }
 .composer-row .reply-composer {
   flex: 1;
   min-width: 0;
+  padding-right: 0;
+  padding-left: 8px;
+  border: 0;
+  background: transparent;
 }
 .composer-tools {
   display: flex;
+  align-self: flex-end;
   flex-shrink: 0;
   gap: 6px;
   overflow: visible;
@@ -2497,7 +2510,7 @@ dialog::backdrop {
   height: 44px;
   place-items: center;
   overflow: visible;
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   border-radius: 14px;
   background: var(--paper);
   color: var(--secondary);
