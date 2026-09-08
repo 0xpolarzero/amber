@@ -2871,36 +2871,6 @@ dialog::backdrop {
   font-size: 11px;
   box-shadow: 0 3px 12px #0000000b;
 }
-.memory-history {
-  margin: 0 0 12px;
-  border-top: 1px solid var(--line);
-  color: var(--secondary);
-}
-.memory-history summary {
-  min-height: 44px;
-  padding: 12px 0;
-  cursor: pointer;
-  font-size: 12px;
-}
-.memory-history ol {
-  display: grid;
-  gap: 10px;
-  padding: 0 0 8px;
-  margin: 0;
-  list-style: none;
-}
-.memory-history li {
-  display: grid;
-  gap: 2px;
-  font-size: 11px;
-}
-.memory-history strong {
-  color: var(--ink);
-  font-weight: 550;
-}
-.memory-history span {
-  overflow-wrap: anywhere;
-}
 .agent-progress li[data-status="failed"],
 .agent-progress li[data-status="exhausted"] {
   color: #a13f36;

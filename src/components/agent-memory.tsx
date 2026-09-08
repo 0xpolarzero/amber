@@ -53,58 +53,27 @@ export function AgentMemoryPanel({ id }: { id: string }) {
             onDone={finish}
           />
         ) : (
-          <>
-            <div className="memory-list">
-              {memories.map((memory) => (
-                <div className="memory-entry" key={memory.id}>
-                  <p>{memory.text}</p>
-                  <MemoryActions
-                    memory={memory}
-                    onEdit={() => setEditing(memory)}
-                    onDelete={() => {
-                      dispatch({ type: 'forgetMemory', id: memory.id })
-                      requestAnimationFrame(() => addButton.current?.focus())
-                    }}
-                  />
-                </div>
-              ))}
-              {!agent.memories.length ? (
-                <p className="memory-empty">No saved preferences yet.</p>
-              ) : null}
-              {agent.memories.length > 0 && !memories.length ? (
-                <p className="memory-empty">
-                  No preferences match your search.
-                </p>
-              ) : null}
-            </div>
-            {agent.memoryHistory.length > 0 && !normalizedQuery ? (
-              <details className="memory-history">
-                <summary>Recent memory changes</summary>
-                <ol>
-                  {[...agent.memoryHistory].reverse().map((event) => (
-                    <li
-                      key={`${event.id}-${event.kind}-${event.before ?? ''}-${event.after ?? ''}`}
-                    >
-                      <strong>
-                        {event.kind === 'created'
-                          ? 'Created'
-                          : event.kind === 'replaced'
-                            ? 'Replaced'
-                            : 'Deleted'}
-                      </strong>
-                      {event.kind === 'replaced' ? (
-                        <span>
-                          {event.before} → {event.after}
-                        </span>
-                      ) : (
-                        <span>{event.after ?? event.before}</span>
-                      )}
-                    </li>
-                  ))}
-                </ol>
-              </details>
+          <div className="memory-list">
+            {memories.map((memory) => (
+              <div className="memory-entry" key={memory.id}>
+                <p>{memory.text}</p>
+                <MemoryActions
+                  memory={memory}
+                  onEdit={() => setEditing(memory)}
+                  onDelete={() => {
+                    dispatch({ type: 'forgetMemory', id: memory.id })
+                    requestAnimationFrame(() => addButton.current?.focus())
+                  }}
+                />
+              </div>
+            ))}
+            {!agent.memories.length ? (
+              <p className="memory-empty">No saved preferences yet.</p>
             ) : null}
-          </>
+            {agent.memories.length > 0 && !memories.length ? (
+              <p className="memory-empty">No preferences match your search.</p>
+            ) : null}
+          </div>
         )}
       </div>
       {!editing ? (
