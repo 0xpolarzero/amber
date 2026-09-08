@@ -2818,6 +2818,9 @@ dialog::backdrop {
   .agent-chat {
     height: calc(100dvh - 166px);
   }
+  .agent-chat .conversation-history {
+    padding-bottom: 4px;
+  }
   .chat-message:has(.applied-changes) {
     width: 100%;
   }

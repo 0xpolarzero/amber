@@ -179,7 +179,10 @@ function AgentChat({
             {message.changes?.length ? (
               <AppliedChanges
                 changes={message.changes}
-                expanded={message.id === latestChangeMessage}
+                expanded={
+                  message.id === latestChangeMessage &&
+                  message.changes.length === 1
+                }
               />
             ) : null}
             {reit(message.memoryEvents) ? (

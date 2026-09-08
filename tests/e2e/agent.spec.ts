@@ -14,6 +14,12 @@ test('shows the grounded private conversation, applied post changes and memory h
   await expect(
     page.getByText('One private conversation across your posts.'),
   ).toBeVisible()
+  await expect(
+    page.getByText(
+      'Atlas now states that it works offline. Noted emphasizes on-device transcription and marks PDF export as planned. Aurora is invite-only. I’ll keep posts concise.',
+      { exact: true },
+    ),
+  ).toBeInViewport({ ratio: 1 })
   await expect(page.getByRole('log')).toContainText(
     'Noted now reflects Mandarin support',
   )
@@ -34,6 +40,7 @@ test('shows the grounded private conversation, applied post changes and memory h
   await expect(page.getByText('you', { exact: true })).toHaveCount(0)
 
   const atlasDiff = page.getByRole('region', { name: 'Changes to Atlas' })
+  await page.getByText('Updated Atlas', { exact: true }).click()
   await expect(atlasDiff).toBeVisible()
   const changedSummary = await atlasDiff.locator('ins').first().innerText()
   await atlasDiff.getByRole('link', { name: 'View Atlas post' }).click()
