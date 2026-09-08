@@ -75,9 +75,11 @@ test('walks the recorded extraction and messaging guide without typing or waitin
   await related.locator(':scope > summary').click()
   await expect(related).toContainText('Same batch: Tab tidy')
   await expect(related).toContainText('Bea · #103')
-  const recording = trace.locator('details.trace-recording')
-  await recording.locator(':scope > summary').click()
-  await expect(recording).toContainText(preview.disclosure)
+  const recording = trace.locator('.trace-recording')
+  await expect(recording).toBeVisible()
+  await expect(recording).toHaveText(
+    `${preview.telegram.groupId} · ${preview.trace.recording.model}`,
+  )
   await expect(page.locator('.request-intent')).toHaveCount(0)
 
   const next = guide.getByRole('button', { name: 'Next', exact: true })

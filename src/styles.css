@@ -2898,8 +2898,7 @@ dialog::backdrop {
   padding: 8px 10px;
 }
 .workflow-trace-step > summary:hover,
-.trace-related > summary:hover,
-.trace-recording > summary:hover {
+.trace-related > summary:hover {
   background: #f5f5f2;
 }
 .trace-step-number {
@@ -2966,8 +2965,7 @@ dialog::backdrop {
 .trace-record p,
 .trace-post p,
 .trace-tools p,
-.trace-collection > p,
-.trace-recording p {
+.trace-collection > p {
   margin-top: 2px;
   color: var(--ink);
 }
@@ -3012,8 +3010,7 @@ dialog::backdrop {
   font-size: 12px;
   line-height: 1.5;
 }
-.trace-nested > summary,
-.trace-recording > summary {
+.trace-nested > summary {
   width: fit-content;
   padding: 4px 0;
   color: var(--quiet);
@@ -3045,13 +3042,10 @@ dialog::backdrop {
   margin: 0 10px 9px 43px;
 }
 .trace-recording {
-  padding: 4px 10px 7px 43px;
+  padding: 8px 10px;
   color: var(--quiet);
   font-size: 10px;
   line-height: 1.45;
-}
-.trace-recording p {
-  color: var(--secondary);
 }
 .new-message-jump {
   align-self: center;

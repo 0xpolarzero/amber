@@ -510,14 +510,9 @@ function WorkflowTraceDisclosure({
             </div>
           </details>
         ))}
-        <details className="trace-recording">
-          <summary>Recorded run details</summary>
-          <p>{trace.recording.disclosure}</p>
-          <span>
-            {trace.recording.model} · batch {source.batchId} · group{' '}
-            {source.groupId}
-          </span>
-        </details>
+        <p className="trace-recording">
+          {source.groupId} · {trace.recording.model}
+        </p>
       </div>
     </details>
   )
