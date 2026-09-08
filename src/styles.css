@@ -2296,31 +2296,42 @@ dialog::backdrop {
   margin: 0;
 }
 .memory-entry {
-  padding: 7px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
   border-top: 1px solid var(--line);
 }
 .memory-entry:first-child {
   border-top: 0;
 }
 .memory-entry p {
+  flex: 1;
+  min-width: 0;
   font-size: 13px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .memory-actions {
   display: flex;
-  gap: 14px;
-  margin-top: 4px;
+  flex-shrink: 0;
+  gap: 2px;
 }
 .memory-actions button {
-  padding: 4px 0;
-  min-height: 28px;
-  font-size: 11px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   color: var(--secondary);
 }
 .memory-actions button:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  background: var(--soft);
+  color: var(--ink);
+}
+.memory-actions svg {
+  width: 14px;
+  height: 14px;
 }
 .memory-empty {
   font-size: 13px;
@@ -2330,9 +2341,6 @@ dialog::backdrop {
 @media (max-width: 500px) {
   .memory-editor textarea {
     font-size: 16px;
-  }
-  .memory-actions button {
-    min-height: 32px;
   }
 }
 

@@ -58,25 +58,14 @@ export function AgentMemoryPanel({ id }: { id: string }) {
               {memories.map((memory) => (
                 <div className="memory-entry" key={memory.id}>
                   <p>{memory.text}</p>
-                  <div className="memory-actions">
-                    <button
-                      type="button"
-                      onClick={() => setEditing(memory)}
-                      aria-label={`Edit memory: ${memory.text}`}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        dispatch({ type: 'forgetMemory', id: memory.id })
-                        requestAnimationFrame(() => addButton.current?.focus())
-                      }}
-                      aria-label={`Forget memory: ${memory.text}`}
-                    >
-                      Forget
-                    </button>
-                  </div>
+                  <MemoryActions
+                    memory={memory}
+                    onEdit={() => setEditing(memory)}
+                    onDelete={() => {
+                      dispatch({ type: 'forgetMemory', id: memory.id })
+                      requestAnimationFrame(() => addButton.current?.focus())
+                    }}
+                  />
                 </div>
               ))}
               {!agent.memories.length ? (
@@ -129,6 +118,91 @@ export function AgentMemoryPanel({ id }: { id: string }) {
         </button>
       ) : null}
     </section>
+  )
+}
+
+function MemoryActions({
+  memory,
+  onEdit,
+  onDelete,
+}: {
+  memory: AgentMemory
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const [confirming, setConfirming] = useState(false)
+  const actions = useRef<HTMLDivElement>(null)
+  const deleteButton = useRef<HTMLButtonElement>(null)
+  const cancel = () => {
+    setConfirming(false)
+    requestAnimationFrame(() => deleteButton.current?.focus())
+  }
+  useEffect(() => {
+    if (!confirming) return
+    const outside = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !actions.current?.contains(event.target)
+      )
+        setConfirming(false)
+    }
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setConfirming(false)
+        requestAnimationFrame(() => deleteButton.current?.focus())
+      }
+    }
+    document.addEventListener('pointerdown', outside, true)
+    document.addEventListener('keydown', onEscape)
+    return () => {
+      document.removeEventListener('pointerdown', outside, true)
+      document.removeEventListener('keydown', onEscape)
+    }
+  }, [confirming])
+  return (
+    <div className="memory-actions" ref={actions}>
+      {confirming ? (
+        <>
+          <button
+            type="button"
+            onClick={cancel}
+            aria-label="Cancel deletion"
+            title="Cancel"
+          >
+            <Icon name="close" />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label={`Confirm delete memory: ${memory.text}`}
+            title="Confirm delete"
+          >
+            <Icon name="check" />
+          </button>
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={onEdit}
+            aria-label={`Edit memory: ${memory.text}`}
+            title="Edit"
+          >
+            <Icon name="edit" />
+          </button>
+          <button
+            type="button"
+            ref={deleteButton}
+            onClick={() => setConfirming(true)}
+            aria-label={`Delete memory: ${memory.text}`}
+            title="Delete"
+          >
+            <Icon name="trash" />
+          </button>
+        </>
+      )}
+    </div>
   )
 }
 

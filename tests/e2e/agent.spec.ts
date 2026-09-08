@@ -378,3 +378,33 @@ test('keeps the auto-revealed source, guide and composer usable on desktop and m
     fullPage: true,
   })
 })
+
+test('confirms memory deletion inline and dismisses it without deleting', async ({
+  page,
+}) => {
+  await page.goto('/agent')
+  await selectPreviewAccount(page, 'author')
+  await page.getByRole('button', { name: 'Open memory (1 saved)' }).click()
+  const memory = page.getByRole('region', { name: 'Memory' })
+  const remove = memory.getByRole('button', { name: /^Delete memory:/ })
+  const approve = memory.getByRole('button', {
+    name: /^Confirm delete memory:/,
+  })
+  const edit = memory.getByRole('button', { name: /^Edit memory:/ })
+  await remove.click()
+  await expect(edit).toHaveCount(0)
+  await expect(approve).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(approve).toHaveCount(0)
+  await expect(remove).toBeFocused()
+  await remove.click()
+  await memory.getByRole('searchbox', { name: 'Search memory' }).click()
+  await expect(approve).toHaveCount(0)
+  await remove.click()
+  await memory.getByRole('button', { name: 'Cancel deletion' }).click()
+  await expect(edit).toBeVisible()
+  await remove.click()
+  await approve.click()
+  await expect(memory).toContainText('No saved preferences yet.')
+  await expect(remove).toHaveCount(0)
+})
