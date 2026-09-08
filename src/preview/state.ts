@@ -109,6 +109,71 @@ export type WorkflowTrace = {
   }[]
   recording: { model: string; disclosure: string }
 }
+export type ReplyWorkflowTrace = {
+  planner: {
+    pendingRequests: readonly ReplyTraceMessage[]
+    queries: readonly {
+      resource: 'posts' | 'user_messages' | 'assistant_messages'
+      terms: readonly string[]
+      limit: number
+    }[]
+  }
+  context: {
+    posts: readonly {
+      id: string
+      version: number
+      title: string
+      summary: string
+      detail: string
+    }[]
+    userMessages: readonly ReplyTraceMessage[]
+    assistantMessages: readonly ReplyTraceMessage[]
+    linkedRequestPostIds: readonly string[]
+    memories: readonly { id: string; text: string; version?: number }[]
+    unaddressed: readonly ReplyTraceMessage[]
+  }
+  response: {
+    classification: string
+    intent: string
+    text: string
+    pendingOutcome: { kind: string }
+    postChanges: readonly {
+      postId: string
+      expectedVersion: number
+      title: string
+      summary: string
+      detail: string
+      evidence: readonly {
+        kind: string
+        id?: string
+        version?: number
+        url?: string
+      }[]
+    }[]
+  }
+  memory: {
+    existing: readonly { id: string; text: string; version?: number }[]
+    operations: readonly {
+      kind: string
+      id: string
+      text?: string
+      expectedVersion?: number
+    }[]
+  }
+  addressing: {
+    requests: readonly ReplyTraceMessage[]
+    resolutions: readonly {
+      requestMessageId: string
+      outcome: 'answered' | 'ignored'
+      reason: string
+    }[]
+  }
+}
+type ReplyTraceMessage = {
+  id: string
+  text: string
+  linkedPostId: string | null
+}
 export type AgentMessage = {
   id: string
   sender: 'amber' | 'user'
@@ -129,6 +194,7 @@ export type AgentMessage = {
   usedHistory?: readonly string[]
   source?: TelegramSource
   trace?: WorkflowTrace
+  replyRun?: AgentRun
 }
 export const isUnaddressed = (message: AgentMessage) =>
   message.sender === 'amber' &&
@@ -166,6 +232,7 @@ export type AgentRun = {
   memoryAttempts: number
   addressingAttempts: number
   maxAttempts: number
+  trace: ReplyWorkflowTrace
   outcome?: TurnOutcome
   error?: string
   stale?: boolean
@@ -563,7 +630,14 @@ export function previewReducer(
     return withAgent({
       ...agent,
       draft: '',
-      messages: [...agent.messages, message],
+      messages: [
+        ...agent.messages.map((item) =>
+          action.previewRun && item.id === agent.run?.outcome?.responseId
+            ? { ...item, replyRun: agent.run }
+            : item,
+        ),
+        message,
+      ],
       revision: agent.revision + 1,
       ...(action.previewRun
         ? { run: illustrativeRun(state.fixtureFeed, action.id) }

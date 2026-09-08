@@ -79,7 +79,7 @@ export const AGENT_GUIDE: readonly AgentGuideCheckpoint[] = [
     notice:
       'The fake maker reply answers the extracted question and repeats the concise, factual writing preference.',
     scenarioId: 'stage-planning',
-    targetMessageId: `${captured.messaging.input.turnId}:user`,
+    targetMessageId: captured.messaging.assistant.id,
     revealProgress: true,
   },
   {
@@ -258,7 +258,7 @@ function response(feed: Feed): AgentMessage {
   )
 }
 
-const completeRun = (messageId: string): AgentRun => ({
+const completeRun = (feed: Feed, messageId: string): AgentRun => ({
   messageId,
   stage: 'complete',
   status: 'complete',
@@ -269,6 +269,8 @@ const completeRun = (messageId: string): AgentRun => ({
   memoryAttempts: 1,
   addressingAttempts: 1,
   maxAttempts: 2,
+  trace: captured.messaging.trace,
+  outcome: outcome(feed),
 })
 
 const baseConversation = (
@@ -304,6 +306,7 @@ function activeRun(feed: Feed, stage: AgentRunStage): AgentRun {
     memoryAttempts: 0,
     addressingAttempts: 0,
     maxAttempts: 2,
+    trace: captured.messaging.trace,
     outcome: outcome(feed),
   }
 }
@@ -331,7 +334,7 @@ export function buildAgentScenario(
       conversation: {
         ...baseConversation([question(true), inputMessage(), response(feed)]),
         readThrough: 2,
-        run: completeRun(`${captured.messaging.input.turnId}:user`),
+        run: completeRun(feed, `${captured.messaging.input.turnId}:user`),
       },
       posts: fixture.after,
     }

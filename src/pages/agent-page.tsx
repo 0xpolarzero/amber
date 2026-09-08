@@ -1,15 +1,17 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import type { ReactNode } from 'react'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AgentMemoryPanel } from '../components/agent-memory'
 import { AgentProgress } from '../components/agent-progress'
 import { Icon } from '../components/icon'
 import { ReplyComposer } from '../components/reply-composer'
+import { TraceCollection, TraceStep } from '../components/workflow-trace'
 import { AGENT_GUIDE } from '../preview/agent-example'
 import { usePreview } from '../preview/provider'
 import {
   type AgentConversation,
   type AgentMemoryEvent,
+  type AgentMessage,
+  type AgentRun,
   isAgentBusy,
   isUnaddressed,
   type PostChange,
@@ -79,6 +81,17 @@ function AgentChat({
   const messages = injectedMessages
     ? [...agent.messages, ...injectedMessages]
     : agent.messages
+  const responseId = agent.run?.outcome?.responseId
+  const publishedResponse = responseId
+    ? messages.find(({ id }) => id === responseId)
+    : undefined
+  const timelineMessages = responseId
+    ? messages.filter(({ id }) => id !== responseId)
+    : messages
+  const hasReplySlot = Boolean(
+    agent.run && timelineMessages.some(({ id }) => id === agent.run?.messageId),
+  )
+  const timelineCount = timelineMessages.length + (hasReplySlot ? 1 : 0)
   const pending = messages.filter(isUnaddressed)
   const context = [...state.posts, ...state.agentPosts].find(
     (post) => post.id === postId,
@@ -89,7 +102,7 @@ function AgentChat({
   }, [agent.messages.length, agent.readThrough, dispatch])
   useLayoutEffect(() => {
     const element = history.current
-    if (!element || agent.messages.length === previousCount.current) return
+    if (!element || timelineCount === previousCount.current) return
     const latest = agent.messages.at(-1)
     const userSent = latest?.sender === 'user'
     if (nearBottom.current || userSent || previousCount.current === 0) {
@@ -98,8 +111,8 @@ function AgentChat({
     } else {
       setNewBelow(true)
     }
-    previousCount.current = agent.messages.length
-  }, [agent.messages])
+    previousCount.current = timelineCount
+  }, [agent.messages, timelineCount])
   useLayoutEffect(() => {
     if (!guide?.targetMessageId) return
     const message = document.getElementById(`message-${guide.targetMessageId}`)
@@ -153,84 +166,104 @@ function AgentChat({
           if (nearBottom.current) setNewBelow(false)
         }}
       >
-        {messages.map((message) => (
-          <article
-            key={message.id}
-            id={`message-${message.id}`}
-            tabIndex={-1}
-            aria-current={
-              activePanel === 'pending' &&
-              message.id === pending[pendingIndex]?.id
-                ? true
-                : undefined
-            }
-            className={`chat-message ${message.sender === 'user' ? 'outgoing' : ''} ${isUnaddressed(message) ? 'unaddressed' : ''}`}
-          >
-            {message.sender === 'amber' ? (
-              <span className="chat-sender">Amber</span>
-            ) : null}
-            {message.postId && !message.changes?.length ? (
-              <PostReference postId={message.postId} />
-            ) : null}
-            {message.candidate ? (
-              <span className={`candidate-context ${message.candidate.status}`}>
-                {message.candidate.name} ·{' '}
-                {message.candidate.status === 'clarification'
-                  ? 'details needed'
-                  : message.candidate.status}
-              </span>
-            ) : null}
-            <MessageState message={message} />
-            <p className="chat-bubble">{message.text}</p>
-            {message.source && message.trace ? (
-              <WorkflowTraceDisclosure
-                source={message.source}
-                trace={message.trace}
-                open={
-                  Boolean(guide?.revealSource) &&
-                  message.id === guide?.targetMessageId
-                }
-              />
-            ) : null}
-            {message.changes?.length ? (
-              <AppliedChanges
-                changes={message.changes}
+        {timelineMessages.map((message) => (
+          <Fragment key={message.id}>
+            <article
+              id={`message-${message.id}`}
+              tabIndex={-1}
+              aria-current={
+                activePanel === 'pending' &&
+                message.id === pending[pendingIndex]?.id
+                  ? true
+                  : undefined
+              }
+              className={`chat-message ${message.sender === 'user' ? 'outgoing' : ''} ${isUnaddressed(message) ? 'unaddressed' : ''}`}
+            >
+              {message.sender === 'amber' ? (
+                <span className="chat-sender">Amber</span>
+              ) : null}
+              {message.postId && !message.changes?.length ? (
+                <PostReference postId={message.postId} />
+              ) : null}
+              {message.candidate ? (
+                <span
+                  className={`candidate-context ${message.candidate.status}`}
+                >
+                  {message.candidate.name} ·{' '}
+                  {message.candidate.status === 'clarification'
+                    ? 'details needed'
+                    : message.candidate.status}
+                </span>
+              ) : null}
+              <MessageState message={message} />
+              <p className="chat-bubble">{message.text}</p>
+              {message.source && message.trace ? (
+                <WorkflowTraceDisclosure
+                  source={message.source}
+                  trace={message.trace}
+                  open={
+                    Boolean(guide?.revealSource) &&
+                    message.id === guide?.targetMessageId
+                  }
+                />
+              ) : null}
+              {message.changes?.length ? (
+                <AppliedChanges
+                  changes={message.changes}
+                  expandedPostId={
+                    message.id === guide?.targetMessageId
+                      ? guide.expandedChangePostId
+                      : undefined
+                  }
+                />
+              ) : null}
+              {reit(message.memoryEvents) ? (
+                <MemoryReceipt
+                  events={message.memoryEvents ?? []}
+                  onOpen={() => setActivePanel('memory')}
+                />
+              ) : null}
+              {message.usedMemories?.length || message.usedHistory?.length ? (
+                <details
+                  className="context-used"
+                  open={
+                    guide?.revealContext && message.id === guide.targetMessageId
+                  }
+                >
+                  <summary>Context used</summary>
+                  {message.usedMemories?.map((memory) => (
+                    <p key={memory.id}>
+                      <strong>Preference</strong>
+                      {memory.text}
+                    </p>
+                  ))}
+                  {message.usedHistory?.map((text) => (
+                    <p key={text}>
+                      <strong>Earlier message</strong>
+                      {text}
+                    </p>
+                  ))}
+                </details>
+              ) : null}
+              {message.replyRun ? (
+                <AgentProgress run={message.replyRun} />
+              ) : null}
+            </article>
+            {agent.run?.messageId === message.id ? (
+              <ReplySlot
+                key={`reply-${agent.run.messageId}`}
+                run={agent.run}
+                response={publishedResponse}
+                expanded={Boolean(guide?.revealProgress)}
                 expandedPostId={
-                  message.id === guide?.targetMessageId
-                    ? guide.expandedChangePostId
+                  guide?.targetMessageId === responseId
+                    ? guide?.expandedChangePostId
                     : undefined
                 }
+                onOpenMemory={() => setActivePanel('memory')}
               />
             ) : null}
-            {reit(message.memoryEvents) ? (
-              <MemoryReceipt
-                events={message.memoryEvents ?? []}
-                onOpen={() => setActivePanel('memory')}
-              />
-            ) : null}
-            {message.usedMemories?.length || message.usedHistory?.length ? (
-              <details
-                className="context-used"
-                open={
-                  guide?.revealContext && message.id === guide.targetMessageId
-                }
-              >
-                <summary>Context used</summary>
-                {message.usedMemories?.map((memory) => (
-                  <p key={memory.id}>
-                    <strong>Preference</strong>
-                    {memory.text}
-                  </p>
-                ))}
-                {message.usedHistory?.map((text) => (
-                  <p key={text}>
-                    <strong>Earlier message</strong>
-                    {text}
-                  </p>
-                ))}
-              </details>
-            ) : null}
-          </article>
+          </Fragment>
         ))}
       </div>
       {newBelow ? (
@@ -248,9 +281,6 @@ function AgentChat({
         </button>
       ) : null}
       <div className="conversation-footer">
-        {agent.run ? (
-          <AgentProgress run={agent.run} expanded={guide?.revealProgress} />
-        ) : null}
         {postId ? (
           <div className="agent-post-context">
             {context ? (
@@ -365,6 +395,62 @@ function AgentChat({
   )
 }
 
+function ReplySlot({
+  run,
+  response,
+  expanded,
+  expandedPostId,
+  onOpenMemory,
+}: {
+  run: AgentRun
+  response?: AgentMessage
+  expanded: boolean
+  expandedPostId?: string
+  onOpenMemory: () => void
+}) {
+  return (
+    <article
+      id={`message-${run.outcome?.responseId ?? `reply-${run.messageId}`}`}
+      className="chat-message reply-slot"
+      aria-label="Amber reply"
+      tabIndex={-1}
+    >
+      <span className="chat-sender">Amber</span>
+      {response ? <p className="chat-bubble">{response.text}</p> : null}
+      <AgentProgress run={run} expanded={expanded} />
+      {response?.changes?.length ? (
+        <AppliedChanges
+          changes={response.changes}
+          expandedPostId={expandedPostId}
+        />
+      ) : null}
+      {reit(response?.memoryEvents) ? (
+        <MemoryReceipt
+          events={response?.memoryEvents ?? []}
+          onOpen={onOpenMemory}
+        />
+      ) : null}
+      {response?.usedMemories?.length || response?.usedHistory?.length ? (
+        <details className="context-used">
+          <summary>Context used</summary>
+          {response.usedMemories?.map((memory) => (
+            <p key={memory.id}>
+              <strong>Preference</strong>
+              {memory.text}
+            </p>
+          ))}
+          {response.usedHistory?.map((text) => (
+            <p key={text}>
+              <strong>Earlier message</strong>
+              {text}
+            </p>
+          ))}
+        </details>
+      ) : null}
+    </article>
+  )
+}
+
 function WorkflowTraceDisclosure({
   source,
   trace,
@@ -380,13 +466,13 @@ function WorkflowTraceDisclosure({
   const memoryCount = trace.context.memories.length
   const outstandingCount = trace.context.outstandingRequests.length
   return (
-    <details className="workflow-trace" open={open}>
-      <summary aria-label="How Amber got here">
+    <details className="workflow-trace extraction-workflow-trace" open={open}>
+      <summary aria-label="From Telegram">
         <span className="workflow-trace-toggle-icons">
-          <Icon name="workflow" />
+          <Icon name="telegram" />
           <Icon name="chevronDown" className="workflow-trace-caret" />
         </span>
-        <span>How Amber got here</span>
+        <span>From Telegram</span>
         <span className="workflow-trace-count">4 steps</span>
       </summary>
       <div className="workflow-trace-content">
@@ -518,36 +604,6 @@ function WorkflowTraceDisclosure({
   )
 }
 
-function TraceStep({
-  number,
-  title,
-  summary,
-  open = false,
-  children,
-}: {
-  number: number
-  title: string
-  summary: string
-  open?: boolean
-  children: ReactNode
-}) {
-  return (
-    <li>
-      <details className="workflow-trace-step" open={open}>
-        <summary>
-          <span className="trace-step-number">{number}</span>
-          <span className="trace-step-copy">
-            <strong>{title}</strong>
-            <span>{summary}</span>
-          </span>
-          <Icon name="chevronDown" />
-        </summary>
-        <div className="trace-evidence">{children}</div>
-      </details>
-    </li>
-  )
-}
-
 function EvidenceMessages({
   messages,
 }: {
@@ -564,32 +620,6 @@ function EvidenceMessages({
           <p>{message.text}</p>
         </div>
       ))}
-    </div>
-  )
-}
-
-function TraceCollection({
-  title,
-  empty,
-  items,
-}: {
-  title: string
-  empty: string
-  items: readonly { id: string; title: string; text: string }[]
-}) {
-  return (
-    <div className="trace-collection">
-      <strong>{title}</strong>
-      {items.length ? (
-        items.map((item) => (
-          <div className="trace-record" key={item.id}>
-            <span>{item.title}</span>
-            <p>{item.text}</p>
-          </div>
-        ))
-      ) : (
-        <p>{empty}</p>
-      )}
     </div>
   )
 }

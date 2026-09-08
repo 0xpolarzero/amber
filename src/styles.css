@@ -2399,94 +2399,6 @@ dialog::backdrop {
   box-shadow: -1px 0 #8a621c;
   outline: none;
 }
-.agent-progress {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  margin-bottom: 12px;
-  padding: 11px 13px;
-  font-size: 12px;
-}
-.agent-progress > summary {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  list-style: none;
-  font-weight: 500;
-}
-.agent-progress > summary::-webkit-details-marker {
-  display: none;
-}
-.agent-progress > summary > svg {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-}
-.agent-progress[open] > summary > svg {
-  transform: rotate(90deg);
-}
-.agent-progress-current {
-  margin-left: auto;
-  color: var(--quiet);
-  font-size: 11px;
-  font-weight: 400;
-}
-.agent-progress ol {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px 16px;
-  list-style: none;
-  padding: 0;
-  margin: 16px 0 12px;
-}
-.agent-progress li {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--quiet);
-}
-.agent-progress li[data-status="running"] {
-  color: #916619;
-}
-.agent-progress li[data-status="queued"] {
-  color: #92928d;
-}
-.task-state {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 13px;
-  height: 13px;
-}
-.task-state svg {
-  width: 13px;
-  height: 13px;
-}
-.task-state > span {
-  width: 6px;
-  height: 6px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-}
-[data-status="running"] .task-state > span {
-  background: currentColor;
-}
-.agent-progress > p {
-  font-size: 11px;
-  color: var(--quiet);
-  margin: 0;
-}
-@media (max-width: 600px) {
-  .agent-progress > summary {
-    flex-wrap: wrap;
-    column-gap: 6px;
-    row-gap: 3px;
-  }
-  .agent-progress-current {
-    font-size: 10px;
-  }
-}
-
 /* Full messaging workflow preview */
 .composer-row {
   position: relative;
@@ -2869,6 +2781,25 @@ dialog::backdrop {
   font-size: 10px;
   font-weight: 450;
 }
+.reply-slot {
+  width: min(100%, 570px);
+  max-width: 100%;
+}
+.reply-slot:not(:has(.chat-bubble)) .chat-sender {
+  margin-bottom: 1px;
+}
+.reply-workflow-trace {
+  margin-top: 8px;
+}
+.reply-workflow-trace > summary {
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+}
+.reply-workflow-trace .agent-progress-current {
+  color: var(--quiet);
+  font-size: 10px;
+  font-weight: 450;
+  text-align: right;
+}
 .workflow-trace-content {
   margin-top: 3px;
   overflow: hidden;
@@ -3053,14 +2984,13 @@ dialog::backdrop {
   font-size: 11px;
   box-shadow: 0 3px 12px #0000000b;
 }
-.agent-progress li[data-status="failed"],
-.agent-progress li[data-status="exhausted"] {
+.reply-workflow-trace
+  .workflow-trace-steps
+  > li:is([data-status="failed"], [data-status="exhausted"])
+  .trace-step-number {
+  border-color: #d8aaa5;
+  background: #fff4f2;
   color: #a13f36;
-}
-.agent-progress li[data-status="failed"] .task-state > span,
-.agent-progress li[data-status="exhausted"] .task-state > span {
-  border-radius: 2px;
-  background: currentColor;
 }
 .run-error,
 .run-note {
@@ -3087,6 +3017,33 @@ dialog::backdrop {
 }
 .background-retries button:hover {
   background: var(--soft);
+}
+.reply-workflow-trace
+  .workflow-trace-steps
+  > li[data-status="running"]
+  .trace-step-number {
+  border-color: #c89b47;
+  background: #fff9ed;
+  color: #80580e;
+}
+.reply-workflow-trace
+  .workflow-trace-steps
+  > li[data-status="queued"]
+  .trace-step-copy,
+.reply-workflow-trace
+  .workflow-trace-steps
+  > li[data-status="queued"]
+  .trace-step-number {
+  opacity: 0.62;
+}
+.reply-workflow-trace .trace-step-number svg {
+  width: 13px;
+  height: 13px;
+}
+.reply-workflow-trace .run-error,
+.reply-workflow-trace .run-note,
+.reply-workflow-trace .background-retries {
+  margin: 10px;
 }
 
 .agent-guide {
