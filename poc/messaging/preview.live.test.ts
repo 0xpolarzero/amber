@@ -4,6 +4,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import * as Action from '@smthrs/flow/Action'
 import { Effect, Layer } from 'effect'
 import { expect, it } from 'vitest'
+import { type PreviewProjectionCapture, projectPreviewTrace } from '../preview-projection'
 import { antigravity, modelId } from '../shared/antigravity'
 import { testEngine } from '../shared/test-engine'
 import { telegramLayers } from '../telegram/agents'
@@ -49,21 +50,38 @@ const configuration = (
 ): observation is Extract<ModelObservation, { kind: 'configuration' }> =>
   observation.kind === 'configuration'
 
+const candidateAuthorId = (input: unknown) => {
+  if (!input || typeof input !== 'object' || !('work' in input)) return undefined
+  const work = input.work
+  if (!work || typeof work !== 'object' || !('candidate' in work)) return undefined
+  const candidate = work.candidate
+  if (!candidate || typeof candidate !== 'object' || !('authorId' in candidate)) return undefined
+  return typeof candidate.authorId === 'string' ? candidate.authorId : undefined
+}
+
 it('captures the guided preview from one real extraction batch and one real messaging turn', async () => {
   const extracted = telegramStore(batch, initialPosts)
   const extractionCalls: { task: string; input: unknown; output: unknown }[] = []
-  const extractionObservations: { task: string; observation: ModelObservation }[] = []
+  const extractionObservations: {
+    task: string
+    authorId?: string
+    observation: ModelObservation
+  }[] = []
   const extractionModel: TelegramPorts['model'] = (request) =>
     antigravity({
       ...request,
       observe: (observation) =>
-        request
-          .observe(observation)
-          .pipe(
-            Effect.tap(() =>
-              Effect.sync(() => extractionObservations.push({ task: request.task, observation })),
+        request.observe(observation).pipe(
+          Effect.tap(() =>
+            Effect.sync(() =>
+              extractionObservations.push({
+                task: request.task,
+                authorId: candidateAuthorId(request.input),
+                observation,
+              }),
             ),
           ),
+        ),
     }).pipe(
       Effect.tap((output) =>
         Effect.sync(() =>
@@ -133,7 +151,7 @@ it('captures the guided preview from one real extraction batch and one real mess
     ),
   )
   const recordedAt = new Date().toISOString()
-  const projection = {
+  const baseProjection = {
     version: 1,
     mode: 'recorded-real-model',
     model: modelId,
@@ -202,8 +220,14 @@ it('captures the guided preview from one real extraction batch and one real mess
       progress: messaged.progress,
       after: afterTurn,
     },
-    projection,
+    projection: baseProjection,
   }
+  const projection = {
+    ...baseProjection,
+    version: 2,
+    trace: projectPreviewTrace(artifact as unknown as PreviewProjectionCapture),
+  }
+  artifact.projection = projection
   // Persist first so any semantic assertion failure remains reviewable.
   await writeFile(artifactUrl, `${JSON.stringify(artifact, null, 2)}\n`)
   await writeFile(
