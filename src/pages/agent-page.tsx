@@ -1,4 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
+import type { ReactNode } from 'react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AgentMemoryPanel } from '../components/agent-memory'
 import { AgentProgress } from '../components/agent-progress'
@@ -13,6 +14,8 @@ import {
   isUnaddressed,
   type PostChange,
   type PostFieldChange,
+  type TelegramSource,
+  type WorkflowTrace,
 } from '../preview/state'
 
 export function AgentPage({ postId }: { postId?: string }) {
@@ -179,9 +182,10 @@ function AgentChat({
             ) : null}
             <MessageState message={message} />
             <p className="chat-bubble">{message.text}</p>
-            {message.source ? (
-              <TelegramSourceDisclosure
+            {message.source && message.trace ? (
+              <WorkflowTraceDisclosure
                 source={message.source}
+                trace={message.trace}
                 open={
                   Boolean(guide?.revealSource) &&
                   message.id === guide?.targetMessageId
@@ -361,56 +365,248 @@ function AgentChat({
   )
 }
 
-function TelegramSourceDisclosure({
+function WorkflowTraceDisclosure({
   source,
+  trace,
   open,
 }: {
-  source: NonNullable<AgentConversation['messages'][number]['source']>
+  source: TelegramSource
+  trace: WorkflowTrace
   open: boolean
 }) {
+  const selected = messagesById(source, trace.selectedMessageIds)
+  const author = personName(trace.authorId)
+  const existingCount = trace.context.existingPosts.length
+  const memoryCount = trace.context.memories.length
+  const outstandingCount = trace.context.outstandingRequests.length
   return (
-    <details className="telegram-source" open={open}>
-      <summary
-        aria-label="Source Telegram messages"
-        title="Source Telegram messages"
-      >
-        <Icon name="telegram" />
-        <Icon name="chevronDown" className="telegram-source-caret" />
+    <details className="workflow-trace" open={open}>
+      <summary aria-label="How Amber got here">
+        <span className="workflow-trace-toggle-icons">
+          <Icon name="workflow" />
+          <Icon name="chevronDown" className="workflow-trace-caret" />
+        </span>
+        <span>How Amber got here</span>
+        <span className="workflow-trace-count">4 steps</span>
       </summary>
-      <div className="telegram-source-content">
-        <p className="telegram-source-disclosure">{source.disclosure}</p>
-        <p className="telegram-source-batch">
-          Batch {source.batchId} · group {source.groupId}
-        </p>
-        <ol>
-          {source.messages.map((message) => (
-            <li key={message.id}>
+      <div className="workflow-trace-content">
+        <ol className="workflow-trace-steps">
+          <TraceStep
+            number={1}
+            title="Shared Telegram work selected"
+            summary={`${selected.length} messages grouped as ${author}’s ${trace.project} work.`}
+          >
+            <EvidenceMessages messages={selected} />
+            {source.outcomes.ignored.length ? (
+              <details className="trace-nested">
+                <summary>
+                  {source.outcomes.ignored.length} unrelated message ignored
+                </summary>
+                {source.outcomes.ignored.map((ignored) => {
+                  const message = source.messages.find(
+                    ({ id }) => id === ignored.messageId,
+                  )
+                  return (
+                    <div className="trace-record" key={ignored.messageId}>
+                      <strong>#{ignored.messageId}</strong>
+                      {message ? <p>{message.text}</p> : null}
+                      <span>{ignored.reason}</span>
+                    </div>
+                  )
+                })}
+              </details>
+            ) : null}
+          </TraceStep>
+          <TraceStep
+            number={2}
+            title="Relevant context considered"
+            summary={`${countLabel(existingCount, 'existing post')}, ${countLabel(memoryCount, 'saved preference')}, ${countLabel(outstandingCount, 'outstanding request')} supplied.`}
+          >
+            <TraceCollection
+              title="Existing posts"
+              empty="No existing Noted post was supplied to this writer branch."
+              items={trace.context.existingPosts.map((post) => ({
+                id: post.id,
+                title: post.title,
+                text: post.summary,
+              }))}
+            />
+            <TraceCollection
+              title="Saved preferences"
+              empty="No saved preferences were supplied."
+              items={trace.context.memories.map((memory) => ({
+                id: memory.id,
+                title: 'Writing preference',
+                text: memory.text,
+              }))}
+            />
+            <TraceCollection
+              title="Outstanding requests"
+              empty="No earlier outstanding requests were supplied."
+              items={trace.context.outstandingRequests.map((request) => ({
+                id: request.id,
+                title: request.intent,
+                text: request.text,
+              }))}
+            />
+            <div className="trace-tools">
+              <strong>Recorded tool observations</strong>
+              <p>
+                {trace.context.observedTools.length
+                  ? trace.context.observedTools.join(' · ')
+                  : 'No tool calls were observed.'}
+              </p>
               <span>
-                <strong>{message.authorId ?? 'unknown'}</strong> · #{message.id}
-                {message.replyToId ? ` · reply to #${message.replyToId}` : ''}
+                The recording names observed tools across{' '}
+                {trace.context.observationScope}. It does not retain their
+                result payloads, so no fetch or search result is claimed here.
               </span>
-              <p>{message.text}</p>
-            </li>
-          ))}
+            </div>
+          </TraceStep>
+          <TraceStep
+            number={3}
+            title="Accurate post published"
+            summary={`${trace.publication.output.existingPostId ? 'Updated' : 'Created'} “${trace.publication.post.title}” from the supported details.`}
+          >
+            <div className="trace-post">
+              <strong>{trace.publication.post.title}</strong>
+              <p>{trace.publication.post.summary}</p>
+              <p>{trace.publication.post.detail}</p>
+              <span>
+                Sources:{' '}
+                {trace.publication.output.sources
+                  .map(({ messageId }) => `#${messageId}`)
+                  .join(', ')}
+              </span>
+            </div>
+          </TraceStep>
+          <TraceStep
+            number={4}
+            title="Unanswered fact asked"
+            summary="Mandarin support was not stated in the selected messages."
+          >
+            <blockquote>{trace.question}</blockquote>
+          </TraceStep>
         </ol>
-        <div className="telegram-source-outcomes">
-          {source.outcomes.posts.map((post) => (
-            <p key={`${post.authorId}:${post.title}`}>
-              <strong>{post.authorId}</strong> · {post.outcome} “{post.title}” ·{' '}
-              {post.questionCount} follow-up{' '}
-              {post.questionCount === 1 ? 'question' : 'questions'}
-            </p>
-          ))}
-          {source.outcomes.ignored.map((ignored) => (
-            <p key={ignored.messageId}>
-              <strong>#{ignored.messageId} ignored</strong> · {ignored.reason}
-            </p>
-          ))}
-        </div>
+        {trace.related.map((branch) => (
+          <details className="trace-related" key={branch.authorId}>
+            <summary>
+              Same batch: {branch.project}
+              <span>{branch.outcome}</span>
+              <Icon name="chevronDown" />
+            </summary>
+            <EvidenceMessages
+              messages={messagesById(source, branch.messageIds)}
+            />
+            {branch.existingPosts.map((post) => (
+              <div className="trace-record" key={post.id}>
+                <strong>Existing post: {post.title}</strong>
+                <p>{post.summary}</p>
+              </div>
+            ))}
+            <div className="trace-record">
+              <strong>Result: {branch.resultPost.title}</strong>
+              <p>{branch.resultPost.summary}</p>
+            </div>
+          </details>
+        ))}
+        <details className="trace-recording">
+          <summary>Recorded run details</summary>
+          <p>{trace.recording.disclosure}</p>
+          <span>
+            {trace.recording.model} · batch {source.batchId} · group{' '}
+            {source.groupId}
+          </span>
+        </details>
       </div>
     </details>
   )
 }
+
+function TraceStep({
+  number,
+  title,
+  summary,
+  open = false,
+  children,
+}: {
+  number: number
+  title: string
+  summary: string
+  open?: boolean
+  children: ReactNode
+}) {
+  return (
+    <li>
+      <details className="workflow-trace-step" open={open}>
+        <summary>
+          <span className="trace-step-number">{number}</span>
+          <span className="trace-step-copy">
+            <strong>{title}</strong>
+            <span>{summary}</span>
+          </span>
+          <Icon name="chevronDown" />
+        </summary>
+        <div className="trace-evidence">{children}</div>
+      </details>
+    </li>
+  )
+}
+
+function EvidenceMessages({
+  messages,
+}: {
+  messages: TelegramSource['messages']
+}) {
+  return (
+    <div className="trace-messages">
+      {messages.map((message) => (
+        <div className="trace-record" key={message.id}>
+          <span>
+            <strong>{personName(message.authorId)}</strong> · #{message.id}
+            {message.replyToId ? ` · reply to #${message.replyToId}` : ''}
+          </span>
+          <p>{message.text}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function TraceCollection({
+  title,
+  empty,
+  items,
+}: {
+  title: string
+  empty: string
+  items: readonly { id: string; title: string; text: string }[]
+}) {
+  return (
+    <div className="trace-collection">
+      <strong>{title}</strong>
+      {items.length ? (
+        items.map((item) => (
+          <div className="trace-record" key={item.id}>
+            <span>{item.title}</span>
+            <p>{item.text}</p>
+          </div>
+        ))
+      ) : (
+        <p>{empty}</p>
+      )}
+    </div>
+  )
+}
+
+const messagesById = (source: TelegramSource, ids: readonly string[]) =>
+  ids.flatMap((id) => source.messages.filter((message) => message.id === id))
+
+const personName = (id: string | null) =>
+  id ? `${id.charAt(0).toUpperCase()}${id.slice(1)}` : 'Unknown'
+
+const countLabel = (count: number, noun: string) =>
+  `${count} ${noun}${count === 1 ? '' : 's'}`
 
 function reit<T>(items: readonly T[] | undefined) {
   return Boolean(items?.length)

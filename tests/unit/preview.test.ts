@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import {
+  type PreviewProjectionCapture,
+  projectPreviewTrace,
+} from '../../poc/preview-projection'
 import artifact from '../../poc/preview-result.json'
 import { AGENT_GUIDE } from '../../src/preview/agent-example'
 import projection from '../../src/preview/generated/amber-real-preview'
@@ -32,6 +36,26 @@ describe('recorded preview projection', () => {
     expect(projection).toEqual(artifact.projection)
   })
 
+  it('derives the primary and related branches by identity after reordering', () => {
+    const reordered = structuredClone(artifact)
+    reordered.extraction.calls.reverse()
+    reordered.extraction.result.posts.reverse()
+    const selection = reordered.extraction.calls.find(
+      ({ task }) => task === 'selection',
+    )
+    selection?.output.candidates?.reverse()
+
+    const trace = projectPreviewTrace(
+      reordered as unknown as PreviewProjectionCapture,
+    )
+    expect(trace).toMatchObject({
+      authorId: 'alex',
+      project: 'Noted',
+      publication: { post: { id: 'batch-1:0' } },
+      related: [{ authorId: 'bea', project: 'Tab tidy' }],
+    })
+  })
+
   it('contains the exact grounded extraction and messaging evidence', () => {
     expect(projection.mode).toBe('recorded-real-model')
     expect(projection.model).toBe('gemini-3.8-flash-medium')
@@ -54,6 +78,73 @@ describe('recorded preview projection', () => {
         outcome: 'answered',
       }),
     ])
+    const selection = artifact.extraction.calls.find(
+      ({ task }) => task === 'selection',
+    )
+    const notedWriter = artifact.extraction.calls.find(
+      (call) =>
+        call.task === 'post' &&
+        call.input.work?.candidate.authorId === projection.trace.authorId,
+    )
+    if (!selection?.output.candidates)
+      throw new Error('Missing recorded selection call')
+    if (!notedWriter?.input.work)
+      throw new Error('Missing recorded Noted writer call')
+    const candidate = selection.output.candidates.find(
+      ({ authorId }) => authorId === projection.trace.authorId,
+    )
+    expect(projection.trace.selectedMessageIds).toEqual(candidate?.messageIds)
+    expect(projection.trace.context.existingPosts).toEqual(
+      notedWriter.input.posts,
+    )
+    expect(projection.trace.context.memories).toEqual(
+      notedWriter.input.memories,
+    )
+    expect(projection.trace.context.outstandingRequests).toEqual(
+      notedWriter.input.unaddressed,
+    )
+    expect(projection.trace.publication.output).toEqual({
+      existingPostId: notedWriter.output.existingPostId,
+      sources: notedWriter.output.sources,
+    })
+    const publishedPost = artifact.extraction.result.posts.find(
+      ({ id, authorId }) =>
+        id === projection.telegram.questions[0].postId &&
+        authorId === projection.trace.authorId,
+    )
+    if (!publishedPost) throw new Error('Missing recorded published post')
+    expect(projection.trace.publication.post).toEqual({
+      id: publishedPost.id,
+      title: publishedPost.title,
+      summary: publishedPost.summary,
+      detail: publishedPost.detail,
+    })
+    expect(projection.trace.question).toBe(
+      projection.telegram.questions[0].text,
+    )
+    const beaWriter = artifact.extraction.calls.find(
+      (call) =>
+        call.task === 'post' && call.input.work?.candidate.authorId === 'bea',
+    )
+    if (!beaWriter?.input.work)
+      throw new Error('Missing recorded Bea writer call')
+    expect(projection.trace.related[0]).toMatchObject({
+      authorId: 'bea',
+      messageIds: beaWriter.input.work.candidate.messageIds,
+      existingPosts: beaWriter.input.posts.map(({ id, title, summary }) => ({
+        id,
+        title,
+        summary,
+      })),
+    })
+    expect(projection.trace.context.observedTools).toEqual([
+      'amber/searchMessages',
+      'amber/searchPosts',
+      'amber/readMessages',
+    ])
+    expect(JSON.stringify(projection)).not.toMatch(
+      /accessToken|authorization|runtimeInventory|refreshToken|sessionCookie/i,
+    )
     expect(JSON.stringify(projection)).not.toMatch(/Atlas|Clipwise|Aurora/)
   })
 })
@@ -81,7 +172,7 @@ describe('guided preview', () => {
     ).toHaveLength(1)
   })
 
-  it('shows the fake source batch and its recorded ownership boundary', () => {
+  it('attaches the full recorded extraction trace to the question', () => {
     const state = scenario('extracted')
     const message = state.agentByUser.alex.messages[0]
     expect(message.text).toBe(projection.telegram.questions[0].text)
@@ -108,6 +199,9 @@ describe('guided preview', () => {
     expect(message.source?.outcomes.ignored).toEqual(
       expect.arrayContaining([expect.objectContaining({ messageId: '101' })]),
     )
+    expect(message.trace).toEqual(projection.trace)
+    expect(message.trace?.questionId).toBe(message.id)
+    expect(message.trace?.publication.post.id).toBe(message.postId)
     expect(state.posts.find(({ id }) => id === message.postId)?.detail).toBe(
       projection.telegram.posts.find(({ id }) => id === message.postId)?.detail,
     )

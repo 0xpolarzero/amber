@@ -28,6 +28,14 @@ const glyphs = {
   send: <path d="M12 19V5m-6 6 6-6 6 6" />,
   check: <path d="m5 12 4 4L19 6" />,
   telegram: <path d="m3 11 18-7-4 17-6-5-4 3v-6zM7 13 17 7l-6 9" />,
+  workflow: (
+    <>
+      <circle cx="6" cy="6" r="2" />
+      <circle cx="18" cy="12" r="2" />
+      <circle cx="6" cy="18" r="2" />
+      <path d="M8 6h2a2 2 0 0 1 2 2v2h4M8 18h2a2 2 0 0 0 2-2v-2h4" />
+    </>
+  ),
   x: <path d="m5 4 14 16M19 4 5 20M5 4h4l10 16h-4Z" />,
   spark: <path d="m12 3 2.3 6.7L21 12l-6.7 2.3L12 21l-2.3-6.7L3 12l6.7-2.3z" />,
   edit: <path d="m15 4 5 5M4 20l1-5L17 3l4 4L9 19z" />,

@@ -20,38 +20,73 @@ test('walks the recorded extraction and messaging guide without typing or waitin
   await expect(guide).toContainText(
     '1 of 6 · Recorded Gemini run · Fake Telegram',
   )
-  await expect(guide).toContainText('Invented Telegram source')
+  await expect(guide).toContainText('Workflow behind the question')
   await expect(
     page.locator(`#message-${preview.telegram.questions[0].id}`),
   ).toBeFocused()
-  const source = page.locator('details.telegram-source')
-  await expect(source).toHaveAttribute('open', '')
+  const trace = page.locator('details.workflow-trace')
+  await expect(trace).toHaveAttribute('open', '')
   const iconPosition = () =>
-    source.evaluate((element) => {
-      const sourceBounds = element.getBoundingClientRect()
-      return [...element.querySelectorAll('summary svg')].map((icon) => {
-        const bounds = icon.getBoundingClientRect()
-        return { x: bounds.x - sourceBounds.x, y: bounds.y - sourceBounds.y }
-      })
+    trace.evaluate((element) => {
+      const traceBounds = element.getBoundingClientRect()
+      return [...element.querySelectorAll(':scope > summary svg')].map(
+        (icon) => {
+          const bounds = icon.getBoundingClientRect()
+          return { x: bounds.x - traceBounds.x, y: bounds.y - traceBounds.y }
+        },
+      )
     })
   const expandedPositions = await iconPosition()
-  await source.locator('summary').click()
+  await trace.locator(':scope > summary').click()
   expect(await iconPosition()).toEqual(expandedPositions)
-  await source.locator('summary').click()
+  await trace.locator(':scope > summary').click()
   expect(await iconPosition()).toEqual(expandedPositions)
-  await expect(source).toContainText(preview.disclosure)
-  await expect(source).toContainText('carl · #105 · reply to #102')
-  await expect(source).toContainText('Does Noted understand Mandarin?')
-  await expect(source).toContainText('bea · updated')
-  await expect(source).toContainText('0 follow-up questions')
-  await expect(source).toContainText('#101 ignored')
+  await expect(trace).toContainText('Shared Telegram work selected')
+  await expect(trace).toContainText('Relevant context considered')
+  await expect(trace).toContainText('Accurate post published')
+  await expect(trace).toContainText('Unanswered fact asked')
+  await expect(trace).toContainText('Carl · #105 · reply to #102')
+  await expect(trace).toContainText('Does Noted understand Mandarin?')
+  await expect(trace).toContainText('#101')
+  const steps = trace.locator('details.workflow-trace-step')
+  await expect(steps.nth(0)).not.toHaveAttribute('open', '')
+  await steps.nth(0).locator(':scope > summary').click()
+  await expect(steps.nth(0)).toHaveAttribute('open', '')
+  await expect(steps.nth(1)).not.toHaveAttribute('open', '')
+  await steps.nth(1).locator(':scope > summary').click()
+  await expect(steps.nth(1)).toHaveAttribute('open', '')
+  await expect(steps.nth(0)).toHaveAttribute('open', '')
+  await expect(steps.nth(1)).toContainText(
+    'Keep my posts short and factual. No hype.',
+  )
+  await expect(steps.nth(1)).toContainText('amber/searchMessages')
+  await expect(steps.nth(1)).toContainText(
+    'no fetch or search result is claimed here',
+  )
+  await steps.nth(2).locator(':scope > summary').click()
+  await expect(steps.nth(2)).toContainText(
+    preview.telegram.posts.find(
+      ({ id }) => id === preview.telegram.questions[0].postId,
+    )?.detail ?? '',
+  )
+  await steps.nth(3).locator(':scope > summary').click()
+  await expect(steps.nth(3)).toContainText(preview.telegram.questions[0].text)
+  const related = trace.locator('details.trace-related')
+  await related.locator(':scope > summary').click()
+  await expect(related).toContainText('Same batch: Tab tidy')
+  await expect(related).toContainText('Bea · #103')
+  const recording = trace.locator('details.trace-recording')
+  await recording.locator(':scope > summary').click()
+  await expect(recording).toContainText(preview.disclosure)
   await expect(page.locator('.request-intent')).toHaveCount(0)
 
   const next = guide.getByRole('button', { name: 'Next', exact: true })
   await next.click()
   await expect(guide).toContainText('2 of 6 · Recorded Gemini run')
   await expect(
-    page.getByText(preview.telegram.questions[0].text, { exact: true }),
+    page
+      .locator(`#message-${preview.telegram.questions[0].id}`)
+      .locator('.chat-bubble'),
   ).toBeVisible()
   const recordedPost = preview.telegram.posts.find(
     ({ id }) => id === preview.telegram.questions[0].postId,
@@ -359,14 +394,14 @@ test('keeps the expanded memory panel above a usable composer on desktop and mob
   })
 })
 
-test('keeps the auto-revealed source, guide and composer usable on desktop and mobile', async ({
+test('keeps the auto-revealed trace, guide and composer usable on desktop and mobile', async ({
   page,
   isMobile,
 }) => {
   await page.goto('/agent')
   const guide = guideFor(page)
   await guide.getByRole('button', { name: 'Start', exact: true }).click()
-  await expect(page.locator('details.telegram-source')).toHaveAttribute(
+  await expect(page.locator('details.workflow-trace')).toHaveAttribute(
     'open',
     '',
   )
@@ -386,8 +421,8 @@ test('keeps the auto-revealed source, guide and composer usable on desktop and m
   ).toBeLessThanOrEqual(guideBounds?.y ?? 0)
   await page.screenshot({
     path: isMobile
-      ? '/private/tmp/amber-real-preview-mobile.png'
-      : '/private/tmp/amber-real-preview-desktop.png',
+      ? '/private/tmp/amber-question-trace-mobile.png'
+      : '/private/tmp/amber-question-trace-desktop.png',
     fullPage: true,
   })
 })

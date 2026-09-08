@@ -58,9 +58,9 @@ const recordedDiff = required(
 
 export const AGENT_GUIDE: readonly AgentGuideCheckpoint[] = [
   {
-    title: 'Invented Telegram source',
+    title: 'Workflow behind the question',
     notice:
-      'Inspect the fictional batch, including Carl’s reply, Bea’s separate post update, and ignored news chatter.',
+      'Open the recorded path from selected Telegram work through the published Noted post and unanswered fact.',
     scenarioId: 'extracted',
     targetMessageId: extractedQuestion.id,
     focusMessage: true,
@@ -237,6 +237,10 @@ function question(resolved = false): AgentMessage {
       messages: sourceMessages,
       outcomes: sourceOutcomes,
     },
+    trace:
+      captured.trace.questionId === extractedQuestion.id
+        ? captured.trace
+        : undefined,
   })
 }
 

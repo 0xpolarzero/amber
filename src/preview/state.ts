@@ -57,6 +57,58 @@ export type TelegramSource = {
     ignored: readonly { messageId: string; reason: string }[]
   }
 }
+export type WorkflowTrace = {
+  questionId: string
+  authorId: string
+  project: string
+  selectedMessageIds: readonly string[]
+  context: {
+    existingPosts: readonly {
+      id: string
+      title: string
+      summary: string
+    }[]
+    memories: readonly { id: string; text: string }[]
+    outstandingRequests: readonly {
+      id: string
+      text: string
+      intent: string
+      linkedPostId: string | null
+    }[]
+    observedTools: readonly string[]
+    observationScope: string
+  }
+  publication: {
+    post: {
+      id: string
+      title: string
+      summary: string
+      detail: string
+    }
+    output: {
+      existingPostId: string | null
+      sources: readonly { kind: string; messageId: string }[]
+    }
+  }
+  question: string
+  related: readonly {
+    authorId: string
+    project: string
+    messageIds: readonly string[]
+    existingPosts: readonly {
+      id: string
+      title: string
+      summary: string
+    }[]
+    resultPost: {
+      id: string
+      title: string
+      summary: string
+    }
+    outcome: 'created' | 'updated'
+  }[]
+  recording: { model: string; disclosure: string }
+}
 export type AgentMessage = {
   id: string
   sender: 'amber' | 'user'
@@ -76,6 +128,7 @@ export type AgentMessage = {
   usedMemories?: readonly AgentMemory[]
   usedHistory?: readonly string[]
   source?: TelegramSource
+  trace?: WorkflowTrace
 }
 export const isUnaddressed = (message: AgentMessage) =>
   message.sender === 'amber' &&
