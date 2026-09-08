@@ -370,7 +370,13 @@ function TelegramSourceDisclosure({
 }) {
   return (
     <details className="telegram-source" open={open}>
-      <summary>Source Telegram messages</summary>
+      <summary
+        aria-label="Source Telegram messages"
+        title="Source Telegram messages"
+      >
+        <Icon name="telegram" />
+        <span>Source Telegram messages</span>
+      </summary>
       <p className="telegram-source-disclosure">{source.disclosure}</p>
       <p className="telegram-source-batch">
         Batch {source.batchId} · group {source.groupId}
