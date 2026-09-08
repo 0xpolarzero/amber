@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test'
+import { openMoreControls } from './preview-controls'
 
 async function box(locator: Locator) {
   const bounds = await locator.boundingBox()
@@ -24,6 +25,7 @@ test.beforeEach(async ({ page }) => {
     throw error
   })
   await page.goto('/')
+  await openMoreControls(page)
   await expect(
     page.getByRole('button', { name: 'Filter by group' }),
   ).toBeVisible()

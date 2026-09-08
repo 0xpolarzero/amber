@@ -2566,12 +2566,24 @@ dialog::backdrop {
   margin-left: 0;
 }
 .request-state,
+.request-intent,
 .candidate-context {
   display: block;
   width: fit-content;
   margin: 0 0 6px 2px;
   font-size: 11px;
   color: var(--quiet);
+}
+.request-intent {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--secondary);
+}
+.request-intent.informational {
+  background: var(--soft);
 }
 .request-state.answered::before {
   content: "✓ ";
@@ -2750,38 +2762,179 @@ dialog::backdrop {
   background: var(--soft);
 }
 
-.preview-controls {
-  max-width: calc(100vw - 28px);
-  flex-wrap: wrap;
-  row-gap: 5px;
+.agent-guide {
+  left: 50%;
+  bottom: 14px;
+  display: block;
+  width: min(650px, calc(100vw - 28px));
+  max-width: none;
+  max-height: 46dvh;
+  padding: 10px 12px;
+  transform: translateX(-50%);
+  overflow-y: auto;
+  white-space: normal;
+  background: rgba(249, 249, 247, 0.985);
+  box-shadow: 0 6px 28px #0000000b;
 }
-.preview-controls > span:first-child {
+.guide-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.guide-copy {
+  min-width: 0;
+  flex: 1;
+}
+.guide-copy .guide-kicker {
+  display: block;
+  margin-bottom: 1px;
+  color: #777;
+  font-size: 9px;
   font-weight: 550;
-  color: #555;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
-.preview-controls label {
+.guide-copy > strong {
+  display: block;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.guide-copy p {
+  margin-top: 2px;
+  color: var(--secondary);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.guide-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 5px;
+}
+.agent-guide .guide-actions button,
+.guide-alternatives button {
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid #dededb;
+  border-radius: 7px;
+  background: var(--paper);
+  color: #555;
+  font-size: 10px;
+}
+.agent-guide .guide-actions .guide-primary {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: white;
+}
+.preview-more,
+.guide-alternatives {
+  margin-top: 7px;
+  border-top: 1px solid #e5e5e2;
+}
+.agent-guide:has(.preview-more[open]) .guide-main,
+.agent-guide:has(.preview-more[open]) .guide-alternatives {
+  display: none;
+}
+.agent-guide:has(.preview-more[open]) .preview-more {
+  margin-top: 0;
+  border-top: 0;
+}
+.agent-guide:has(.preview-more[open]) .preview-more > summary {
+  padding-top: 0;
+}
+.preview-more > summary,
+.guide-alternatives > summary {
+  width: fit-content;
+  min-height: 28px;
+  padding: 7px 2px 0;
+  cursor: pointer;
+  color: #777;
+  font-size: 9px;
+}
+.preview-more-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 7px 0 2px;
+}
+.preview-more-row label {
   display: flex;
   align-items: center;
   gap: 5px;
 }
-.preview-controls label > span {
+.preview-more-row label > span {
   color: #777;
 }
-.preview-controls .scenario-control {
+.preview-more-row .scenario-control {
   min-width: 0;
 }
-.preview-controls select {
+.preview-more-row select {
   max-width: 172px;
 }
-.preview-controls button {
+.preview-more-row button {
   min-height: 26px;
   padding: 2px 5px;
   border-left: 1px solid #ddd;
   color: #555;
   font-size: 10px;
 }
-.preview-controls button:hover:not(:disabled) {
+.preview-more-row button:hover:not(:disabled) {
   color: #111;
+}
+.guide-alternatives > div {
+  display: flex;
+  gap: 6px;
+  padding-top: 6px;
+}
+.guide-memory-evidence {
+  max-height: 128px;
+  margin-bottom: 10px;
+  padding: 8px 11px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--secondary);
+  font-size: 10px;
+}
+.guide-memory-evidence > summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 550;
+}
+.guide-memory-evidence > div {
+  padding-top: 7px;
+}
+.guide-memory-evidence p strong {
+  margin-right: 5px;
+}
+.guide-memory-evidence ol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  margin: 7px 0 0;
+  padding: 7px 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+.guide-memory-evidence li {
+  display: grid;
+  min-width: 0;
+}
+.guide-memory-evidence li strong {
+  color: var(--ink);
+  font-weight: 550;
+}
+.guide-memory-evidence li span {
+  overflow-wrap: anywhere;
+}
+.guide-active .agent-chat {
+  height: calc(100dvh - 220px);
+  min-height: 360px;
+}
+main.guide-active ~ .toast {
+  bottom: 128px;
 }
 
 @media (max-width: 600px) {
@@ -2797,26 +2950,38 @@ dialog::backdrop {
   .agent-header .memory-button {
     margin-left: 0;
   }
-  .preview-controls {
-    width: calc(100vw - 20px);
-    justify-content: center;
-    white-space: normal;
-    max-height: 92px;
-    overflow-y: auto;
-    scrollbar-width: thin;
+  .agent-guide {
+    bottom: 8px;
+    width: calc(100vw - 16px);
+    padding: 9px 10px;
   }
-  .preview-controls > span:first-child,
-  .preview-controls a {
-    display: none;
+  .guide-main {
+    flex-wrap: wrap;
+    gap: 6px;
   }
-  .preview-controls select {
+  .guide-copy {
+    flex-basis: 100%;
+  }
+  .guide-copy p {
+    display: block;
+  }
+  .guide-actions {
+    margin-left: auto;
+    gap: 3px;
+  }
+  .agent-guide .guide-actions button {
+    min-height: 38px;
+    padding: 5px 7px;
+  }
+  .preview-more-row select {
     max-width: 136px;
   }
-  .preview-controls .scenario-control select {
+  .preview-more-row .scenario-control select {
     max-width: 164px;
   }
-  .agent-chat {
-    height: calc(100dvh - 166px);
+  .guide-active .agent-chat {
+    height: calc(100dvh - 242px);
+    min-height: 320px;
   }
   .agent-chat .conversation-history {
     padding-bottom: 4px;
@@ -2826,5 +2991,8 @@ dialog::backdrop {
   }
   .post-update > summary {
     font-size: 11px;
+  }
+  .guide-memory-evidence ol {
+    grid-template-columns: 1fr;
   }
 }

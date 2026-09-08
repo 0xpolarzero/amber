@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test'
+import { openMoreControls } from './preview-controls'
 
 test.beforeEach(async ({ page }) => {
   page.on('pageerror', (error) => {
     throw error
   })
   await page.goto('/')
+  await openMoreControls(page)
   await expect(
     page.getByRole('button', { name: 'Filter by group' }),
   ).toBeVisible()

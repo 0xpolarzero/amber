@@ -1,15 +1,164 @@
 import { expect, type Page, test } from '@playwright/test'
+import { openMoreControls, selectPreviewAccount } from './preview-controls'
 
-const scenarios = (page: Page) =>
-  page.getByRole('combobox', { name: 'Agent scenario' })
+const scenarios = async (page: Page) => {
+  await openMoreControls(page)
+  return page.getByRole('combobox', { name: 'Agent scenario' })
+}
+
+test('walks the complete guided preview without typing or waiting', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const guide = page.getByRole('complementary', {
+    name: 'Amber guided preview',
+  })
+  await expect(
+    page.getByRole('combobox', { name: 'Agent scenario' }),
+  ).toBeHidden()
+  await guide.getByRole('button', { name: 'Start', exact: true }).click()
+  await expect(page).toHaveURL(/\/agent$/)
+  await expect(guide).toContainText('1 of 10 · Guided fixture')
+  await expect(guide).toContainText('New requests')
+  await expect(page.locator('#message-request-license')).toBeFocused()
+  await expect(page.getByText('Request', { exact: true })).toBeVisible()
+  await expect(
+    page.getByText('Question', { exact: true }).first(),
+  ).toBeVisible()
+  await expect(page.getByText('Suggestion', { exact: true })).toBeVisible()
+  await expect(page.getByText('Information', { exact: true })).toBeVisible()
+
+  const next = guide.getByRole('button', { name: 'Next', exact: true })
+  await next.click()
+  await expect(guide).toContainText('2 of 10 · Guided fixture')
+  await expect(guide).toContainText('A turn starts')
+  const tasks = page.getByRole('list', { name: 'Task progress' })
+  await expect(tasks).toContainText('Plan queries: Running')
+  const composer = page.getByRole('textbox', { name: 'Message Amber' })
+  await expect(composer).toHaveValue(
+    'I can draft the next message while this turn finishes.',
+  )
+  await expect(
+    page.getByRole('button', { name: 'Send message' }),
+  ).toBeDisabled()
+  await composer.fill('A stale draft.')
+  await guide.getByRole('button', { name: 'Back', exact: true }).click()
+  await next.click()
+  await expect(composer).toHaveValue(
+    'I can draft the next message while this turn finishes.',
+  )
+
+  await next.click()
+  await expect(guide).toContainText('3 of 10 · Guided fixture')
+  await expect(page.getByText('Finishing in the background')).toBeVisible()
+  await expect(
+    page.getByText(
+      'I updated Atlas to say it works offline and kept the wording concise.',
+    ),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('region', { name: 'Changes to Atlas' }),
+  ).toBeVisible()
+  await expect(tasks.locator('[data-status="running"]')).toHaveText([
+    'Update memory: Running',
+    'Resolve requests: Running',
+  ])
+
+  await next.click()
+  await expect(guide).toContainText('4 of 10 · Guided fixture')
+  await expect(page.getByText('Ignored', { exact: true })).toBeVisible()
+  await expect(
+    page.getByText('Answered', { exact: true }).first(),
+  ).toBeVisible()
+  await expect(page.getByText('Deferred · still open')).toBeVisible()
+  await expect(
+    page.getByText('Created Clipwise', { exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('region', { name: 'Changes to Clipwise' }),
+  ).toBeVisible()
+
+  await next.click()
+  await expect(guide).toContainText('5 of 10 · Guided fixture')
+  await expect(page.getByText('3 posts changed', { exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('region', { name: 'Changes to Atlas' }),
+  ).toBeVisible()
+  const memoryHistory = page.getByRole('list', { name: 'Memory history' })
+  await expect(memoryHistory).toContainText('Preference created')
+  await expect(memoryHistory).toContainText('Preference replaced')
+  await expect(memoryHistory).toContainText('Preference deleted')
+  await expect(page.getByText('Earlier message', { exact: true })).toBeVisible()
+  await expect(
+    page.getByText('Aurora should remain invite-only.', { exact: true }),
+  ).toBeVisible()
+
+  await next.click()
+  await expect(guide).toContainText('6 of 10 · Guided fixture')
+  await expect(page.getByText('Clipwise · details needed')).toBeVisible()
+  await expect(
+    page.getByRole('region', { name: 'Applied post changes' }),
+  ).toHaveCount(0)
+
+  await next.click()
+  await expect(guide).toContainText('7 of 10 · Guided fixture')
+  await expect(page.getByText('1 post created', { exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('region', { name: 'Changes to Clipwise' }),
+  ).toBeVisible()
+
+  await next.click()
+  await expect(guide).toContainText('8 of 10 · Guided fixture')
+  await expect(page.getByText(/Nothing was published/)).toBeVisible()
+  await expect(
+    page.getByRole('region', { name: 'Applied post changes' }),
+  ).toHaveCount(0)
+
+  await next.click()
+  await expect(guide).toContainText('9 of 10 · Guided fixture')
+  await expect(
+    page.getByRole('button', { name: 'Retry memory save' }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('region', { name: 'Changes to Atlas' }),
+  ).toBeVisible()
+  await guide.getByText('Retry safeguards', { exact: true }).click()
+  await guide.getByRole('button', { name: 'Retry limit' }).click()
+  await expect(
+    page.getByText(/Retry limit reached\. Your answer/),
+  ).toBeVisible()
+  await guide.getByRole('button', { name: 'Stale retry' }).click()
+  await expect(page.getByText(/newer turn has started/)).toBeVisible()
+
+  await next.click()
+  await expect(guide).toContainText('10 of 10 · Guided fixture')
+  await expect(tasks).toContainText('Update memory: Complete')
+  await expect(tasks).toContainText('Resolve requests: Complete')
+  await expect(
+    page.getByRole('button', { name: /Preference replaced/ }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Retry memory save' }),
+  ).toHaveCount(0)
+
+  await next.click()
+  await expect(guide).toContainText('10 of 10 · Complete')
+  await expect(
+    guide.getByRole('button', { name: 'Replay', exact: true }),
+  ).toBeVisible()
+  await guide.getByRole('button', { name: 'Back', exact: true }).click()
+  await expect(guide).toContainText('10 of 10 · Guided fixture')
+  await next.click()
+  await guide.getByRole('button', { name: 'Replay', exact: true }).click()
+  await expect(guide).toContainText('1 of 10 · Guided fixture')
+  await expect(page.locator('#message-request-license')).toBeFocused()
+})
 
 test('shows the grounded private conversation, applied post changes and memory history', async ({
   page,
 }) => {
   await page.goto('/agent')
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('author')
+  await selectPreviewAccount(page, 'author')
   await expect(page.getByRole('heading', { name: 'Amber' })).toBeVisible()
   await expect(
     page.getByText('One private conversation across your posts.'),
@@ -64,10 +213,8 @@ test('switches and resets stable scenarios and cycles through every pending requ
   page,
 }) => {
   await page.goto('/agent')
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('author')
-  const selector = scenarios(page)
+  await selectPreviewAccount(page, 'author')
+  const selector = await scenarios(page)
   await selector.selectOption('incoming')
   const next = page.getByRole('button', {
     name: 'Next pending request (4 open)',
@@ -100,7 +247,7 @@ test('manual progress publishes the response before both background jobs finish 
   page,
 }) => {
   await page.goto('/agent')
-  await scenarios(page).selectOption('stage-planning')
+  await (await scenarios(page)).selectOption('stage-planning')
   const composer = page.getByRole('textbox', { name: 'Message Amber' })
   const send = page.getByRole('button', { name: 'Send message' })
   await composer.fill('Keep this draft while the current turn finishes.')
@@ -141,7 +288,7 @@ test('background retry preserves the answer and diffs while stale and exhausted 
   page,
 }) => {
   await page.goto('/agent')
-  const selector = scenarios(page)
+  const selector = await scenarios(page)
   await selector.selectOption('failure-memory')
   const answer = page.getByText(
     'I updated Atlas to say it works offline and kept the wording concise.',
@@ -183,7 +330,7 @@ test('candidate clarification does not publish, while candidate publication crea
   page,
 }) => {
   await page.goto('/agent')
-  const selector = scenarios(page)
+  const selector = await scenarios(page)
   await selector.selectOption('candidate-clarify')
   await expect(
     page.getByText('Clipwise · details needed', { exact: true }),
@@ -201,26 +348,35 @@ test('candidate clarification does not publish, while candidate publication crea
   ).toBeVisible()
 })
 
-test('captures the finished design on desktop and mobile without overflow', async ({
+test('keeps the guide above the composer on desktop and mobile', async ({
   page,
   isMobile,
 }) => {
   await page.goto('/agent')
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('author')
+  const guide = page.getByRole('complementary', {
+    name: 'Amber guided preview',
+  })
+  await guide.getByRole('button', { name: 'Start', exact: true }).click()
+  const next = guide.getByRole('button', { name: 'Next', exact: true })
+  for (let index = 0; index < 4; index++) await next.click()
   await expect(
     page.getByRole('button', { name: 'Send message' }),
   ).toBeInViewport()
+  await expect(next).toBeInViewport()
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true)
+  const composer = await page.locator('.reply-composer').boundingBox()
+  const guideBounds = await guide.boundingBox()
+  expect((composer?.y ?? 0) + (composer?.height ?? 0)).toBeLessThanOrEqual(
+    guideBounds?.y ?? 0,
+  )
   await page.screenshot({
     path: isMobile
-      ? '/private/tmp/amber-agent-ui-mobile.png'
-      : '/private/tmp/amber-agent-ui-desktop.png',
+      ? '/private/tmp/amber-guide-mobile.png'
+      : '/private/tmp/amber-guide-desktop.png',
     fullPage: true,
   })
 })

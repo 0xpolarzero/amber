@@ -4,6 +4,7 @@ import { AgentMemoryDialog } from '../components/agent-memory'
 import { AgentProgress } from '../components/agent-progress'
 import { Icon } from '../components/icon'
 import { ReplyComposer } from '../components/reply-composer'
+import { AGENT_GUIDE } from '../preview/agent-example'
 import { usePreview } from '../preview/provider'
 import {
   type AgentConversation,
@@ -15,9 +16,16 @@ import {
 } from '../preview/state'
 
 export function AgentPage({ postId }: { postId?: string }) {
-  const { user, agent, openDialog } = usePreview()
+  const { state, user, agent, openDialog } = usePreview()
   if (user && agent)
-    return <AgentChat key={user} user={user} agent={agent} postId={postId} />
+    return (
+      <AgentChat
+        key={`${user}-${state.guideStep}-${state.scenarioRevision}`}
+        user={user}
+        agent={agent}
+        postId={postId}
+      />
+    )
   return (
     <div className="empty">
       <div className="empty-icon">
@@ -54,6 +62,8 @@ function AgentChat({
   const nearBottom = useRef(true)
   const previousCount = useRef(0)
   const pending = agent.messages.filter(isUnaddressed)
+  const guide =
+    state.guideStep === null ? undefined : AGENT_GUIDE[state.guideStep]
   const context = [...state.posts, ...state.agentPosts].find(
     (post) => post.id === postId,
   )
@@ -74,6 +84,12 @@ function AgentChat({
     }
     previousCount.current = agent.messages.length
   }, [agent.messages])
+  useLayoutEffect(() => {
+    if (!guide?.targetMessageId) return
+    const message = document.getElementById(`message-${guide.targetMessageId}`)
+    message?.scrollIntoView({ block: 'start' })
+    if (guide.focusMessage) message?.focus({ preventScroll: true })
+  }, [guide])
   const jumpToPending = (direction: 1 | -1) => {
     if (!pending.length) return
     const next = (pendingIndex + direction + pending.length) % pending.length
@@ -174,14 +190,25 @@ function AgentChat({
                   : message.candidate.status}
               </span>
             ) : null}
+            {message.sender === 'amber' && message.intent ? (
+              <span className={`request-intent ${message.intent}`}>
+                {message.intent === 'informational'
+                  ? 'Information'
+                  : message.intent[0].toUpperCase() + message.intent.slice(1)}
+              </span>
+            ) : null}
             <MessageState message={message} />
             <p className="chat-bubble">{message.text}</p>
             {message.changes?.length ? (
               <AppliedChanges
                 changes={message.changes}
-                expanded={
-                  message.id === latestChangeMessage &&
-                  message.changes.length === 1
+                expandedPostId={
+                  message.id === guide?.targetMessageId
+                    ? guide.expandedChangePostId
+                    : message.id === latestChangeMessage &&
+                        message.changes.length === 1
+                      ? message.changes[0].postId
+                      : undefined
                 }
               />
             ) : null}
@@ -192,7 +219,12 @@ function AgentChat({
               />
             ) : null}
             {message.usedMemories?.length || message.usedHistory?.length ? (
-              <details className="context-used">
+              <details
+                className="context-used"
+                open={
+                  guide?.revealContext && message.id === guide.targetMessageId
+                }
+              >
                 <summary>Context used</summary>
                 {message.usedMemories?.map((memory) => (
                   <p key={memory.id}>
@@ -226,7 +258,10 @@ function AgentChat({
         </button>
       ) : null}
       <div className="conversation-footer">
-        {agent.run ? <AgentProgress run={agent.run} /> : null}
+        {agent.run ? (
+          <AgentProgress run={agent.run} expanded={guide?.revealProgress} />
+        ) : null}
+        {guide?.revealMemory ? <GuideMemoryEvidence agent={agent} /> : null}
         {postId ? (
           <div className="agent-post-context">
             <span>About {context?.project ?? 'an unavailable post'}</span>
@@ -339,10 +374,10 @@ function PostReference({ postId }: { postId: string }) {
 
 function AppliedChanges({
   changes,
-  expanded,
+  expandedPostId,
 }: {
   changes: readonly PostChange[]
-  expanded: boolean
+  expandedPostId?: string
 }) {
   return (
     <section className="applied-changes" aria-label="Applied post changes">
@@ -358,10 +393,34 @@ function AppliedChanges({
         <PostChangeDiff
           key={change.postId}
           change={change}
-          expanded={expanded}
+          expanded={change.postId === expandedPostId}
         />
       ))}
     </section>
+  )
+}
+
+function GuideMemoryEvidence({ agent }: { agent: AgentConversation }) {
+  return (
+    <details className="guide-memory-evidence" open>
+      <summary>Memory used and saved</summary>
+      <div>
+        <p>
+          <strong>Current</strong>{' '}
+          {agent.memories.map((memory) => memory.text).join(' · ')}
+        </p>
+        <ol aria-label="Memory history">
+          {agent.memoryHistory.map((event) => (
+            <li
+              key={`${event.id}-${event.kind}-${event.before ?? ''}-${event.after ?? ''}`}
+            >
+              <strong>{memoryEventLabel(event)}</strong>
+              <span>{event.after ?? event.before}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </details>
   )
 }
 

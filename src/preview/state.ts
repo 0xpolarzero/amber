@@ -2,6 +2,7 @@ import { Schema } from 'effect'
 import { AnswerText, CommentText, EditPost, MemoryText } from '../domain/forms'
 import type { Feed, Post } from '../domain/post'
 import {
+  AGENT_GUIDE,
   type AgentScenarioId,
   applyFixturePostChanges,
   buildAgentScenario,
@@ -113,11 +114,19 @@ export type PreviewState = Feed & {
   fixtureFeed: Feed
   scenarioId: AgentScenarioId
   scenarioRevision: number
+  guideStep: number | null
+  guideComplete: boolean
   agentPosts: readonly Post[]
 }
 export type PreviewAction =
   | { type: 'role'; role: PreviewRole }
   | { type: 'loadScenario'; id: AgentScenarioId }
+  | { type: 'loadGuideStep'; step: number }
+  | { type: 'completeGuide' }
+  | {
+      type: 'loadGuideAlternative'
+      id: 'retry-exhausted' | 'retry-stale'
+    }
   | { type: 'save'; postId: string }
   | { type: 'readAgent' }
   | { type: 'draftMessage'; text: string }
@@ -182,6 +191,8 @@ export function createPreviewState(
     fixtureFeed: feed,
     scenarioId: selected,
     scenarioRevision: 0,
+    guideStep: null,
+    guideComplete: false,
     agentPosts: scenario.posts,
   }
 }
@@ -321,6 +332,56 @@ export function previewReducer(
   if (action.type === 'loadScenario') {
     const next = createPreviewState(state.fixtureFeed, action.id)
     return { ...next, scenarioRevision: state.scenarioRevision + 1 }
+  }
+  if (action.type === 'loadGuideStep') {
+    const checkpoint = AGENT_GUIDE[action.step]
+    if (!checkpoint) return state
+    let next = createPreviewState(state.fixtureFeed, checkpoint.scenarioId)
+    if (checkpoint.draft) {
+      next = {
+        ...next,
+        agentByUser: {
+          ...next.agentByUser,
+          alex: { ...next.agentByUser.alex, draft: checkpoint.draft },
+        },
+      }
+    }
+    if (checkpoint.recovery === 'memory') {
+      next = previewReducer(next, {
+        type: 'retryBackground',
+        task: 'memory',
+      })
+      const run = next.agentByUser.alex.run
+      if (run)
+        next = previewReducer(next, {
+          type: 'advanceRun',
+          userId: 'alex',
+          messageId: run.messageId,
+          stage: run.stage,
+          memory: run.memory,
+          addressing: run.addressing,
+        })
+    }
+    return {
+      ...next,
+      guideStep: action.step,
+      guideComplete: false,
+      scenarioRevision: state.scenarioRevision + 1,
+    }
+  }
+  if (action.type === 'completeGuide') {
+    if (state.guideStep !== AGENT_GUIDE.length - 1) return state
+    return { ...state, guideComplete: true }
+  }
+  if (action.type === 'loadGuideAlternative') {
+    if (state.guideStep === null) return state
+    const next = createPreviewState(state.fixtureFeed, action.id)
+    return {
+      ...next,
+      guideStep: state.guideStep,
+      guideComplete: false,
+      scenarioRevision: state.scenarioRevision + 1,
+    }
   }
   if (action.type === 'role') return { ...state, role: action.role }
   if (action.type === 'advanceRun') {

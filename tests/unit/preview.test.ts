@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { AGENT_GUIDE } from '../../src/preview/agent-example'
 import {
   createPreviewState,
   isAgentBusy,
@@ -25,6 +26,54 @@ function tick(state: PreviewState) {
 }
 
 describe('agent fixtures', () => {
+  it('loads every guide checkpoint deterministically and recovers through the existing retry path', () => {
+    let state = createPreviewState(fixtures)
+    expect(state.role).toBe('visitor')
+    expect(state.guideStep).toBeNull()
+    expect(AGENT_GUIDE).toHaveLength(10)
+    for (let step = 0; step < AGENT_GUIDE.length; step++) {
+      state = previewReducer(state, { type: 'loadGuideStep', step })
+      expect(state.role).toBe('author')
+      expect(state.guideStep).toBe(step)
+      expect(state.agentByUser.alex.draft).toBe(AGENT_GUIDE[step].draft ?? '')
+    }
+    expect(state.agentByUser.alex.run).toMatchObject({
+      status: 'complete',
+      memory: 'done',
+      addressing: 'done',
+      memoryAttempts: 2,
+    })
+    expect(
+      state.agentByUser.alex.messages.filter(
+        ({ id }) => id === 'preview-turn:assistant',
+      ),
+    ).toHaveLength(1)
+    expect(
+      state.posts.find(({ project }) => project === 'Atlas')?.summary,
+    ).toContain('offline')
+  })
+
+  it('resets guide state on Back, completion, Replay and raw scenario selection', () => {
+    let state = createPreviewState(fixtures)
+    state = previewReducer(state, { type: 'loadGuideStep', step: 1 })
+    state = previewReducer(state, {
+      type: 'draftMessage',
+      text: 'Discard this stale draft.',
+    })
+    state = previewReducer(state, { type: 'loadGuideStep', step: 0 })
+    expect(state.agentByUser.alex.draft).toBe('')
+    state = previewReducer(state, {
+      type: 'loadGuideStep',
+      step: AGENT_GUIDE.length - 1,
+    })
+    state = previewReducer(state, { type: 'completeGuide' })
+    expect(state.guideComplete).toBe(true)
+    state = previewReducer(state, { type: 'loadGuideStep', step: 0 })
+    expect(state.guideComplete).toBe(false)
+    state = previewReducer(state, { type: 'loadScenario', id: 'empty' })
+    expect(state.guideStep).toBeNull()
+  })
+
   it('grounds the default in the accepted two-turn result with consistent post changes', () => {
     const state = scenario('rich-complete')
     const agent = state.agentByUser.alex

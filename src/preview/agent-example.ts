@@ -41,6 +41,110 @@ export const AGENT_SCENARIOS = [
 
 export type AgentScenarioId = (typeof AGENT_SCENARIOS)[number][0]
 
+export type AgentGuideCheckpoint = {
+  title: string
+  notice: string
+  scenarioId: AgentScenarioId
+  targetMessageId?: string
+  focusMessage?: boolean
+  draft?: string
+  revealProgress?: boolean
+  revealMemory?: boolean
+  revealContext?: boolean
+  expandedChangePostId?: string
+  recovery?: 'memory'
+}
+
+export const AGENT_GUIDE: readonly AgentGuideCheckpoint[] = [
+  {
+    title: 'New requests',
+    notice:
+      'Notice how questions, requests, and suggestions need a reply while information does not.',
+    scenarioId: 'incoming',
+    targetMessageId: 'request-license',
+    focusMessage: true,
+  },
+  {
+    title: 'A turn starts',
+    notice:
+      'The task list exposes planning, retrieval, generation, and publication while your next draft stays editable.',
+    scenarioId: 'stage-planning',
+    targetMessageId: 'preview-turn:user',
+    draft: 'I can draft the next message while this turn finishes.',
+    revealProgress: true,
+  },
+  {
+    title: 'Answer first',
+    notice:
+      'The answer and Atlas edit are visible while memory and request resolution finish in the background.',
+    scenarioId: 'stage-background-both',
+    targetMessageId: 'preview-turn:assistant',
+    draft: 'I can draft the next message while this turn finishes.',
+    revealProgress: true,
+    expandedChangePostId: 'atlas-preview',
+  },
+  {
+    title: 'One reply, several outcomes',
+    notice:
+      'Amber answers two requests, sets a suggestion aside, updates Noted, and creates Clipwise; the export question stays open.',
+    scenarioId: 'rich-complete',
+    targetMessageId: 'live-turn-1:assistant',
+    expandedChangePostId: 'clipwise-preview',
+  },
+  {
+    title: 'Context carries forward',
+    notice:
+      'The follow-up changes three posts and shows the saved preference, its full history, and the older message Amber retrieved.',
+    scenarioId: 'rich-complete',
+    targetMessageId: 'live-turn-2:assistant',
+    revealMemory: true,
+    revealContext: true,
+    expandedChangePostId: 'atlas-preview',
+  },
+  {
+    title: 'Missing evidence',
+    notice:
+      'Amber asks for the missing license instead of publishing an unsupported candidate.',
+    scenarioId: 'candidate-clarify',
+    targetMessageId: 'clarify:assistant',
+  },
+  {
+    title: 'Candidate published',
+    notice:
+      'Once the facts are sufficient, Amber publishes the new Clipwise post without a separate approval step.',
+    scenarioId: 'candidate-publish',
+    targetMessageId: 'change:assistant',
+    expandedChangePostId: 'clipwise-preview',
+  },
+  {
+    title: 'Safe foreground failure',
+    notice:
+      'Your message stays in the chat, but no answer or post changes are published.',
+    scenarioId: 'failure-before-publication',
+    targetMessageId: 'preview-turn:user',
+    revealProgress: true,
+  },
+  {
+    title: 'Background failure',
+    notice:
+      'The answer and edit stay saved, and Retry offers only the unfinished memory task.',
+    scenarioId: 'failure-memory',
+    targetMessageId: 'preview-turn:assistant',
+    revealProgress: true,
+    expandedChangePostId: 'atlas-preview',
+  },
+  {
+    title: 'Recovered safely',
+    notice:
+      'The same retry path completes memory without repeating the answer, post edit, or finished request task.',
+    scenarioId: 'failure-memory',
+    targetMessageId: 'preview-turn:assistant',
+    revealProgress: true,
+    expandedChangePostId: 'atlas-preview',
+    recovery: 'memory',
+  },
+]
+
 export type AgentScenario = {
   role: PreviewRole
   conversation: AgentConversation
@@ -297,11 +401,15 @@ function data(feed: Feed) {
 
 function requests(): readonly AgentMessage[] {
   return [
-    amber('request-license', 'Which license will Clipwise use?', {
-      needsReply: true,
-      intent: 'question',
-      candidate: { name: 'Clipwise', status: 'pending' },
-    }),
+    amber(
+      'request-license',
+      'Please confirm which license Clipwise will use.',
+      {
+        needsReply: true,
+        intent: 'request',
+        candidate: { name: 'Clipwise', status: 'pending' },
+      },
+    ),
     amber('request-language', 'Does Noted support Mandarin?', {
       needsReply: true,
       intent: 'question',

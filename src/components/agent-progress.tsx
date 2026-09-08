@@ -37,7 +37,13 @@ const backgroundLabel = (status: BackgroundStatus) =>
           ? 'Retry limit reached'
           : 'Queued'
 
-export function AgentProgress({ run }: { run: AgentRun }) {
+export function AgentProgress({
+  run,
+  expanded = false,
+}: {
+  run: AgentRun
+  expanded?: boolean
+}) {
   const { dispatch } = usePreview()
   const current =
     run.status === 'failed'
@@ -61,7 +67,7 @@ export function AgentProgress({ run }: { run: AgentRun }) {
   return (
     <details
       className="agent-progress"
-      open={run.status === 'running' || needsAttention}
+      open={expanded || run.status === 'running' || needsAttention}
     >
       <summary>
         <span>Turn progress</span>

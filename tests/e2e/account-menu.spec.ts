@@ -1,13 +1,12 @@
 import { expect, test } from '@playwright/test'
+import { openMoreControls, selectPreviewAccount } from './preview-controls'
 
 test.beforeEach(async ({ page }) => {
   page.on('pageerror', (error) => {
     throw error
   })
   await page.goto('/')
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('author')
+  await selectPreviewAccount(page, 'author')
 })
 
 test('account dropdown contains working profile and sign-out actions', async ({
@@ -47,9 +46,8 @@ test('account dropdown contains working profile and sign-out actions', async ({
   await expect(page.getByRole('heading', { name: 'Alex Chen' })).toBeVisible()
   await expect(menu).toBeHidden()
   await trigger.click()
-  await page
-    .getByRole('combobox', { name: 'Preview account' })
-    .selectOption('member')
+  await openMoreControls(page)
+  await selectPreviewAccount(page, 'member')
   await expect(menu).toBeHidden()
   await trigger.click()
   await expect(
