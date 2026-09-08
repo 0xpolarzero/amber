@@ -25,10 +25,10 @@ jobs:
           cache: pnpm
           cache-dependency-path: |
             pnpm-lock.yaml
-            poc/telegram/pnpm-lock.yaml
+            poc/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --dir poc/telegram install --frozen-lockfile
+      - run: pnpm --dir poc install --frozen-lockfile
       - run: pnpm check
-      - run: pnpm --dir poc/telegram test
+      - run: pnpm --dir poc test
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
