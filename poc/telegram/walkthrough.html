@@ -1,0 +1,2595 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Amber Telegram PoC · Recorded flow walkthrough</title>
+    <style>
+    :root {
+      --ink: #202020;
+      --secondary: #5f5f5f;
+      --quiet: #73736f;
+      --line: #e8e8e3;
+      --line-strong: #d7d7cf;
+      --soft: #f6f6f4;
+      --paper: #fff;
+      --amber: #b96808;
+      --amber-deep: #7a4100;
+      --amber-soft: #fff4df;
+      --amber-line: #edc98a;
+      --green: #21643a;
+      --green-soft: #edf8f0;
+      --blue-soft: #eef5fa;
+      --shadow: 0 14px 40px rgb(32 32 32 / 0.07);
+      --radius: 16px;
+      --content: 1080px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 116px;
+    }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font:
+        15px / 1.58 -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a {
+      color: inherit;
+    }
+    a:focus-visible,
+    summary:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--amber);
+      outline-offset: 3px;
+    }
+    p,
+    h1,
+    h2,
+    h3,
+    h4 {
+      margin: 0;
+    }
+    code,
+    pre,
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    code {
+      padding: 0.12em 0.36em;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--soft);
+      font-size: 0.88em;
+    }
+    ::selection {
+      background: #ffe2ae;
+    }
+
+    .skip {
+      position: fixed;
+      z-index: 50;
+      top: -60px;
+      left: 16px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: white;
+    }
+    .skip:focus {
+      top: 10px;
+    }
+
+    .topbar {
+      position: sticky;
+      z-index: 20;
+      top: 0;
+      border-bottom: 1px solid var(--line);
+      background: rgb(255 255 255 / 0.94);
+      backdrop-filter: blur(14px);
+    }
+    .topbar-inner {
+      max-width: calc(var(--content) + 64px);
+      min-height: 68px;
+      margin: auto;
+      padding: 10px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .brand {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: baseline;
+      gap: 9px;
+      text-decoration: none;
+      font-weight: 720;
+      letter-spacing: -0.04em;
+      font-size: 21px;
+    }
+    .brand-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+    .step-nav {
+      margin-left: auto;
+      display: flex;
+      gap: 3px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .step-nav::-webkit-scrollbar {
+      display: none;
+    }
+    .step-nav a {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 7px;
+      color: var(--quiet);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 620;
+    }
+    .step-nav a:hover {
+      background: var(--soft);
+      color: var(--ink);
+    }
+
+    main {
+      overflow: clip;
+    }
+    .wrap {
+      width: min(var(--content), calc(100% - 48px));
+      margin-inline: auto;
+    }
+    .hero {
+      padding: 84px 0 64px;
+    }
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--amber-deep);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 18px;
+      height: 2px;
+      background: var(--amber);
+    }
+    h1 {
+      max-width: 850px;
+      margin-top: 17px;
+      font-size: clamp(44px, 7vw, 76px);
+      line-height: 0.98;
+      letter-spacing: -0.065em;
+      font-weight: 720;
+    }
+    .lede {
+      max-width: 760px;
+      margin-top: 27px;
+      color: var(--secondary);
+      font-size: clamp(17px, 2vw, 21px);
+      line-height: 1.55;
+    }
+    .lede strong {
+      color: var(--ink);
+      font-weight: 650;
+    }
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 28px;
+    }
+    .tag,
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 4px 10px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: white;
+      color: var(--secondary);
+      font-size: 12px;
+      font-weight: 620;
+    }
+    .tag.live {
+      border-color: var(--amber-line);
+      background: var(--amber-soft);
+      color: var(--amber-deep);
+    }
+    .tag.live::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+
+    .scoreboard {
+      margin-top: 52px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .score {
+      min-width: 0;
+      padding: 18px 16px 17px;
+      border-right: 1px solid var(--line);
+      background: #fff;
+    }
+    .score:last-child {
+      border: 0;
+    }
+    .score b {
+      display: block;
+      font-size: 25px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+    .score span {
+      display: block;
+      margin-top: 7px;
+      color: var(--quiet);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    .truth-note {
+      margin-top: 22px;
+      padding: 17px 19px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 13px;
+      border-left: 3px solid var(--amber);
+      background: var(--amber-soft);
+      color: #57360f;
+      border-radius: 3px 11px 11px 3px;
+    }
+    .truth-note .icon {
+      font-size: 17px;
+      line-height: 1.4;
+    }
+    .truth-note strong {
+      color: var(--amber-deep);
+    }
+
+    .section {
+      padding: 86px 0;
+      border-top: 1px solid var(--line);
+    }
+    .section.soft {
+      background: var(--soft);
+    }
+    .section-head {
+      display: grid;
+      grid-template-columns: 104px minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+      margin-bottom: 38px;
+    }
+    .step-label {
+      padding-top: 8px;
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    h2 {
+      font-size: clamp(30px, 4vw, 45px);
+      line-height: 1.08;
+      letter-spacing: -0.045em;
+      font-weight: 700;
+    }
+    .section-intro {
+      max-width: 740px;
+      margin-top: 13px;
+      color: var(--secondary);
+      font-size: 17px;
+    }
+    h3 {
+      font-size: 20px;
+      line-height: 1.25;
+      letter-spacing: -0.025em;
+      font-weight: 680;
+    }
+    h4 {
+      font-size: 14px;
+      line-height: 1.3;
+      font-weight: 700;
+    }
+    .muted {
+      color: var(--quiet);
+    }
+    .small {
+      font-size: 12px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+      gap: 26px;
+      align-items: start;
+    }
+    .equal-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .card {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: 0 8px 26px rgb(32 32 32 / 0.035);
+    }
+    .card-pad {
+      padding: 24px;
+    }
+    .card-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .card-kicker {
+      margin-bottom: 6px;
+      color: var(--quiet);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .chat {
+      padding: 18px;
+      background: #f4f1ea;
+      background-image: radial-gradient(rgb(185 104 8 / 0.06) 0.8px, transparent 0.8px);
+      background-size: 14px 14px;
+    }
+    .chat-top {
+      margin: -18px -18px 18px;
+      padding: 16px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e2ded4;
+      background: rgb(255 255 255 / 0.86);
+    }
+    .chat-title {
+      font-weight: 690;
+    }
+    .bubble-row {
+      display: flex;
+      align-items: end;
+      gap: 9px;
+      margin: 12px 0;
+    }
+    .avatar {
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgb(0 0 0 / 0.06);
+      border-radius: 50%;
+      background: #fff;
+      color: var(--quiet);
+      font-size: 10px;
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+    .bubble {
+      position: relative;
+      max-width: 82%;
+      padding: 10px 12px 9px;
+      border: 1px solid #e5e2da;
+      border-radius: 13px 13px 13px 4px;
+      background: #fff;
+      box-shadow: 0 2px 7px rgb(32 32 32 / 0.045);
+    }
+    .bubble.old {
+      opacity: 0.7;
+      border-style: dashed;
+    }
+    .bubble.reply {
+      border-left: 3px solid var(--amber-line);
+    }
+    .bubble-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: center;
+      margin-bottom: 3px;
+      font-size: 10px;
+    }
+    .author {
+      color: var(--amber-deep);
+      font-weight: 760;
+    }
+    .message-id {
+      color: var(--quiet);
+      font-variant-numeric: tabular-nums;
+    }
+    .status {
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-weight: 730;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .status.old {
+      background: #eeeeea;
+      color: var(--quiet);
+    }
+    .reply-line {
+      margin-bottom: 5px;
+      color: var(--amber-deep);
+      font-size: 10px;
+      font-weight: 650;
+    }
+    .bubble p {
+      overflow-wrap: anywhere;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .stack {
+      display: grid;
+      gap: 16px;
+    }
+    .context-card {
+      padding: 19px;
+    }
+    .context-card p + p {
+      margin-top: 9px;
+    }
+    .post-mini {
+      border-top: 1px solid var(--line);
+      margin-top: 14px;
+      padding-top: 14px;
+    }
+    .version {
+      color: var(--amber-deep);
+      font-weight: 760;
+    }
+    .fact-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .fact-list li {
+      position: relative;
+      padding-left: 18px;
+      color: var(--secondary);
+    }
+    .fact-list li + li {
+      margin-top: 9px;
+    }
+    .fact-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.68em;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber-line);
+    }
+
+    .selection-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .candidate {
+      padding: 22px;
+      overflow: hidden;
+    }
+    .candidate-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .candidate-name {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+    }
+    .owner {
+      color: var(--quiet);
+      font-size: 12px;
+    }
+    .id-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+    .id-chip {
+      padding: 5px 8px;
+      border: 1px solid var(--amber-line);
+      border-radius: 6px;
+      background: var(--amber-soft);
+      color: var(--amber-deep);
+      font:
+        700 11px / 1 ui-monospace,
+        monospace;
+    }
+    .candidate-note {
+      margin-top: 15px;
+      color: var(--secondary);
+      font-size: 13px;
+    }
+    .ignore-card {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 17px 20px;
+      background: #fbfbfa;
+    }
+    .ignore-card .id-chip {
+      border-color: var(--line-strong);
+      background: #efefec;
+      color: var(--quiet);
+    }
+
+    .flow-shell {
+      padding: 28px;
+    }
+    .flow-main {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 24px;
+      align-items: center;
+    }
+    .flow-node {
+      position: relative;
+      min-height: 84px;
+      padding: 15px;
+      display: grid;
+      align-content: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: #fff;
+    }
+    .flow-node:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -20px;
+      top: 50%;
+      translate: 50% -50%;
+      color: var(--quiet);
+      font-size: 18px;
+    }
+    .flow-node b {
+      font-size: 13px;
+    }
+    .flow-node span {
+      margin-top: 4px;
+      color: var(--quiet);
+      font-size: 10px;
+      line-height: 1.35;
+    }
+    .fanout {
+      position: relative;
+      margin: 26px 0;
+      padding: 22px 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      border-top: 1px solid var(--amber-line);
+      border-bottom: 1px solid var(--amber-line);
+    }
+    .fanout::before {
+      content: "fan out concurrently";
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      translate: -50%;
+      padding: 0 9px;
+      background: var(--paper);
+      color: var(--amber-deep);
+      font-size: 10px;
+      font-weight: 760;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+    .child-flow {
+      padding: 17px;
+      border: 1px solid var(--amber-line);
+      border-radius: 12px;
+      background: var(--amber-soft);
+    }
+    .child-flow strong {
+      display: block;
+      margin-bottom: 10px;
+    }
+    .child-nodes {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--amber-deep);
+      font:
+        650 11px / 1.35 ui-monospace,
+        monospace;
+    }
+    .join {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .join .flow-node {
+      width: min(100%, 240px);
+    }
+    .tech-grid {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .tech {
+      padding: 16px;
+      border-left: 2px solid var(--amber-line);
+      background: #fafaf8;
+    }
+    .tech b {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 12px;
+    }
+    .tech p {
+      color: var(--quiet);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .writer {
+      overflow: hidden;
+    }
+    .writer-banner {
+      padding: 20px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .writer-banner.alex {
+      background: var(--amber-soft);
+    }
+    .writer-banner.bea {
+      background: var(--blue-soft);
+    }
+    .writer-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .writer-title .avatar {
+      width: 38px;
+      height: 38px;
+    }
+    .writer-body {
+      padding: 22px;
+    }
+    .context-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--line);
+    }
+    .context-stat {
+      min-width: 0;
+      padding: 12px;
+      background: #fff;
+    }
+    .context-stat b {
+      display: block;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .context-stat span {
+      display: block;
+      margin-top: 5px;
+      color: var(--quiet);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .proposal {
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #fbfbfa;
+    }
+    .proposal > p {
+      margin-top: 10px;
+      color: var(--secondary);
+      font-size: 13px;
+    }
+    .proposal dl {
+      display: grid;
+      grid-template-columns: 105px 1fr;
+      gap: 8px 14px;
+      margin: 16px 0 0;
+      font-size: 12px;
+    }
+    .proposal dt {
+      color: var(--quiet);
+    }
+    .proposal dd {
+      margin: 0;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .source-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .source {
+      padding: 3px 6px;
+      border-radius: 5px;
+      background: var(--amber-soft);
+      color: var(--amber-deep);
+      font:
+        650 10px / 1.2 ui-monospace,
+        monospace;
+    }
+    .result-post {
+      margin-top: 18px;
+      padding: 22px;
+      border: 1px solid #dfdfd8;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 10px 24px rgb(32 32 32 / 0.05);
+    }
+    .result-post h4 {
+      font-size: 17px;
+    }
+    .result-post .summary {
+      margin-top: 9px;
+      color: var(--secondary);
+      font-weight: 600;
+    }
+    .result-post .detail {
+      margin-top: 12px;
+      color: var(--secondary);
+      font-size: 13px;
+    }
+    .result-meta {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .question {
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 3px solid var(--amber);
+      background: var(--amber-soft);
+      color: var(--amber-deep);
+      font-size: 13px;
+    }
+
+    .diff {
+      margin-top: 22px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    .diff-head {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      background: #fafaf8;
+      font-size: 11px;
+    }
+    .diff-line {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 13px;
+      padding: 11px 15px;
+      font:
+        11px / 1.55 ui-monospace,
+        monospace;
+      overflow-wrap: anywhere;
+    }
+    .diff-line + .diff-line {
+      border-top: 1px solid #fff;
+    }
+    .diff-line del,
+    .diff-line ins {
+      text-decoration: none;
+    }
+    .diff-line.minus {
+      background: #fff0ef;
+      color: #6e2e28;
+    }
+    .diff-line.plus {
+      background: #edf8f0;
+      color: #215c34;
+    }
+    .diff-label {
+      font-weight: 800;
+    }
+
+    details {
+      min-width: 0;
+      border-top: 1px solid var(--line);
+    }
+    details:first-child {
+      border-top: 0;
+    }
+    summary {
+      padding: 14px 0;
+      cursor: pointer;
+      color: var(--secondary);
+      font-size: 12px;
+      font-weight: 680;
+      list-style-position: outside;
+    }
+    summary:hover {
+      color: var(--ink);
+    }
+    .details-card {
+      margin-top: 16px;
+      padding: 0 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+    .details-card details > :not(summary) {
+      margin-bottom: 17px;
+    }
+    pre {
+      max-width: 100%;
+      margin: 0;
+      padding: 16px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #f8f8f6;
+      color: #383835;
+      font-size: 10.5px;
+      line-height: 1.55;
+      tab-size: 2;
+      white-space: pre;
+    }
+    pre.wrap-code {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .guard-flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 19px;
+      align-items: stretch;
+    }
+    .guard-step {
+      position: relative;
+      padding: 17px 14px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+    }
+    .guard-step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -16px;
+      top: 50%;
+      translate: 50% -50%;
+      color: var(--quiet);
+    }
+    .guard-step b {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .guard-step span {
+      color: var(--quiet);
+      font-size: 10px;
+      line-height: 1.4;
+    }
+    .boundary-note {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    .boundary {
+      padding: 18px;
+      border-radius: 11px;
+    }
+    .boundary.allowed {
+      background: var(--green-soft);
+      color: #214f31;
+    }
+    .boundary.denied {
+      background: #f3f3f0;
+      color: var(--secondary);
+    }
+    .boundary b {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 12px;
+    }
+    .boundary p {
+      font-size: 12px;
+    }
+
+    .tools-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .tools-table th,
+    .tools-table td {
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+    .tools-table th {
+      color: var(--quiet);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .tools-table tr:last-child td {
+      border-bottom: 0;
+    }
+    .tools-table td:first-child {
+      font-family: ui-monospace, monospace;
+      font-weight: 700;
+    }
+
+    .progress {
+      position: relative;
+      margin-top: 24px;
+      padding-left: 20px;
+    }
+    .progress::before {
+      content: "";
+      position: absolute;
+      left: 5px;
+      top: 9px;
+      bottom: 9px;
+      width: 1px;
+      background: var(--line-strong);
+    }
+    .event {
+      position: relative;
+      display: grid;
+      grid-template-columns: 130px 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 9px 0;
+    }
+    .event::before {
+      content: "";
+      position: absolute;
+      left: -19px;
+      width: 9px;
+      height: 9px;
+      border: 2px solid white;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 0 1px var(--amber-line);
+    }
+    .event .task {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+    }
+    .event .scope {
+      color: var(--secondary);
+      font-size: 12px;
+    }
+    .event .state {
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 760;
+      text-transform: uppercase;
+    }
+
+    .web-runs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .web-card {
+      padding: 22px;
+    }
+    .web-card .run-label {
+      color: var(--amber);
+      font-size: 10px;
+      font-weight: 760;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .web-card h3 {
+      margin-top: 7px;
+    }
+    .tool-chain {
+      margin: 17px 0;
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      align-items: center;
+      color: var(--quiet);
+      font:
+        650 10px / 1.3 ui-monospace,
+        monospace;
+    }
+    .tool-box {
+      padding: 6px 8px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+    }
+    .result-box {
+      padding: 14px;
+      border-radius: 9px;
+      background: var(--green-soft);
+      color: #215c34;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+    .limits {
+      margin-top: 18px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .file-map {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .file {
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: white;
+    }
+    .file a {
+      color: var(--amber-deep);
+      font:
+        670 11px / 1.4 ui-monospace,
+        monospace;
+      overflow-wrap: anywhere;
+    }
+    .file p {
+      margin-top: 5px;
+      color: var(--quiet);
+      font-size: 10px;
+    }
+    .provenance {
+      margin-top: 24px;
+      padding: 22px;
+      border: 1px solid var(--amber-line);
+      border-radius: 13px;
+      background: var(--amber-soft);
+    }
+    .provenance-grid {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+    .provenance-grid dt {
+      color: var(--quiet);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+    .provenance-grid dd {
+      margin: 4px 0 0;
+      font-size: 11px;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      padding: 38px 0 52px;
+      border-top: 1px solid var(--line);
+      color: var(--quiet);
+      font-size: 11px;
+    }
+    footer .wrap {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    @media (max-width: 860px) {
+      .topbar-inner {
+        padding-inline: 20px;
+      }
+      .step-nav a {
+        padding-inline: 8px;
+      }
+      .scoreboard {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .score:nth-child(3) {
+        border-right: 0;
+      }
+      .score:nth-child(-n + 3) {
+        border-bottom: 1px solid var(--line);
+      }
+      .two-col,
+      .equal-col {
+        grid-template-columns: 1fr;
+      }
+      .flow-main {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .flow-node:nth-child(2)::after {
+        content: "↓";
+        right: auto;
+        top: auto;
+        bottom: -22px;
+        left: 50%;
+        translate: -50% 50%;
+      }
+      .tech-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .guard-flow {
+        grid-template-columns: 1fr;
+      }
+      .guard-step:not(:last-child)::after {
+        content: "↓";
+        right: auto;
+        top: auto;
+        bottom: -17px;
+        left: 50%;
+        translate: -50% 50%;
+      }
+      .file-map {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 620px) {
+      html {
+        scroll-padding-top: 105px;
+      }
+      .wrap {
+        width: min(100% - 28px, var(--content));
+      }
+      .topbar-inner {
+        padding: 9px 14px;
+        display: block;
+      }
+      .brand {
+        font-size: 18px;
+      }
+      .step-nav {
+        margin-top: 6px;
+        margin-left: -6px;
+      }
+      .step-nav a {
+        font-size: 10px;
+      }
+      .hero {
+        padding: 58px 0 46px;
+      }
+      h1 {
+        font-size: clamp(40px, 13vw, 58px);
+      }
+      .lede {
+        font-size: 16px;
+      }
+      .scoreboard {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .score {
+        border-bottom: 1px solid var(--line);
+      }
+      .score:nth-child(2n) {
+        border-right: 0;
+      }
+      .score:nth-child(n + 5) {
+        border-bottom: 0;
+      }
+      .score:nth-child(3) {
+        border-right: 1px solid var(--line);
+      }
+      .section {
+        padding: 62px 0;
+      }
+      .section-head {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        margin-bottom: 28px;
+      }
+      .step-label {
+        padding-top: 0;
+      }
+      .selection-grid,
+      .fanout,
+      .web-runs,
+      .boundary-note {
+        grid-template-columns: 1fr;
+      }
+      .ignore-card {
+        grid-column: auto;
+        align-items: start;
+      }
+      .flow-shell {
+        padding: 17px;
+      }
+      .flow-main {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+      .flow-node:not(:last-child)::after,
+      .flow-node:nth-child(2)::after {
+        content: "↓";
+        right: auto;
+        top: auto;
+        bottom: -15px;
+        left: 50%;
+        translate: -50% 50%;
+      }
+      .fanout::before {
+        white-space: nowrap;
+      }
+      .child-nodes {
+        flex-wrap: wrap;
+      }
+      .tech-grid {
+        grid-template-columns: 1fr;
+      }
+      .writer-banner {
+        align-items: start;
+        flex-direction: column;
+      }
+      .context-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .proposal dl {
+        grid-template-columns: 1fr;
+        gap: 2px;
+      }
+      .proposal dd + dt {
+        margin-top: 8px;
+      }
+      .diff-line {
+        grid-template-columns: 1fr;
+        gap: 3px;
+      }
+      .event {
+        grid-template-columns: 84px 1fr;
+        gap: 8px;
+      }
+      .event .state {
+        grid-column: 2;
+      }
+      .file-map {
+        grid-template-columns: 1fr;
+      }
+      .provenance-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      footer .wrap {
+        display: block;
+      }
+      footer p + p {
+        margin-top: 8px;
+      }
+    }
+
+    @media print {
+      .topbar {
+        position: static;
+      }
+      .step-nav {
+        display: none;
+      }
+      .section {
+        break-inside: avoid;
+      }
+      details > * {
+        display: block;
+      }
+      .card {
+        box-shadow: none;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to walkthrough</a>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#top" aria-label="Amber walkthrough home"
+          >amber <span class="brand-dot" aria-hidden="true"></span></a
+        >
+        <nav class="step-nav" aria-label="Walkthrough steps">
+          <a href="#input">1 Input</a>
+          <a href="#selection">2 Select</a>
+          <a href="#orchestration">3 Flow</a>
+          <a href="#writers">4 Write</a>
+          <a href="#publish">5 Publish</a>
+          <a href="#receipt">6 Receipt</a>
+          <a href="#web-evidence">Web tests</a>
+          <a href="#sources">Sources</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="wrap">
+          <p class="eyebrow">Recorded proof of concept</p>
+          <h1>From Telegram batch to two factual posts.</h1>
+          <p class="lede">
+            This is a saved observation of Amber processing one
+            <strong>fictional Telegram fixture</strong>
+            in an
+            <strong>in-memory test store</strong>. The three answers are real
+            <strong>Gemini 3.8 Flash medium</strong>
+            responses obtained through a Google subscription and the Antigravity CLI. Nothing runs
+            from this page.
+          </p>
+          <div class="hero-tags">
+            <span class="tag live">saved live-model result</span>
+            <span class="tag">batch-1 · ai-builders</span>
+            <span class="tag">Smithers Flow/Action 1.0 API</span>
+            <span class="tag">baseline 6e953b4</span>
+          </div>
+
+          <div class="scoreboard">
+            <div class="score"><b>5</b><span>new messages</span></div>
+            <div class="score"><b>1</b><span>old context message</span></div>
+            <div class="score"><b>2</b><span>selected projects</span></div>
+            <div class="score"><b>1</b><span>post created</span></div>
+            <div class="score"><b>1</b><span>post updated</span></div>
+            <div class="score"><b>1</b><span>follow-up saved</span></div>
+          </div>
+
+          <div class="truth-note">
+            <span class="icon" aria-hidden="true">◎</span>
+            <p>
+              <strong>Boundary, not a live product UI.</strong>
+              No Telegram collector ran. A future GramJS reader, cursor and outbox transaction are
+              described as adapter boundaries in source comments; they are not implemented by this
+              fixture. The page uses only committed synthetic fixtures, saved model results and
+              source code.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section soft" id="input">
+        <div class="wrap">
+          <div class="section-head">
+            <p class="step-label">Step 1</p>
+            <div>
+              <h2>Load one bounded batch.</h2>
+              <p class="section-intro">
+                The fixture separates five new messages from one older context message. Replies
+                preserve the conversation shape; a reply from another author can add context without
+                changing ownership.
+              </p>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="card chat">
+              <div class="chat-top">
+                <div>
+                  <div class="chat-title">AI Builders</div>
+                  <div class="small muted">fictional Telegram fixture</div>
+                </div>
+                <span class="pill">6 supplied</span>
+              </div>
+
+              <div class="bubble-row">
+                <span class="avatar">DA</span>
+                <div class="bubble old">
+                  <div class="bubble-meta">
+                    <span class="author">dana</span><span class="message-id">#90</span
+                    ><span class="status old">old context</span>
+                  </div>
+                  <p>I released Clipbook last month. It saves copied links.</p>
+                </div>
+              </div>
+              <div class="bubble-row">
+                <span class="avatar">CA</span>
+                <div class="bubble">
+                  <div class="bubble-meta">
+                    <span class="author">carl</span><span class="message-id">#101</span
+                    ><span class="status">new</span>
+                  </div>
+                  <p>The new Gemini announcement looks impressive!</p>
+                </div>
+              </div>
+              <div class="bubble-row">
+                <span class="avatar">AL</span>
+                <div class="bubble">
+                  <div class="bubble-meta">
+                    <span class="author">alex</span><span class="message-id">#102</span
+                    ><span class="status">new</span>
+                  </div>
+                  <p>
+                    I built Noted: voice notes transcribed locally on a Mac. https://noted.example
+                  </p>
+                </div>
+              </div>
+              <div class="bubble-row">
+                <span class="avatar">BE</span>
+                <div class="bubble">
+                  <div class="bubble-meta">
+                    <span class="author">bea</span><span class="message-id">#103</span
+                    ><span class="status">new</span>
+                  </div>
+                  <p>
+                    Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs
+                    and issues can stay together.
+                  </p>
+                </div>
+              </div>
+              <div class="bubble-row">
+                <span class="avatar">AL</span>
+                <div class="bubble reply">
+                  <div class="bubble-meta">
+                    <span class="author">alex</span><span class="message-id">#104</span
+                    ><span class="status">new</span>
+                  </div>
+                  <div class="reply-line">↳ reply to #102</div>
+                  <p>It uses Whisper on the device. It is free and works offline.</p>
+                </div>
+              </div>
+              <div class="bubble-row">
+                <span class="avatar">CA</span>
+                <div class="bubble reply">
+                  <div class="bubble-meta">
+                    <span class="author">carl</span><span class="message-id">#105</span
+                    ><span class="status">new</span>
+                  </div>
+                  <div class="reply-line">↳ reply to #102</div>
+                  <p>Does Noted understand Mandarin?</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="stack">
+              <article class="card context-card">
+                <p class="card-kicker">Existing author-owned post</p>
+                <h3>Tab tidy <span class="version">v2</span></h3>
+                <div class="post-mini">
+                  <p>
+                    <strong>Summary</strong><br>
+                    <span class="muted">A Chrome extension that groups tabs by domain.</span>
+                  </p>
+                  <p>
+                    <strong>Detail</strong><br>
+                    <span class="muted">Related tabs share a group based on their domain.</span>
+                  </p>
+                </div>
+              </article>
+              <article class="card context-card">
+                <p class="card-kicker">Alex memory</p>
+                <h3>Writing preference</h3>
+                <div class="post-mini"><p>“Keep my posts short and factual. No hype.”</p></div>
+              </article>
+              <article class="card context-card">
+                <p class="card-kicker">Admission rules</p>
+                <ul class="fact-list">
+                  <li>Message <code>90</code> is context only and cannot trigger a project.</li>
+                  <li>All five new IDs need a selected or ignored disposition.</li>
+                  <li>Author IDs establish attribution; display names do not.</li>
+                </ul>
+              </article>
+              <div class="details-card">
+                <details>
+                  <summary>Inspect exact fixture object</summary>
+                  <pre class="wrap-code">batchId: "batch-1"
+groupId: "ai-builders"
+newMessageIds: ["101", "102", "103", "104", "105"]
+messages: [
+  { id: "90", authorId: "dana", text: "I released Clipbook last month. It saves copied links.", replyToId: null, albumId: null },
+  { id: "101", authorId: "carl", text: "The new Gemini announcement looks impressive!", replyToId: null, albumId: null },
+  { id: "102", authorId: "alex", text: "I built Noted: voice notes transcribed locally on a Mac. https://noted.example", replyToId: null, albumId: null },
+  { id: "103", authorId: "bea", text: "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.", replyToId: null, albumId: null },
+  { id: "104", authorId: "alex", text: "It uses Whisper on the device. It is free and works offline.", replyToId: "102", albumId: null },
+  { id: "105", authorId: "carl", text: "Does Noted understand Mandarin?", replyToId: "102", albumId: null }
+]</pre>
+                </details>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="selection">
+        <div class="wrap">
+          <div class="section-head">
+            <p class="step-label">Step 2</p>
+            <div>
+              <h2>Select work, preserve ownership.</h2>
+              <p class="section-intro">
+                The first Gemini call returned one structured selection. Alex owns Noted, Bea owns
+                Tab tidy, and Carl’s question remains evidence inside Alex’s project.
+              </p>
+            </div>
+          </div>
+
+          <div class="selection-grid">
+            <article class="card candidate">
+              <div class="candidate-top">
+                <div>
+                  <p class="card-kicker">Candidate batch-1:0</p>
+                  <p class="candidate-name">Noted</p>
+                  <p class="owner">owner · alex</p>
+                </div>
+                <span class="pill">revision 0</span>
+              </div>
+              <div class="id-row">
+                <span class="id-chip">#102 · alex</span><span class="id-chip">#104 · alex</span
+                ><span class="id-chip">#105 · carl</span>
+              </div>
+              <p class="candidate-note">
+                Carl’s reply supplies an unanswered project question. It does not create a Carl post
+                or transfer ownership.
+              </p>
+            </article>
+
+            <article class="card candidate">
+              <div class="candidate-top">
+                <div>
+                  <p class="card-kicker">Candidate batch-1:1</p>
+                  <p class="candidate-name">Tab tidy</p>
+                  <p class="owner">owner · bea</p>
+                </div>
+                <span class="pill">revision 0</span>
+              </div>
+              <div class="id-row"><span class="id-chip">#103 · bea</span></div>
+              <p class="candidate-note">
+                The update is firsthand, concrete and attributable. Existing-post matching happens
+                in the writer step.
+              </p>
+            </article>
+
+            <article class="card ignore-card">
+              <span class="id-chip">#101</span>
+              <div>
+                <strong>Ignored</strong>
+                <p class="muted">
+                  Exact recorded reason: “General AI announcement reaction rather than firsthand
+                  work”
+                </p>
+              </div>
+            </article>
+          </div>
+
+          <div class="details-card">
+            <details>
+              <summary>Inspect exact selection proposal</summary>
+              <pre>{
+  "candidates": [
+    { "authorId": "alex", "messageIds": ["102", "104", "105"], "project": "Noted" },
+    { "authorId": "bea", "messageIds": ["103"], "project": "Tab tidy" }
+  ],
+  "ignored": [
+    { "messageId": "101", "reason": "General AI announcement reaction rather than firsthand work" }
+  ]
+}</pre>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="section soft" id="orchestration">
+        <div class="wrap">
+          <div class="section-head">
+            <p class="step-label">Step 3</p>
+            <div>
+              <h2>Run one workflow per project.</h2>
+              <p class="section-intro">
+                Smithers interprets declarative Flow and Action nodes. Application-supplied Effect
+                handlers perform each action, while a custom adapter invokes Antigravity for the
+                model steps.
+              </p>
+            </div>
+          </div>
+
+          <div class="card flow-shell">
+            <div class="flow-main">
+              <div class="flow-node">
+                <b>LoadBatch</b><span>fixture adapter returns batch context</span>
+              </div>
+              <div class="flow-node">
+                <b>SelectProjects</b><span>Gemini call 1 · structured selection</span>
+              </div>
+              <div class="flow-node">
+                <b>QueueProjects</b><span>assign candidate ID + revision</span>
+              </div>
+              <div class="flow-node">
+                <b>BuildProjects</b><span>attach one child flow per item</span>
+              </div>
+            </div>
+            <div class="fanout">
+              <div class="child-flow">
+                <strong>Alex · batch-1:0 @ revision 0</strong>
+                <div class="child-nodes">
+                  <span>LoadProject</span><span>→</span><span>WritePost</span><span>→</span
+                  ><span>PublishProject</span>
+                </div>
+              </div>
+              <div class="child-flow">
+                <strong>Bea · batch-1:1 @ revision 0</strong>
+                <div class="child-nodes">
+                  <span>LoadProject</span><span>→</span><span>WritePost</span><span>→</span
+                  ><span>PublishProject</span>
+                </div>
+              </div>
+            </div>
+            <div class="join">
+              <span class="muted small">join results →</span>
+              <div class="flow-node">
+                <b>FinishBatch</b><span>reconcile candidate receipts</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tech-grid">
+            <article class="tech">
+              <b>Smithers</b>
+              <p>
+                Runs the pinned <code>@smthrs/flow</code> <code>1.0.0-rc.0</code> Flow/Action graph.
+                This code uses the 1.0 API, not legacy JSX.
+              </p>
+            </article>
+            <article class="tech">
+              <b>Effect handlers</b>
+              <p>
+                Connect actions to load, validate, track, publish and retry functions supplied by
+                the host layer.
+              </p>
+            </article>
+            <article class="tech">
+              <b>Custom adapter</b>
+              <p>
+                Converts task input, prompt, schema and scoped tools into an Antigravity CLI
+                request. Antigravity is not a built-in Smithers agent.
+              </p>
+            </article>
+            <article class="tech">
+              <b>Google model</b>
+              <p>
+                <code>gemini-3.8-flash-medium</code>
+                produced three structured answers: one selection and two writer proposals.
+              </p>
+            </article>
+          </div>
+
+          <div class="details-card">
+            <details>
+              <summary>Inspect core Flow/Action source</summary>
+              <pre>export const Project = Flow.make('amber/project', {
+  payload: S.WorkItem,
+  success: S.ProjectResult,
+  error: S.Failure,
+  body: (work) =&gt;
+    LoadProject.call(work).pipe(
+      Node.bindPlanned((context) =&gt;
+        WritePost.call(context).pipe(
+          Node.bindPlanned((draft) =&gt; PublishProject.call({ context, draft })),
+        ),
+      ),
+      Node.catch({
+        error: S.Failure,
+        onFailure: (failure) =&gt; QueueProjectRetry.call({ work, failure }),
+      }),
+    ),
+})
+
+export const BuildProjects = Flow.make('amber/build-projects', {
+  payload: Work,
+  success: S.Receipt,
+  error: S.Failure,
+  body: ({ batch, items }) =&gt;
+    Node.all(Object.fromEntries(items.map((work) =&gt; [work.candidateId, Project.child(work)]))).pipe(
+      Node.bindPlanned((results) =&gt; FinishBatch.call({ batch, results })),
+    ),
+})
+
+export const TelegramBatch = Flow.make('amber/telegram-batch', {
+  payload: S.Batch,
+  success: S.Receipt,
+  error: S.Failure,
+  maxRounds: 2,
+  body: (batch) =&gt;
+    LoadBatch.call(batch).pipe(
+      Node.bindPlanned((context) =&gt;
+        SelectProjects.call(context).pipe(
+          Node.bindPlanned((selection) =&gt; QueueProjects.call({ batch: context, selection })),
+        ),
+      ),
+      Node.bindPlanned((work) =&gt; BuildProjects.to(work)),
+    ),
+})</pre>
+              <p class="small muted">
+                Source:
+                <a
+                  href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/workflow.ts#L49-L93"
+                  >workflow.ts at the verified commit</a
+                >
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="writers">
+        <div class="wrap">
+          <div class="section-head">
+            <p class="step-label">Step 4</p>
+            <div>
+              <h2>Write with scoped context and read-only research.</h2>
+              <p class="section-intro">
+                The two child flows ran concurrently. Each writer received only its work item,
+                selected messages, its author’s posts and memories, plus empty clarification and
+                unaddressed lists.
+              </p>
+            </div>
+          </div>
+
+          <div class="equal-col">
+            <article class="card writer">
+              <div class="writer-banner alex">
+                <div class="writer-title">
+                  <span class="avatar">AL</span>
+                  <div>
+                    <p class="card-kicker">Writer · candidate batch-1:0</p>
+                    <h3>Alex / Noted</h3>
+                  </div>
+                </div>
+                <span class="pill">create</span>
+              </div>
+              <div class="writer-body">
+                <div class="context-strip">
+                  <div class="context-stat"><b>3</b><span>messages</span></div>
+                  <div class="context-stat"><b>0</b><span>own posts</span></div>
+                  <div class="context-stat"><b>1</b><span>memory</span></div>
+                  <div class="context-stat">
+                    <b>0 + 0</b><span>clarifications / unaddressed</span>
+                  </div>
+                </div>
+                <div class="proposal">
+                  <h4>Exact structured proposal</h4>
+                  <dl>
+                    <dt>kind</dt>
+                    <dd><code>post</code></dd>
+                    <dt>existing / version</dt>
+                    <dd><code>null</code> / <code>null</code></dd>
+                    <dt>title</dt>
+                    <dd>Noted: Local voice note transcription on Mac</dd>
+                    <dt>summary</dt>
+                    <dd>
+                      A free Mac app that transcribes voice notes locally and offline using
+                      on-device Whisper.
+                    </dd>
+                    <dt>detail</dt>
+                    <dd>
+                      Noted is a free application for Mac that transcribes voice notes locally. It
+                      runs Whisper on the device to perform transcription offline without needing an
+                      internet connection. Available at https://noted.example.
+                    </dd>
+                    <dt>question</dt>
+                    <dd>Does Noted support Mandarin or other languages?</dd>
+                    <dt>sources</dt>
+                    <dd>
+                      <span class="source-row"
+                        ><span class="source">telegram:102</span
+                        ><span class="source">telegram:104</span
+                        ><span class="source">telegram:105</span></span
+                      >
+                    </dd>
+                  </dl>
+                </div>
+                <div class="result-post">
+                  <p class="card-kicker">Resulting post · v1</p>
+                  <h4>Noted: Local voice note transcription on Mac</h4>
+                  <p class="summary">
+                    A free Mac app that transcribes voice notes locally and offline using on-device
+                    Whisper.
+                  </p>
+                  <p class="detail">
+                    Noted is a free application for Mac that transcribes voice notes locally. It
+                    runs Whisper on the device to perform transcription offline without needing an
+                    internet connection. Available at https://noted.example.
+                  </p>
+                  <div class="result-meta">
+                    <span class="pill">id batch-1:0</span><span class="pill">author alex</span
+                    ><span class="pill">version 1</span>
+                  </div>
+                </div>
+                <div class="question">
+                  <strong>Follow-up · needsReply true</strong><br>“Does Noted support Mandarin or
+                  other languages?”
+                </div>
+                <div class="details-card">
+                  <details>
+                    <summary>Exact Alex input context</summary>
+                    <pre class="wrap-code">work: {
+  batchId: "batch-1", groupId: "ai-builders",
+  candidateId: "batch-1:0", revision: 0,
+  candidate: { authorId: "alex", project: "Noted", messageIds: ["102", "104", "105"] }
+}
+messages: [
+  { id: "102", authorId: "alex", text: "I built Noted: voice notes transcribed locally on a Mac. https://noted.example", replyToId: null, albumId: null },
+  { id: "104", authorId: "alex", text: "It uses Whisper on the device. It is free and works offline.", replyToId: "102", albumId: null },
+  { id: "105", authorId: "carl", text: "Does Noted understand Mandarin?", replyToId: "102", albumId: null }
+]
+clarifications: []
+posts: []
+memories: [{ id: "style", text: "Keep my posts short and factual. No hype." }]
+unaddressed: []</pre>
+                  </details>
+                </div>
+              </div>
+            </article>
+
+            <article class="card writer">
+              <div class="writer-banner bea">
+                <div class="writer-title">
+                  <span class="avatar">BE</span>
+                  <div>
+                    <p class="card-kicker">Writer · candidate batch-1:1</p>
+                    <h3>Bea / Tab tidy</h3>
+                  </div>
+                </div>
+                <span class="pill">update v2 → v3</span>
+              </div>
+              <div class="writer-body">
+                <div class="context-strip">
+                  <div class="context-stat"><b>1</b><span>message</span></div>
+                  <div class="context-stat"><b>1</b><span>own post</span></div>
+                  <div class="context-stat"><b>0</b><span>memories</span></div>
+                  <div class="context-stat">
+                    <b>0 + 0</b><span>clarifications / unaddressed</span>
+                  </div>
+                </div>
+                <div class="proposal">
+                  <h4>Exact structured proposal</h4>
+                  <dl>
+                    <dt>kind</dt>
+                    <dd><code>post</code></dd>
+                    <dt>existing / version</dt>
+                    <dd><code>tab-tidy</code> / <code>2</code></dd>
+                    <dt>title</dt>
+                    <dd>Tab tidy</dd>
+                    <dt>summary</dt>
+                    <dd>
+                      A Chrome extension that groups tabs by project as well as domain, keeping
+                      related resources like GitHub, docs, and issues together.
+                    </dd>
+                    <dt>detail</dt>
+                    <dd>
+                      Tab tidy is a Chrome extension that organizes browser tabs into groups. An
+                      update adds project-based grouping alongside domain grouping, allowing related
+                      pages across different domains—such as GitHub repositories, documentation, and
+                      issue trackers—to stay in the same tab group.
+                    </dd>
+                    <dt>question</dt>
+                    <dd><code>null</code></dd>
+                    <dt>sources</dt>
+                    <dd><span class="source">telegram:103</span></dd>
+                  </dl>
+                </div>
+                <div class="result-post">
+                  <p class="card-kicker">Resulting post · v3</p>
+                  <h4>Tab tidy</h4>
+                  <p class="summary">
+                    A Chrome extension that groups tabs by project as well as domain, keeping
+                    related resources like GitHub, docs, and issues together.
+                  </p>
+                  <p class="detail">
+                    Tab tidy is a Chrome extension that organizes browser tabs into groups. An
+                    update adds project-based grouping alongside domain grouping, allowing related
+                    pages across different domains—such as GitHub repositories, documentation, and
+                    issue trackers—to stay in the same tab group.
+                  </p>
+                  <div class="result-meta">
+                    <span class="pill">id tab-tidy</span><span class="pill">author bea</span
+                    ><span class="pill">version 3</span>
+                  </div>
+                </div>
+                <div class="details-card">
+                  <details>
+                    <summary>Exact Bea input context</summary>
+                    <pre class="wrap-code">work: {
+  batchId: "batch-1", groupId: "ai-builders",
+  candidateId: "batch-1:1", revision: 0,
+  candidate: { authorId: "bea", project: "Tab tidy", messageIds: ["103"] }
+}
+messages: [
+  { id: "103", authorId: "bea", text: "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.", replyToId: null, albumId: null }
+]
+clarifications: []
+posts: [{
+  id: "tab-tidy", authorId: "bea", version: 2, title: "Tab tidy",
+  summary: "A Chrome extension that groups tabs by domain.",
+  detail: "Related tabs share a group based on their domain."
+}]
+memories: []
+unaddressed: []</pre>
+                  </details>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="diff">
+            <div class="diff-head">
+              <strong>tab-tidy · exact content diff</strong><span class="muted">v2 → v3</span>
+            </div>
+            <div class="diff-line minus">
+              <span class="diff-label">− summary</span
+              ><del>A Chrome extension that groups tabs by domain.</del>
+            </div>
+            <div class="diff-line plus">
+              <span class="diff-label">+ summary</span
+              ><ins
+                >A Chrome extension that groups tabs by project as well as domain, keeping related
+                resources like GitHub, docs, and issues together.</ins
+              >
+            </div>
+            <div class="diff-line minus">
+              <span class="diff-label">− detail</span
+              ><del>Related tabs share a group based on their domain.</del>
+            </div>
+            <div class="diff-line plus">
+              <span class="diff-label">+ detail</span
+              ><ins
+                >Tab tidy is a Chrome extension that organizes browser tabs into groups. An update
+                adds project-based grouping alongside domain grouping, allowing related pages across
+                different domains—such as GitHub repositories, documentation, and issue trackers—to
+                stay in the same tab group.</ins
+              >
+            </div>
+          </div>
+
+          <div class="details-card">
+            <details>
+              <summary>Inspect all five database tool calls and exact results</summary>
+              <div style="overflow-x:auto">
+                <table class="tools-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Tool</th>
+                      <th>Input</th>
+                      <th>Exact output</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td>searchPosts</td>
+                      <td><code>{ "query": "Tab tidy" }</code></td>
+                      <td>
+                        <code
+                          >[ { "id": "tab-tidy", "authorId": "bea", "version": 2, "title": "Tab
+                          tidy", "summary": "A Chrome extension that groups tabs by domain.",
+                          "detail": "Related tabs share a group based on their domain." }]</code
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td>searchMessages</td>
+                      <td><code>{ "query": "Tab tidy" }</code></td>
+                      <td>
+                        <code
+                          >[ { "id": "103", "authorId": "bea", "text": "Tab tidy update: it now
+                          groups tabs by project, not just domain. GitHub, docs and issues can stay
+                          together.", "replyToId": null, "albumId": null }]</code
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>3</td>
+                      <td>searchPosts</td>
+                      <td><code>{ "query": "Noted" }</code></td>
+                      <td><code>[]</code></td>
+                    </tr>
+                    <tr>
+                      <td>4</td>
+                      <td>searchMessages</td>
+                      <td><code>{ "query": "Noted" }</code></td>
+                      <td>
+                        <code
+                          >[ { "id": "102", "authorId": "alex", "text": "I built Noted: voice notes
+                          transcribed locally on a Mac. https://noted.example", "replyToId": null,
+                          "albumId": null }, { "id": "105", "authorId": "carl", "text": "Does Noted
+                          understand Mandarin?", "replyToId": "102", "albumId": null }]</code
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>5</td>
+                      <td>readMessages</td>
+                      <td><code>{ "ids": ["102", "103", "104", "105", "106"] }</code></td>
+                      <td>
+                        <code
+                          >[ { "id": "102", "authorId": "alex", "text": "I built Noted: voice notes
+                          transcribed locally on a Mac. https://noted.example", "replyToId": null,
+                          "albumId": null }, { "id": "103", "authorId": "bea", "text": "Tab tidy
+                          update: it now groups tabs by project, not just domain. GitHub, docs and
+                          issues can stay together.", "replyToId": null, "albumId": null }, { "id":
+                          "104", "authorId": "alex", "text": "It uses Whisper on the device. It is
+                          free and works offline.", "replyToId": "102", "albumId": null }, { "id":
+                          "105", "authorId": "carl", "text": "Does Noted understand Mandarin?",
+                          "replyToId": "102", "albumId": null }]</code
+                        >
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="small muted">
+                <code>readMessages</code>
+                requested ID <code>106</code>; the scoped in-memory store returned only
+                <code>102–105</code>. The record does not establish why <code>106</code> is absent.
+                Group message results can include other authors.
+              </p>
+            </details>
+          </div>
+
+          <div class="truth-note">
+            <span class="icon" aria-hidden="true">↗</span>
+            <p>
+              <strong>No web calls occurred in this Telegram batch.</strong>
+              <code>noted.example</code>
+              is a fictional link copied from message <code>102</code>, not a researched product.
+              The unused <code>notedPage</code> fixture was not fetched and is not evidence for
+              either proposal.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section soft" id="publish">
+        <div class="wrap">
+          <div class="section-head">
+            <p class="step-label">Step 5</p>
+            <div>
+              <h2>Validate first; publish in application code.</h2>
+              <p class="section-intro">
+                The model returns a proposal, never a database command. Application guards decode
+                the schema and check evidence, ownership and version before the store writes.
+              </p>
+            </div>
+          </div>
+
+          <div class="guard-flow">
+            <div class="guard-step">
+              <b>Structured proposal</b><span>Decode against the post/question/skip schema.</span>
+            </div>
+            <div class="guard-step">
+              <b>Allowed evidence</b
+              ><span>Citations must come from supplied context or observed tool results.</span>
+            </div>
+            <div class="guard-step">
+              <b>Author proof</b
+              ><span>A post must cite a Telegram message written by its candidate author.</span>
+            </div>
+            <div class="guard-step">
+              <b>Owned version</b
+              ><span
+                >An update must target a retrieved author-owned post at the expected version.</span
+              >
+            </div>
+            <div class="guard-step">
+              <b>PublishProject</b
+              ><span>Application adapter writes post, sources, diff and optional question.</span>
+            </div>
+          </div>
+
+          <div class="boundary-note">
+            <article class="boundary allowed">
+              <b>AI can</b>
+              <p>
+                Return structured proposals and use bounded read-only tools: searchMessages,
+                readMessages, searchPosts, plus configured native web tools.
+              </p>
+            </article>
+            <article class="boundary denied">
+              <b>AI cannot</b>
+              <p>
+                Publish, update a post, write memory or message Telegram directly. Those operations
+                are not model tools.
+              </p>
+            </article>
+          </div>
+
+          <div class="details-card">
+            <details>
+              <summary>Inspect the evidence and ownership guard</summary>
+              <pre>export function validateDraft(context, draft) {
+  const { proposal, evidence } = draft
+  if (proposal.kind === 'skip') return
+  const messages = [...context.messages, ...evidence.messages]
+  for (const source of proposal.sources) {
+    if (source is not in supplied messages, clarifications, or observed pages)
+      throw new Error('Cite only supplied messages or actual web tool results.')
+  }
+  if (proposal.kind !== 'post') return
+  if (proposal has no cited message written by candidate.authorId)
+    throw new Error('A post needs cited evidence from its author.')
+  if (proposal targets an existing post and
+      post is missing, owned by someone else, or has a different version)
+    throw new Error('Update only a retrieved, owned post at its expected version.')
+}</pre>
+              <p class="small muted">
+                Condensed from
+                <a
+                  href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/guards.ts#L30-L67"
+                  >guards.ts at the verified commit</a
+                >. The exact source remains linked.
+              </p>
+            </details>
+            <details>
+              <summary>Inspect application write boundary</summary>
+              <pre>publishProject: ({ context, draft }) =&gt;
+  run(() =&gt; {
+    const key = `${work.candidateId}@${work.revision}`
+    const saved = receipts.get(key)
+    if (saved) return saved
+    // Validate expected version, then create v1 or update v2 → v3.
+    // Store source associations and exact diff.
+    // Save an optional question with needsReply: true.
+    receipts.set(key, result)
+    return result
+  })</pre>
+              <p class="small muted">
+                Condensed from the
+                <a
+                  href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/testing/store.ts#L89-L138"
+                  >in-memory test adapter</a
+                >.
+              </p>
+            </details>
+          </div>
+
+          <div class="truth-note">
+            <span class="icon" aria-hidden="true">!</span>
+            <p>
+              The Alex question is stored for <strong>Amber Agent</strong> with
+              <code>needsReply: true</code>. This run did not send it to Telegram or connect it to a
+              live UI. Conversational replies and memory updates are a separate future workflow, not
+              a completed feature in this test.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="receipt">
+        <div class="wrap">
+          <div class="section-head">
+            <p class="step-label">Step 6</p>
+            <div>
+              <h2>Join children and finish the batch.</h2>
+              <p class="section-intro">
+                Both project receipts existed, so the recorded batch receipt completed. The progress
+                sequence shows Bea finishing before Alex; it contains no request durations.
+              </p>
+            </div>
+          </div>
+
+          <div class="equal-col">
+            <article class="card card-pad">
+              <p class="card-kicker">Recorded receipt</p>
+              <h3><span style="color:var(--green)">completed true</span></h3>
+              <ul class="fact-list" style="margin-top:18px">
+                <li><code>retries: []</code></li>
+                <li>Alex outcome: created · post <code>batch-1:0</code></li>
+                <li>Bea outcome: updated · post <code>tab-tidy</code></li>
+              </ul>
+            </article>
+            <article class="card card-pad">
+              <p class="card-kicker">Observed progress order</p>
+              <div class="progress">
+                <div class="event">
+                  <span class="task">selection</span><span class="scope">batch</span
+                  ><span class="state">running</span>
+                </div>
+                <div class="event">
+                  <span class="task">selection</span><span class="scope">batch</span
+                  ><span class="state">done</span>
+                </div>
+                <div class="event">
+                  <span class="task">post</span><span class="scope">alex</span
+                  ><span class="state">running</span>
+                </div>
+                <div class="event">
+                  <span class="task">post</span><span class="scope">bea</span
+                  ><span class="state">running</span>
+                </div>
+                <div class="event">
+                  <span class="task">post</span><span class="scope">bea</span
+                  ><span class="state">done</span>
+                </div>
+                <div class="event">
+                  <span class="task">post</span><span class="scope">alex</span
+                  ><span class="state">done</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="truth-note">
+            <span class="icon" aria-hidden="true">◇</span>
+            <p>
+              <strong>Successful-path evidence only.</strong>
+              Source code defines candidate retry, idempotent
+              <code>candidateId@revision</code>
+              receipts and expected-version conflict checks, but this saved run exercised none of
+              those failure branches. The in-memory adapter proves test behavior, not PostgreSQL
+              durability or production cursor/outbox infrastructure.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section soft" id="web-evidence">
+        <div class="wrap">
+          <div class="section-head">
+            <p class="step-label">Separate runs</p>
+            <div>
+              <h2>Web tool evidence, outside the Telegram batch.</h2>
+              <p class="section-intro">
+                Two saved tests verify the adapter’s native web evidence path. These calls are not
+                events in <code>batch-1</code>.
+              </p>
+            </div>
+          </div>
+
+          <div class="web-runs">
+            <article class="card web-card">
+              <p class="run-label">native-web-result.json</p>
+              <h3>IANA search + fetch</h3>
+              <div class="tool-chain">
+                <span class="tool-box">search_web</span><span>→</span
+                ><span class="tool-box">read_url_content</span><span>→</span
+                ><span class="tool-box">structured fact</span>
+              </div>
+              <div class="result-box">
+                “IANA reserves example domains (including example.com, example.net, example.org, and
+                .example) for use in documentation, illustrative examples, and technical testing
+                without requiring prior coordination.”
+              </div>
+              <p class="small muted" style="margin-top:13px">
+                Configured: finish, search_web, read_url_content, amber/readFetchedPage.<br>Observed:
+                search_web, read_url_content. Fetch status: success.
+              </p>
+            </article>
+            <article class="card web-card">
+              <p class="run-label">fetched-page-result.json</p>
+              <h3>Fresh body-reading probe</h3>
+              <div class="tool-chain">
+                <span class="tool-box">read_url_content</span><span>→</span
+                ><span class="tool-box">amber/readFetchedPage</span><span>→</span
+                ><span class="tool-box">UUID</span>
+              </div>
+              <div class="result-box mono">
+                body: e84b6a4f-fb87-4c65-81fb-82b2cfd1f1bf<br>model:
+                e84b6a4f-fb87-4c65-81fb-82b2cfd1f1bf<br><strong>exactMatch: true</strong>
+              </div>
+              <p class="small muted" style="margin-top:13px">
+                The native fetch saves the response body. The task-scoped
+                <code>amber/readFetchedPage</code>
+                tool lets the model read that saved body without arbitrary file access.
+              </p>
+            </article>
+          </div>
+
+          <div class="limits">
+            <h3>What the probes establish</h3>
+            <ul class="fact-list" style="margin-top:14px">
+              <li>
+                The application controls each task’s declared tools and prompt. Configured and
+                observed tools are different records.
+              </li>
+              <li>
+                The broad <code>runtimeInventory</code> comes from process initialization; it is not
+                the effective custom-agent grant.
+              </li>
+              <li>
+                The inheritance marker was not observed once. That single probe does not prove
+                complete isolation, and Amber cannot inspect or replace Google’s internal runtime
+                instructions.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="sources">
+        <div class="wrap">
+          <div class="section-head">
+            <p class="step-label">Provenance</p>
+            <div>
+              <h2>Records and code behind this page.</h2>
+              <p class="section-intro">
+                The walkthrough is self-contained; links below pin each source to the reviewed
+                public commit.
+              </p>
+            </div>
+          </div>
+
+          <div class="file-map">
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/result.json"
+                >result.json</a
+              >
+              <p>
+                Main saved Telegram observation, model answers, research calls, progress and
+                receipt.
+              </p>
+            </article>
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/testing/fixtures.ts"
+                >testing/fixtures.ts</a
+              >
+              <p>Six fictional messages, Bea v2 post, Alex memory and unused notedPage fixture.</p>
+            </article>
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/workflow.ts"
+                >workflow.ts</a
+              >
+              <p>TelegramBatch, BuildProjects and Project Flow/Action graph.</p>
+            </article>
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/agents.ts"
+                >agents.ts</a
+              >
+              <p>Effect layers, model tasks, prompts and per-task tool allowlists.</p>
+            </article>
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/model.ts"
+                >model.ts</a
+              >
+              <p>Progress tracking, read-tool mediation, evidence capture and schema decode.</p>
+            </article>
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/guards.ts"
+                >guards.ts</a
+              >
+              <p>
+                Selection coverage, source evidence, author ownership and expected-version checks.
+              </p>
+            </article>
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/tools.ts"
+                >tools.ts</a
+              >
+              <p>Bounded read-only model tools and application write-port contracts.</p>
+            </article>
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/testing/store.ts"
+                >testing/store.ts</a
+              >
+              <p>In-memory test handlers, publication, diffs, questions, receipts and progress.</p>
+            </article>
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/antigravity.ts"
+                >antigravity.ts</a
+              >
+              <p>
+                Custom agent definition, CLI stream parser, capability policy and fetched-page
+                reader.
+              </p>
+            </article>
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/workflow.test.ts"
+                >workflow.test.ts</a
+              >
+              <p>Live-model observation harness and assertions.</p>
+            </article>
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/native-web-result.json"
+                >native-web-result.json</a
+              >
+              <p>Separate saved IANA native search/fetch verification.</p>
+            </article>
+            <article class="file">
+              <a
+                href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/fetched-page-result.json"
+                >fetched-page-result.json</a
+              >
+              <p>Separate saved HTTPBin body-reading verification.</p>
+            </article>
+          </div>
+
+          <div class="provenance">
+            <h3>Verified baseline</h3>
+            <dl class="provenance-grid">
+              <div>
+                <dt>Repository</dt>
+                <dd>github.com/0xpolarzero/amber</dd>
+              </div>
+              <div>
+                <dt>Commit</dt>
+                <dd class="mono">6e953b4ae06caee06d3d89cf83e657417c649737</dd>
+              </div>
+              <div>
+                <dt>Main record mode</dt>
+                <dd>live-model</dd>
+              </div>
+              <div>
+                <dt>Model</dt>
+                <dd>gemini-3.8-flash-medium</dd>
+              </div>
+              <div>
+                <dt>Input</dt>
+                <dd>committed fictional fixtures</dd>
+              </div>
+              <div>
+                <dt>Storage</dt>
+                <dd>in-memory test adapter</dd>
+              </div>
+              <div>
+                <dt>Model path</dt>
+                <dd>Google subscription / Antigravity</dd>
+              </div>
+              <div>
+                <dt>Live calls by this page</dt>
+                <dd>none</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="details-card">
+            <details>
+              <summary>Exact selection prompt</summary>
+              <pre
+                class="wrap-code"
+              >Find concrete work people made or materially improved in this Telegram batch.
+Select firsthand creations, working experiments, demos and meaningful project updates.
+Skip general AI news, reposts of other people's work, vague plans, reactions and chatter.
+Group related messages about the same project by its actual author; one person may have
+multiple projects. Replies from others can supply context but never establish ownership.
+Keep replies with useful details or unanswered project questions with that candidate.
+Each candidate needs a new message by its author that evidences their work. Do not turn
+a public link or a mention into proof that the sender built it. Skip unknown authors.
+Use exact supplied message IDs. Context-only messages may support a candidate, but cannot
+trigger one alone. Cover every new message with a candidate or an ignored reason. A new
+message describing multiple distinct projects may support multiple candidates.
+Return candidates with a short project label, author ID and relevant message IDs.
+This is selection, not publication. Existing-post matching and research happen next.</pre>
+              <p class="small muted">
+                <a
+                  href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/prompts/selection.mdx"
+                  >prompts/selection.mdx</a
+                >
+              </p>
+            </details>
+            <details>
+              <summary>Exact post prompt</summary>
+              <pre
+                class="wrap-code"
+              >Write one concise Amber entry about the candidate project, attributed to the
+candidate's author. Read the supplied Telegram messages, linked user clarifications,
+owned posts, memories and outstanding
+requests. Search/read related Telegram messages and search the author's existing posts
+before deciding whether to create or update. Fetch public links or search the web when
+that can resolve missing details. After `read_url_content`, call `readFetchedPage` with
+the same URL to read the fetched body; the native receipt is not the body. Cite only
+supplied or tool-returned evidence.
+You have at most eight tool calls. Use specific project names or supplied IDs, and stop
+researching once you can describe the work accurately. Empty search results are valid;
+do not repeat searches that cannot change the decision.
+Describe what was made, what it does and what someone can try, in plain factual language.
+Do not invent ownership, features, results, access, prices or links. Other people's replies
+are context; prefer the maker's statements and verifiable public project material.
+Use preferences for wording. They do not change project facts. If an existing post covers
+this project, use its ID and exact version. If nothing material is new, return skip.
+Publish when the evidence supports a useful, accurate description. A missing demo does
+not by itself block publication. Attach one short question only for a meaningful remaining
+uncertainty, and do not repeat a supplied outstanding request. If basic identity or purpose
+is unclear after research, return question instead of publishing an empty or invented post.
+Do not ask permission to publish. Return post, question or skip, with supporting sources.
+Fill every field with the actual decision and project facts, never placeholder examples.
+The information threshold and question frequency are provisional rules for review.</pre>
+              <p class="small muted">
+                <a
+                  href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/prompts/post.mdx"
+                  >prompts/post.mdx</a
+                >
+              </p>
+            </details>
+            <details>
+              <summary>Exact task capability definition</summary>
+              <pre>const projectTools = ['searchMessages', 'readMessages', 'searchPosts'] as const
+const nativeWebTools = ['search_web', 'read_url_content'] as const
+
+generate(S.Selection, 'selection', selectionPrompt, input, {}, [], [])
+
+generate(
+  S.Proposal,
+  'post',
+  postPrompt,
+  input,
+  scope,
+  projectTools,
+  nativeWebTools,
+)</pre>
+              <p class="small muted">
+                Source:
+                <a
+                  href="https://github.com/0xpolarzero/amber/blob/6e953b4ae06caee06d3d89cf83e657417c649737/poc/telegram/agents.ts#L10-L47"
+                  >agents.ts at the verified commit</a
+                >.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <p>Amber Telegram PoC · saved observation walkthrough</p>
+        <p>Static HTML · no network, build or server required</p>
+      </div>
+    </footer>
+  </body>
+</html>
