@@ -21,12 +21,12 @@ test('walks the complete guided preview without typing or waiting', async ({
   await expect(guide).toContainText('1 of 10 · Guided fixture')
   await expect(guide).toContainText('New requests')
   await expect(page.locator('#message-request-license')).toBeFocused()
-  await expect(page.getByText('Request', { exact: true })).toBeVisible()
+  await expect(page.locator('.request-intent')).toHaveCount(0)
   await expect(
-    page.getByText('Question', { exact: true }).first(),
+    page.getByText('Does Atlas already support shared workspaces?', {
+      exact: true,
+    }),
   ).toBeVisible()
-  await expect(page.getByText('Suggestion', { exact: true })).toBeVisible()
-  await expect(page.getByText('Information', { exact: true })).toBeVisible()
 
   const next = guide.getByRole('button', { name: 'Next', exact: true })
   await next.click()
@@ -70,7 +70,7 @@ test('walks the complete guided preview without typing or waiting', async ({
   await expect(
     page.getByText('Answered', { exact: true }).first(),
   ).toBeVisible()
-  await expect(page.getByText('Deferred · still open')).toBeVisible()
+  await expect(page.getByText('Deferred', { exact: true })).toBeVisible()
   await expect(
     page.getByText('Created Clipwise', { exact: true }),
   ).toBeVisible()
@@ -176,15 +176,11 @@ test('shows the grounded private conversation, applied post changes and memory h
     'Atlas now states that it works offline',
   )
   await expect(page.getByText('Ignored', { exact: true })).toBeVisible()
-  await expect(
-    page.getByText('Deferred · still open', { exact: true }),
-  ).toBeVisible()
+  await expect(page.getByText('Deferred', { exact: true })).toBeVisible()
   await expect(
     page.getByText('I indexed the latest project messages.'),
   ).toBeVisible()
-  await expect(page.getByText('Needs your reply', { exact: true })).toHaveCount(
-    0,
-  )
+  await expect(page.getByText('Unanswered', { exact: true })).toHaveCount(0)
   await expect(page.getByText('1 pending', { exact: true })).toBeVisible()
   await expect(page.getByText('you', { exact: true })).toHaveCount(0)
 
@@ -224,12 +220,8 @@ test('switches and resets stable scenarios and cycles through every pending requ
   await next.click()
   const second = await page.locator('.chat-message:focus').getAttribute('id')
   expect(first).not.toBe(second)
-  await expect(page.getByText('Needs your reply', { exact: true })).toHaveCount(
-    3,
-  )
-  await expect(
-    page.getByText('Deferred · still open', { exact: true }),
-  ).toHaveCount(1)
+  await expect(page.getByText('Unanswered', { exact: true })).toHaveCount(3)
+  await expect(page.getByText('Deferred', { exact: true })).toHaveCount(1)
 
   const composer = page.getByRole('textbox', { name: 'Message Amber' })
   await composer.fill('A draft that belongs to this fixture.')

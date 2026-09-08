@@ -190,13 +190,6 @@ function AgentChat({
                   : message.candidate.status}
               </span>
             ) : null}
-            {message.sender === 'amber' && message.intent ? (
-              <span className={`request-intent ${message.intent}`}>
-                {message.intent === 'informational'
-                  ? 'Information'
-                  : message.intent[0].toUpperCase() + message.intent.slice(1)}
-              </span>
-            ) : null}
             <MessageState message={message} />
             <p className="chat-bubble">{message.text}</p>
             {message.changes?.length ? (
@@ -314,7 +307,7 @@ function MessageState({
   if (isUnaddressed(message))
     return (
       <span className="unaddressed-label">
-        {message.deferred ? 'Deferred · still open' : 'Needs your reply'}
+        {message.deferred ? 'Deferred' : 'Unanswered'}
       </span>
     )
   return null

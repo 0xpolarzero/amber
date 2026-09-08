@@ -2566,24 +2566,12 @@ dialog::backdrop {
   margin-left: 0;
 }
 .request-state,
-.request-intent,
 .candidate-context {
   display: block;
   width: fit-content;
   margin: 0 0 6px 2px;
   font-size: 11px;
   color: var(--quiet);
-}
-.request-intent {
-  display: inline-block;
-  margin-right: 6px;
-  padding: 2px 6px;
-  border: 1px solid var(--line);
-  border-radius: 99px;
-  color: var(--secondary);
-}
-.request-intent.informational {
-  background: var(--soft);
 }
 .request-state.answered::before {
   content: "✓ ";

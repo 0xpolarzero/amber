@@ -59,7 +59,7 @@ export const AGENT_GUIDE: readonly AgentGuideCheckpoint[] = [
   {
     title: 'New requests',
     notice:
-      'Notice how questions, requests, and suggestions need a reply while information does not.',
+      'Unanswered questions are highlighted; informational messages need no reply.',
     scenarioId: 'incoming',
     targetMessageId: 'request-license',
     focusMessage: true,
@@ -86,7 +86,7 @@ export const AGENT_GUIDE: readonly AgentGuideCheckpoint[] = [
   {
     title: 'One reply, several outcomes',
     notice:
-      'Amber answers two requests, sets a suggestion aside, updates Noted, and creates Clipwise; the export question stays open.',
+      'Amber answers two requests, skips a question, updates Noted, and creates Clipwise; the export question stays open.',
     scenarioId: 'rich-complete',
     targetMessageId: 'live-turn-1:assistant',
     expandedChangePostId: 'clipwise-preview',
@@ -401,26 +401,22 @@ function data(feed: Feed) {
 
 function requests(): readonly AgentMessage[] {
   return [
-    amber(
-      'request-license',
-      'Please confirm which license Clipwise will use.',
-      {
-        needsReply: true,
-        intent: 'request',
-        candidate: { name: 'Clipwise', status: 'pending' },
-      },
-    ),
+    amber('request-license', 'What license does Clipwise use?', {
+      needsReply: true,
+      intent: 'request',
+      candidate: { name: 'Clipwise', status: 'pending' },
+    }),
     amber('request-language', 'Does Noted support Mandarin?', {
       needsReply: true,
       intent: 'question',
       postId: 'voice-notes',
     }),
-    amber('request-team', 'Should Atlas support team workspaces?', {
+    amber('request-team', 'Does Atlas already support shared workspaces?', {
       needsReply: true,
-      intent: 'suggestion',
+      intent: 'question',
       postId: 'atlas-preview',
     }),
-    amber('request-exports', 'Which three export formats will Noted support?', {
+    amber('request-exports', 'Which export formats are planned for Noted?', {
       needsReply: true,
       intent: 'question',
       postId: 'voice-notes',
@@ -444,11 +440,11 @@ function richConversation(feed: Feed): AgentConversation {
     ...requests(),
     user(
       'live-turn-1:user',
-      'Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Ignore the Atlas team-workspace suggestion. Prefer detailed factual posts and forget my macOS-only preference.',
+      'Noted supports Mandarin. Clipwise uses the MIT license and is free, so publish it. Skip the Atlas workspace question. Prefer detailed factual posts and forget my macOS-only preference.',
     ),
     amber(
       'live-turn-1:assistant',
-      'Noted now reflects Mandarin support, and Clipwise is published as free under the MIT license. I also set aside the Atlas team-workspace suggestion.',
+      'Noted now reflects Mandarin support, and Clipwise is published as free under the MIT license. I left out the Atlas workspace details.',
       {
         changes: turnOne,
         memoryEvents: turnOneMemory,
