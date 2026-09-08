@@ -2837,6 +2837,14 @@ dialog::backdrop {
   background: var(--soft);
   color: var(--ink);
 }
+.workflow-trace:not([open]) > summary {
+  width: 36px;
+  grid-template-columns: 36px;
+  padding-right: 0;
+}
+.workflow-trace:not([open]) > summary > span:not(.workflow-trace-toggle-icons) {
+  display: none;
+}
 .workflow-trace-toggle-icons {
   position: relative;
   display: grid;
