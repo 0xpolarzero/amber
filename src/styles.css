@@ -2846,25 +2846,20 @@ dialog::backdrop {
   display: none;
 }
 .workflow-trace-toggle-icons {
-  position: relative;
-  display: grid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   width: 36px;
   height: 36px;
-  place-items: center;
 }
 .workflow-trace-toggle-icons > svg:first-child {
   width: 17px;
   height: 17px;
 }
 .workflow-trace-toggle-icons .workflow-trace-caret {
-  position: absolute;
-  right: 0;
-  bottom: 6px;
-  width: 9px;
-  height: 9px;
-  padding: 1px;
-  border-radius: 50%;
-  background: var(--paper);
+  width: 12px;
+  height: 12px;
 }
 .workflow-trace[open] > summary .workflow-trace-caret {
   transform: rotate(180deg);
