@@ -1,0 +1,1852 @@
+{
+  "mode": "live-model",
+  "provenance": {
+    "model": "gemini-3.8-flash-medium",
+    "provider": "Google subscription through Antigravity CLI",
+    "syntheticInput": true,
+    "storage": "Invented in-memory fixtures; no Telegram, database, or auth connection",
+    "recordedAt": "2026-09-08T13:47:59.541Z",
+    "sourceProvenance": {
+      "../telegram/workflow.ts": "sha256:07f1e8cc52230b238f8bcb031f10ec3b823e026c62d160e27baa1ff88fa95ff0",
+      "../telegram/agents.ts": "sha256:a59a8b63faf71cf3e01b1bf924b9acf42945f8d0f1c18993104081c6b8927bde",
+      "../telegram/model.ts": "sha256:eeedceca8bc747270215982a2466bf5938181384f0ab237d82db839f023016a1",
+      "../telegram/schemas.ts": "sha256:d5c126f2e79b24aa93803b82c81f76d36118870f3786564d85fdc1916e2cf97b",
+      "../telegram/testing/fixtures.ts": "sha256:eb5f067bd70da6ab61d9c98436fac0e74949fd8a6cf18f064bc34bad090bb2de",
+      "../telegram/testing/store.ts": "sha256:e1644f057cbeab5ff57caac2e8f66f22383edd38854e11a5e63602ceec9159ed",
+      "../telegram/prompts/selection.mdx": "sha256:ec6efaaf484a40fe5c5dc5a6f6a13355cbeb07ed4c0e756224e9b5724ae03020",
+      "../telegram/prompts/post.mdx": "sha256:140ef7974b2c13d7d35c4a9980234bac3b5aef2ec783e210bc749fb97ecef723",
+      "./workflow.ts": "sha256:d191f7a2d492a31871a788076916d4b0b21402d35205db90d1c2d167df39d359",
+      "./agents.ts": "sha256:daec6932bfce4adbfb863aad85a0be1556555bca32d0700f61ad9c4c4a8c31cb",
+      "./model.ts": "sha256:0676e9d7ab6e448131902a2c95425c8b409e38a36be8742062fccfb600f178d4",
+      "./schemas.ts": "sha256:726c83fd458fa7dbb7377421fc16b02f1ba4c57d1201315cf9cf69126334b86b",
+      "./testing/store.ts": "sha256:7856d72c8b8cf668dd0d3d010bdf00fe5072854fda17580d5010443c1475da24",
+      "./prompts/query-planner.mdx": "sha256:201b78adbe625d9298f3ad1799ed9d63b23c95f480420f78eec9d0bf3960e419",
+      "./prompts/responder.mdx": "sha256:4c823c94420995907bd511ef60b8a301d91fd91acf58bd8da5146f60bd1d190d",
+      "./prompts/memory.mdx": "sha256:3592390702f1f0b30fc344393a5b087735e6c7149eba7f92d519676c290b8c95",
+      "./prompts/addressing.mdx": "sha256:4970f43ddd11df5e800b12154ee1217e885b40a2af94bb9524af5f4804858bdb"
+    }
+  },
+  "extraction": {
+    "input": {
+      "batchId": "batch-1",
+      "groupId": "ai-builders",
+      "newMessageIds": [
+        "101",
+        "102",
+        "103",
+        "104",
+        "105"
+      ],
+      "messages": [
+        {
+          "id": "90",
+          "authorId": "dana",
+          "text": "I released Clipbook last month. It saves copied links.",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "101",
+          "authorId": "carl",
+          "text": "The new Gemini announcement looks impressive!",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "102",
+          "authorId": "alex",
+          "text": "I built Noted: voice notes transcribed locally on a Mac. https://noted.example",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "103",
+          "authorId": "bea",
+          "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "104",
+          "authorId": "alex",
+          "text": "It uses Whisper on the device. It is free and works offline.",
+          "replyToId": "102",
+          "albumId": null
+        },
+        {
+          "id": "105",
+          "authorId": "carl",
+          "text": "Does Noted understand Mandarin?",
+          "replyToId": "102",
+          "albumId": null
+        }
+      ]
+    },
+    "initialPosts": [
+      {
+        "id": "tab-tidy",
+        "authorId": "bea",
+        "version": 2,
+        "title": "Tab tidy",
+        "summary": "A Chrome extension that groups tabs by domain.",
+        "detail": "Related tabs share a group based on their domain."
+      }
+    ],
+    "receipt": {
+      "completed": true
+    },
+    "result": {
+      "posts": [
+        {
+          "id": "batch-1:0",
+          "authorId": "alex",
+          "version": 1,
+          "title": "Noted: Local Voice Note Transcription for Mac",
+          "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+          "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper. It runs completely offline, is free to use, and is available at https://noted.example."
+        },
+        {
+          "id": "tab-tidy",
+          "authorId": "bea",
+          "version": 3,
+          "title": "Tab tidy",
+          "summary": "A Chrome extension that groups browser tabs by project rather than just by domain.",
+          "detail": "Tab tidy organizes browser tabs into project-based groups instead of grouping solely by domain. This allows related tabs across multiple sites—such as GitHub repositories, documentation, and issue trackers—to stay together in the same group."
+        }
+      ],
+      "questions": [
+        {
+          "authorId": "alex",
+          "postId": "batch-1:0",
+          "text": "Does Noted support Mandarin transcription?",
+          "needsReply": true
+        }
+      ],
+      "diffs": [
+        {
+          "postId": "tab-tidy",
+          "before": {
+            "id": "tab-tidy",
+            "authorId": "bea",
+            "version": 2,
+            "title": "Tab tidy",
+            "summary": "A Chrome extension that groups tabs by domain.",
+            "detail": "Related tabs share a group based on their domain."
+          },
+          "after": {
+            "id": "tab-tidy",
+            "authorId": "bea",
+            "version": 3,
+            "title": "Tab tidy",
+            "summary": "A Chrome extension that groups browser tabs by project rather than just by domain.",
+            "detail": "Tab tidy organizes browser tabs into project-based groups instead of grouping solely by domain. This allows related tabs across multiple sites—such as GitHub repositories, documentation, and issue trackers—to stay together in the same group."
+          }
+        }
+      ],
+      "ignored": [
+        {
+          "messageId": "101",
+          "reason": "General AI news reaction rather than personal project work"
+        }
+      ],
+      "sources": {
+        "batch-1:0": [
+          {
+            "kind": "telegram",
+            "messageId": "102"
+          },
+          {
+            "kind": "telegram",
+            "messageId": "104"
+          },
+          {
+            "kind": "telegram",
+            "messageId": "105"
+          }
+        ],
+        "tab-tidy": [
+          {
+            "kind": "telegram",
+            "messageId": "103"
+          }
+        ]
+      }
+    },
+    "calls": [
+      {
+        "task": "selection",
+        "input": {
+          "batchId": "batch-1",
+          "groupId": "ai-builders",
+          "messages": [
+            {
+              "id": "90",
+              "authorId": "dana",
+              "text": "I released Clipbook last month. It saves copied links.",
+              "replyToId": null,
+              "albumId": null
+            },
+            {
+              "id": "101",
+              "authorId": "carl",
+              "text": "The new Gemini announcement looks impressive!",
+              "replyToId": null,
+              "albumId": null
+            },
+            {
+              "id": "102",
+              "authorId": "alex",
+              "text": "I built Noted: voice notes transcribed locally on a Mac. https://noted.example",
+              "replyToId": null,
+              "albumId": null
+            },
+            {
+              "id": "103",
+              "authorId": "bea",
+              "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+              "replyToId": null,
+              "albumId": null
+            },
+            {
+              "id": "104",
+              "authorId": "alex",
+              "text": "It uses Whisper on the device. It is free and works offline.",
+              "replyToId": "102",
+              "albumId": null
+            },
+            {
+              "id": "105",
+              "authorId": "carl",
+              "text": "Does Noted understand Mandarin?",
+              "replyToId": "102",
+              "albumId": null
+            }
+          ],
+          "newMessageIds": [
+            "101",
+            "102",
+            "103",
+            "104",
+            "105"
+          ]
+        },
+        "output": {
+          "candidates": [
+            {
+              "authorId": "alex",
+              "messageIds": [
+                "102",
+                "104",
+                "105"
+              ],
+              "project": "Noted"
+            },
+            {
+              "authorId": "bea",
+              "messageIds": [
+                "103"
+              ],
+              "project": "Tab tidy"
+            }
+          ],
+          "ignored": [
+            {
+              "messageId": "101",
+              "reason": "General AI news reaction rather than personal project work"
+            }
+          ]
+        }
+      },
+      {
+        "task": "post",
+        "input": {
+          "work": {
+            "batchId": "batch-1",
+            "groupId": "ai-builders",
+            "candidateId": "batch-1:1",
+            "revision": 0,
+            "candidate": {
+              "authorId": "bea",
+              "project": "Tab tidy",
+              "messageIds": [
+                "103"
+              ]
+            }
+          },
+          "messages": [
+            {
+              "id": "103",
+              "authorId": "bea",
+              "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+              "replyToId": null,
+              "albumId": null
+            }
+          ],
+          "clarifications": [],
+          "posts": [
+            {
+              "id": "tab-tidy",
+              "authorId": "bea",
+              "version": 2,
+              "title": "Tab tidy",
+              "summary": "A Chrome extension that groups tabs by domain.",
+              "detail": "Related tabs share a group based on their domain."
+            }
+          ],
+          "memories": [],
+          "unaddressed": []
+        },
+        "output": {
+          "detail": "Tab tidy organizes browser tabs into project-based groups instead of grouping solely by domain. This allows related tabs across multiple sites—such as GitHub repositories, documentation, and issue trackers—to stay together in the same group.",
+          "existingPostId": "tab-tidy",
+          "expectedVersion": 2,
+          "kind": "post",
+          "question": null,
+          "sources": [
+            {
+              "kind": "telegram",
+              "messageId": "103"
+            }
+          ],
+          "summary": "A Chrome extension that groups browser tabs by project rather than just by domain.",
+          "title": "Tab tidy"
+        }
+      },
+      {
+        "task": "post",
+        "input": {
+          "work": {
+            "batchId": "batch-1",
+            "groupId": "ai-builders",
+            "candidateId": "batch-1:0",
+            "revision": 0,
+            "candidate": {
+              "authorId": "alex",
+              "project": "Noted",
+              "messageIds": [
+                "102",
+                "104",
+                "105"
+              ]
+            }
+          },
+          "messages": [
+            {
+              "id": "102",
+              "authorId": "alex",
+              "text": "I built Noted: voice notes transcribed locally on a Mac. https://noted.example",
+              "replyToId": null,
+              "albumId": null
+            },
+            {
+              "id": "104",
+              "authorId": "alex",
+              "text": "It uses Whisper on the device. It is free and works offline.",
+              "replyToId": "102",
+              "albumId": null
+            },
+            {
+              "id": "105",
+              "authorId": "carl",
+              "text": "Does Noted understand Mandarin?",
+              "replyToId": "102",
+              "albumId": null
+            }
+          ],
+          "clarifications": [],
+          "posts": [],
+          "memories": [
+            {
+              "id": "style",
+              "text": "Keep my posts short and factual. No hype."
+            }
+          ],
+          "unaddressed": []
+        },
+        "output": {
+          "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper. It runs completely offline, is free to use, and is available at https://noted.example.",
+          "existingPostId": null,
+          "expectedVersion": null,
+          "kind": "post",
+          "question": "Does Noted support Mandarin transcription?",
+          "sources": [
+            {
+              "kind": "telegram",
+              "messageId": "102"
+            },
+            {
+              "kind": "telegram",
+              "messageId": "104"
+            },
+            {
+              "kind": "telegram",
+              "messageId": "105"
+            }
+          ],
+          "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+          "title": "Noted: Local Voice Note Transcription for Mac"
+        }
+      }
+    ],
+    "observations": [
+      {
+        "task": "selection",
+        "observation": {
+          "kind": "configuration",
+          "agent": "amber",
+          "model": "gemini-3.8-flash-medium",
+          "declaredTools": [
+            "finish"
+          ],
+          "runtimeInventory": [
+            "ask_custom_permission",
+            "ask_permission",
+            "ask_question",
+            "browser_click_element",
+            "browser_drag_pixel_to_pixel",
+            "browser_get_dom",
+            "browser_get_network_request",
+            "browser_input",
+            "browser_list_network_requests",
+            "browser_mouse_down",
+            "browser_mouse_up",
+            "browser_move_mouse",
+            "browser_press_key",
+            "browser_refresh_page",
+            "browser_resize_window",
+            "browser_scroll",
+            "browser_scroll_dom",
+            "browser_select_option",
+            "browser_subagent",
+            "call_mcp_tool",
+            "capture_browser_console_logs",
+            "capture_browser_screenshot",
+            "click_browser_pixel",
+            "command_status",
+            "define_subagent",
+            "delete_knowledge",
+            "execute_browser_javascript",
+            "find_by_name",
+            "finish",
+            "generate_image",
+            "grep_search",
+            "invoke_subagent",
+            "list_browser_pages",
+            "list_dir",
+            "list_permissions",
+            "list_resources",
+            "manage_inbox",
+            "manage_subagents",
+            "manage_task",
+            "multi_replace_file_content",
+            "notebook_edit",
+            "notebook_execution",
+            "open_browser_url",
+            "read_browser_page",
+            "read_resource",
+            "read_url_content",
+            "replace_file_content",
+            "run_command",
+            "schedule",
+            "search_web",
+            "sed_file",
+            "send_command_input",
+            "send_message",
+            "view_file",
+            "wait",
+            "wait_5_seconds",
+            "write_to_file"
+          ],
+          "observedTools": [],
+          "failedTools": [],
+          "controlProvenance": "antigravity-stream-json-v1"
+        }
+      },
+      {
+        "task": "post",
+        "observation": {
+          "kind": "configuration",
+          "agent": "amber",
+          "model": "gemini-3.8-flash-medium",
+          "declaredTools": [
+            "finish",
+            "search_web",
+            "read_url_content",
+            "amber/searchMessages",
+            "amber/readMessages",
+            "amber/searchPosts",
+            "amber/readFetchedPage"
+          ],
+          "runtimeInventory": [
+            "ask_custom_permission",
+            "ask_permission",
+            "ask_question",
+            "browser_click_element",
+            "browser_drag_pixel_to_pixel",
+            "browser_get_dom",
+            "browser_get_network_request",
+            "browser_input",
+            "browser_list_network_requests",
+            "browser_mouse_down",
+            "browser_mouse_up",
+            "browser_move_mouse",
+            "browser_press_key",
+            "browser_refresh_page",
+            "browser_resize_window",
+            "browser_scroll",
+            "browser_scroll_dom",
+            "browser_select_option",
+            "browser_subagent",
+            "call_mcp_tool",
+            "capture_browser_console_logs",
+            "capture_browser_screenshot",
+            "click_browser_pixel",
+            "command_status",
+            "define_subagent",
+            "delete_knowledge",
+            "execute_browser_javascript",
+            "find_by_name",
+            "finish",
+            "generate_image",
+            "grep_search",
+            "invoke_subagent",
+            "list_browser_pages",
+            "list_dir",
+            "list_permissions",
+            "list_resources",
+            "manage_inbox",
+            "manage_subagents",
+            "manage_task",
+            "multi_replace_file_content",
+            "notebook_edit",
+            "notebook_execution",
+            "open_browser_url",
+            "read_browser_page",
+            "read_resource",
+            "read_url_content",
+            "replace_file_content",
+            "run_command",
+            "schedule",
+            "search_web",
+            "sed_file",
+            "send_command_input",
+            "send_message",
+            "view_file",
+            "wait",
+            "wait_5_seconds",
+            "write_to_file"
+          ],
+          "observedTools": [
+            "amber/searchMessages",
+            "amber/searchPosts",
+            "amber/readMessages"
+          ],
+          "failedTools": [],
+          "controlProvenance": "antigravity-stream-json-v1"
+        }
+      },
+      {
+        "task": "post",
+        "observation": {
+          "kind": "configuration",
+          "agent": "amber",
+          "model": "gemini-3.8-flash-medium",
+          "declaredTools": [
+            "finish",
+            "search_web",
+            "read_url_content",
+            "amber/searchMessages",
+            "amber/readMessages",
+            "amber/searchPosts",
+            "amber/readFetchedPage"
+          ],
+          "runtimeInventory": [
+            "ask_custom_permission",
+            "ask_permission",
+            "ask_question",
+            "browser_click_element",
+            "browser_drag_pixel_to_pixel",
+            "browser_get_dom",
+            "browser_get_network_request",
+            "browser_input",
+            "browser_list_network_requests",
+            "browser_mouse_down",
+            "browser_mouse_up",
+            "browser_move_mouse",
+            "browser_press_key",
+            "browser_refresh_page",
+            "browser_resize_window",
+            "browser_scroll",
+            "browser_scroll_dom",
+            "browser_select_option",
+            "browser_subagent",
+            "call_mcp_tool",
+            "capture_browser_console_logs",
+            "capture_browser_screenshot",
+            "click_browser_pixel",
+            "command_status",
+            "define_subagent",
+            "delete_knowledge",
+            "execute_browser_javascript",
+            "find_by_name",
+            "finish",
+            "generate_image",
+            "grep_search",
+            "invoke_subagent",
+            "list_browser_pages",
+            "list_dir",
+            "list_permissions",
+            "list_resources",
+            "manage_inbox",
+            "manage_subagents",
+            "manage_task",
+            "multi_replace_file_content",
+            "notebook_edit",
+            "notebook_execution",
+            "open_browser_url",
+            "read_browser_page",
+            "read_resource",
+            "read_url_content",
+            "replace_file_content",
+            "run_command",
+            "schedule",
+            "search_web",
+            "sed_file",
+            "send_command_input",
+            "send_message",
+            "view_file",
+            "wait",
+            "wait_5_seconds",
+            "write_to_file"
+          ],
+          "observedTools": [
+            "amber/searchMessages",
+            "amber/searchPosts",
+            "amber/readMessages",
+            "amber/readMessages"
+          ],
+          "failedTools": [],
+          "controlProvenance": "antigravity-stream-json-v1"
+        }
+      }
+    ],
+    "progress": [
+      {
+        "task": "selection",
+        "scope": {
+          "batchId": "batch-1",
+          "groupId": "ai-builders"
+        },
+        "status": "running"
+      },
+      {
+        "task": "selection",
+        "scope": {
+          "batchId": "batch-1",
+          "groupId": "ai-builders"
+        },
+        "status": "done"
+      },
+      {
+        "task": "post",
+        "scope": {
+          "userId": "alex",
+          "groupId": "ai-builders",
+          "batchId": "batch-1"
+        },
+        "status": "running"
+      },
+      {
+        "task": "post",
+        "scope": {
+          "userId": "bea",
+          "groupId": "ai-builders",
+          "batchId": "batch-1"
+        },
+        "status": "running"
+      },
+      {
+        "task": "post",
+        "scope": {
+          "userId": "bea",
+          "groupId": "ai-builders",
+          "batchId": "batch-1"
+        },
+        "status": "done"
+      },
+      {
+        "task": "post",
+        "scope": {
+          "userId": "alex",
+          "groupId": "ai-builders",
+          "batchId": "batch-1"
+        },
+        "status": "done"
+      }
+    ]
+  },
+  "messaging": {
+    "seededPosts": [
+      {
+        "id": "batch-1:0",
+        "authorId": "alex",
+        "version": 1,
+        "title": "Noted: Local Voice Note Transcription for Mac",
+        "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+        "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper. It runs completely offline, is free to use, and is available at https://noted.example.",
+        "published": true
+      },
+      {
+        "id": "tab-tidy",
+        "authorId": "bea",
+        "version": 3,
+        "title": "Tab tidy",
+        "summary": "A Chrome extension that groups browser tabs by project rather than just by domain.",
+        "detail": "Tab tidy organizes browser tabs into project-based groups instead of grouping solely by domain. This allows related tabs across multiple sites—such as GitHub repositories, documentation, and issue trackers—to stay together in the same group.",
+        "published": true
+      }
+    ],
+    "seededQuestions": [
+      {
+        "authorId": "alex",
+        "postId": "batch-1:0",
+        "text": "Does Noted support Mandarin transcription?",
+        "needsReply": true
+      }
+    ],
+    "input": {
+      "turnId": "preview-turn-1",
+      "userId": "alex",
+      "text": "Noted supports Mandarin. Keep my posts concise and factual."
+    },
+    "before": {
+      "posts": [
+        {
+          "id": "batch-1:0",
+          "authorId": "alex",
+          "version": 1,
+          "title": "Noted: Local Voice Note Transcription for Mac",
+          "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+          "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper. It runs completely offline, is free to use, and is available at https://noted.example.",
+          "published": true
+        },
+        {
+          "id": "tab-tidy",
+          "authorId": "bea",
+          "version": 3,
+          "title": "Tab tidy",
+          "summary": "A Chrome extension that groups browser tabs by project rather than just by domain.",
+          "detail": "Tab tidy organizes browser tabs into project-based groups instead of grouping solely by domain. This allows related tabs across multiple sites—such as GitHub repositories, documentation, and issue trackers—to stay together in the same group.",
+          "published": true
+        }
+      ],
+      "memories": [
+        {
+          "id": "style",
+          "text": "Keep my posts short and factual. No hype.",
+          "userId": "alex",
+          "version": 1
+        }
+      ],
+      "messages": [
+        {
+          "id": "preview-extracted-question-1",
+          "userId": "alex",
+          "conversationId": "conversation:alex",
+          "role": "assistant",
+          "text": "Does Noted support Mandarin transcription?",
+          "sequence": 1,
+          "turnId": null,
+          "intent": "question",
+          "linkedPostId": "batch-1:0",
+          "pendingCandidateId": null,
+          "addressed": false
+        }
+      ],
+      "candidates": [],
+      "addressing": {},
+      "turns": {}
+    },
+    "receipt": {
+      "turnId": "preview-turn-1",
+      "userId": "alex",
+      "status": "completed",
+      "assistantMessageId": "preview-turn-1:assistant",
+      "diffs": [
+        {
+          "postId": "batch-1:0",
+          "before": {
+            "id": "batch-1:0",
+            "authorId": "alex",
+            "version": 1,
+            "title": "Noted: Local Voice Note Transcription for Mac",
+            "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+            "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper. It runs completely offline, is free to use, and is available at https://noted.example.",
+            "published": true
+          },
+          "after": {
+            "id": "batch-1:0",
+            "authorId": "alex",
+            "version": 2,
+            "title": "Noted: Local Voice Note Transcription for Mac",
+            "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper, with support for Mandarin.",
+            "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper and supports Mandarin transcription. It runs completely offline, is free to use, and is available at https://noted.example.",
+            "published": true
+          }
+        }
+      ],
+      "candidatePublications": [],
+      "background": [
+        {
+          "task": "memory",
+          "status": "done",
+          "reason": null
+        },
+        {
+          "task": "addressing",
+          "status": "done",
+          "reason": null
+        }
+      ]
+    },
+    "calls": [
+      {
+        "task": "query-planner",
+        "input": {
+          "turn": {
+            "turnId": "preview-turn-1",
+            "userId": "alex",
+            "text": "Noted supports Mandarin. Keep my posts concise and factual.",
+            "userMessageId": "preview-turn-1:user",
+            "cutoffSequence": 2
+          },
+          "recentExchanges": [],
+          "pendingRequests": [
+            {
+              "id": "preview-extracted-question-1",
+              "userId": "alex",
+              "conversationId": "conversation:alex",
+              "role": "assistant",
+              "text": "Does Noted support Mandarin transcription?",
+              "sequence": 1,
+              "turnId": null,
+              "intent": "question",
+              "linkedPostId": "batch-1:0",
+              "pendingCandidateId": null,
+              "addressed": false
+            }
+          ]
+        },
+        "output": {
+          "queries": []
+        }
+      },
+      {
+        "task": "responder",
+        "input": {
+          "turn": {
+            "turnId": "preview-turn-1",
+            "userId": "alex",
+            "text": "Noted supports Mandarin. Keep my posts concise and factual.",
+            "userMessageId": "preview-turn-1:user",
+            "cutoffSequence": 2
+          },
+          "recentExchanges": [],
+          "pendingRequests": [
+            {
+              "id": "preview-extracted-question-1",
+              "userId": "alex",
+              "conversationId": "conversation:alex",
+              "role": "assistant",
+              "text": "Does Noted support Mandarin transcription?",
+              "sequence": 1,
+              "turnId": null,
+              "intent": "question",
+              "linkedPostId": "batch-1:0",
+              "pendingCandidateId": null,
+              "addressed": false
+            }
+          ],
+          "queryResults": {
+            "posts": [
+              {
+                "id": "batch-1:0",
+                "authorId": "alex",
+                "version": 1,
+                "title": "Noted: Local Voice Note Transcription for Mac",
+                "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+                "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper. It runs completely offline, is free to use, and is available at https://noted.example.",
+                "published": true
+              }
+            ],
+            "userMessages": [],
+            "assistantMessages": [],
+            "linkedRequestPostIds": [
+              "batch-1:0"
+            ]
+          },
+          "memories": [
+            {
+              "id": "style",
+              "userId": "alex",
+              "text": "Keep my posts short and factual. No hype.",
+              "version": 1
+            }
+          ],
+          "unaddressed": [
+            {
+              "id": "preview-extracted-question-1",
+              "userId": "alex",
+              "conversationId": "conversation:alex",
+              "role": "assistant",
+              "text": "Does Noted support Mandarin transcription?",
+              "sequence": 1,
+              "turnId": null,
+              "intent": "question",
+              "linkedPostId": "batch-1:0",
+              "pendingCandidateId": null,
+              "addressed": false
+            }
+          ],
+          "candidates": []
+        },
+        "output": {
+          "classification": "answer",
+          "intent": "informational",
+          "pendingOutcome": {
+            "kind": "none"
+          },
+          "postChanges": [
+            {
+              "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper and supports Mandarin transcription. It runs completely offline, is free to use, and is available at https://noted.example.",
+              "evidence": [
+                {
+                  "id": "batch-1:0",
+                  "kind": "post",
+                  "version": 1
+                },
+                {
+                  "id": "preview-turn-1:user",
+                  "kind": "user_message"
+                },
+                {
+                  "id": "preview-extracted-question-1",
+                  "kind": "request"
+                }
+              ],
+              "expectedVersion": 1,
+              "postId": "batch-1:0",
+              "published": true,
+              "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper, with support for Mandarin.",
+              "title": "Noted: Local Voice Note Transcription for Mac"
+            }
+          ],
+          "text": "I have updated the post for Noted to reflect that it supports Mandarin transcription. I also acknowledge your preference to keep your posts concise and factual."
+        }
+      },
+      {
+        "task": "memory",
+        "input": {
+          "userMessage": {
+            "id": "preview-turn-1:user",
+            "userId": "alex",
+            "conversationId": "conversation:alex",
+            "role": "user",
+            "text": "Noted supports Mandarin. Keep my posts concise and factual.",
+            "sequence": 2,
+            "turnId": "preview-turn-1",
+            "intent": "request",
+            "linkedPostId": null,
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          "assistantAnswer": {
+            "id": "preview-turn-1:assistant",
+            "userId": "alex",
+            "conversationId": "conversation:alex",
+            "role": "assistant",
+            "text": "I have updated the post for Noted to reflect that it supports Mandarin transcription. I also acknowledge your preference to keep your posts concise and factual.",
+            "sequence": 3,
+            "turnId": "preview-turn-1",
+            "intent": "informational",
+            "linkedPostId": "batch-1:0",
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          "memories": [
+            {
+              "id": "style",
+              "userId": "alex",
+              "text": "Keep my posts short and factual. No hype.",
+              "version": 1
+            }
+          ]
+        },
+        "output": {
+          "operations": []
+        }
+      },
+      {
+        "task": "addressing",
+        "input": {
+          "userMessage": {
+            "id": "preview-turn-1:user",
+            "userId": "alex",
+            "conversationId": "conversation:alex",
+            "role": "user",
+            "text": "Noted supports Mandarin. Keep my posts concise and factual.",
+            "sequence": 2,
+            "turnId": "preview-turn-1",
+            "intent": "request",
+            "linkedPostId": null,
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          "assistantAnswer": {
+            "id": "preview-turn-1:assistant",
+            "userId": "alex",
+            "conversationId": "conversation:alex",
+            "role": "assistant",
+            "text": "I have updated the post for Noted to reflect that it supports Mandarin transcription. I also acknowledge your preference to keep your posts concise and factual.",
+            "sequence": 3,
+            "turnId": "preview-turn-1",
+            "intent": "informational",
+            "linkedPostId": "batch-1:0",
+            "pendingCandidateId": null,
+            "addressed": true
+          },
+          "unaddressedSnapshot": [
+            {
+              "id": "preview-extracted-question-1",
+              "userId": "alex",
+              "conversationId": "conversation:alex",
+              "role": "assistant",
+              "text": "Does Noted support Mandarin transcription?",
+              "sequence": 1,
+              "turnId": null,
+              "intent": "question",
+              "linkedPostId": "batch-1:0",
+              "pendingCandidateId": null,
+              "addressed": false
+            }
+          ]
+        },
+        "output": {
+          "resolutions": [
+            {
+              "outcome": "answered",
+              "reason": "The user directly confirmed that Noted supports Mandarin.",
+              "requestMessageId": "preview-extracted-question-1"
+            }
+          ]
+        }
+      }
+    ],
+    "observations": [
+      {
+        "task": "query-planner",
+        "observation": {
+          "kind": "configuration",
+          "agent": "amber",
+          "model": "gemini-3.8-flash-medium",
+          "declaredTools": [
+            "finish"
+          ],
+          "runtimeInventory": [
+            "ask_custom_permission",
+            "ask_permission",
+            "ask_question",
+            "browser_click_element",
+            "browser_drag_pixel_to_pixel",
+            "browser_get_dom",
+            "browser_get_network_request",
+            "browser_input",
+            "browser_list_network_requests",
+            "browser_mouse_down",
+            "browser_mouse_up",
+            "browser_move_mouse",
+            "browser_press_key",
+            "browser_refresh_page",
+            "browser_resize_window",
+            "browser_scroll",
+            "browser_scroll_dom",
+            "browser_select_option",
+            "browser_subagent",
+            "call_mcp_tool",
+            "capture_browser_console_logs",
+            "capture_browser_screenshot",
+            "click_browser_pixel",
+            "command_status",
+            "define_subagent",
+            "delete_knowledge",
+            "execute_browser_javascript",
+            "find_by_name",
+            "finish",
+            "generate_image",
+            "grep_search",
+            "invoke_subagent",
+            "list_browser_pages",
+            "list_dir",
+            "list_permissions",
+            "list_resources",
+            "manage_inbox",
+            "manage_subagents",
+            "manage_task",
+            "multi_replace_file_content",
+            "notebook_edit",
+            "notebook_execution",
+            "open_browser_url",
+            "read_browser_page",
+            "read_resource",
+            "read_url_content",
+            "replace_file_content",
+            "run_command",
+            "schedule",
+            "search_web",
+            "sed_file",
+            "send_command_input",
+            "send_message",
+            "view_file",
+            "wait",
+            "wait_5_seconds",
+            "write_to_file"
+          ],
+          "observedTools": [],
+          "failedTools": [],
+          "controlProvenance": "antigravity-stream-json-v1"
+        }
+      },
+      {
+        "task": "responder",
+        "observation": {
+          "kind": "configuration",
+          "agent": "amber",
+          "model": "gemini-3.8-flash-medium",
+          "declaredTools": [
+            "finish",
+            "search_web",
+            "read_url_content",
+            "amber/readFetchedPage"
+          ],
+          "runtimeInventory": [
+            "ask_custom_permission",
+            "ask_permission",
+            "ask_question",
+            "browser_click_element",
+            "browser_drag_pixel_to_pixel",
+            "browser_get_dom",
+            "browser_get_network_request",
+            "browser_input",
+            "browser_list_network_requests",
+            "browser_mouse_down",
+            "browser_mouse_up",
+            "browser_move_mouse",
+            "browser_press_key",
+            "browser_refresh_page",
+            "browser_resize_window",
+            "browser_scroll",
+            "browser_scroll_dom",
+            "browser_select_option",
+            "browser_subagent",
+            "call_mcp_tool",
+            "capture_browser_console_logs",
+            "capture_browser_screenshot",
+            "click_browser_pixel",
+            "command_status",
+            "define_subagent",
+            "delete_knowledge",
+            "execute_browser_javascript",
+            "find_by_name",
+            "finish",
+            "generate_image",
+            "grep_search",
+            "invoke_subagent",
+            "list_browser_pages",
+            "list_dir",
+            "list_permissions",
+            "list_resources",
+            "manage_inbox",
+            "manage_subagents",
+            "manage_task",
+            "multi_replace_file_content",
+            "notebook_edit",
+            "notebook_execution",
+            "open_browser_url",
+            "read_browser_page",
+            "read_resource",
+            "read_url_content",
+            "replace_file_content",
+            "run_command",
+            "schedule",
+            "search_web",
+            "sed_file",
+            "send_command_input",
+            "send_message",
+            "view_file",
+            "wait",
+            "wait_5_seconds",
+            "write_to_file"
+          ],
+          "observedTools": [],
+          "failedTools": [],
+          "controlProvenance": "antigravity-stream-json-v1"
+        }
+      },
+      {
+        "task": "memory",
+        "observation": {
+          "kind": "configuration",
+          "agent": "amber",
+          "model": "gemini-3.8-flash-medium",
+          "declaredTools": [
+            "finish"
+          ],
+          "runtimeInventory": [
+            "ask_custom_permission",
+            "ask_permission",
+            "ask_question",
+            "browser_click_element",
+            "browser_drag_pixel_to_pixel",
+            "browser_get_dom",
+            "browser_get_network_request",
+            "browser_input",
+            "browser_list_network_requests",
+            "browser_mouse_down",
+            "browser_mouse_up",
+            "browser_move_mouse",
+            "browser_press_key",
+            "browser_refresh_page",
+            "browser_resize_window",
+            "browser_scroll",
+            "browser_scroll_dom",
+            "browser_select_option",
+            "browser_subagent",
+            "call_mcp_tool",
+            "capture_browser_console_logs",
+            "capture_browser_screenshot",
+            "click_browser_pixel",
+            "command_status",
+            "define_subagent",
+            "delete_knowledge",
+            "execute_browser_javascript",
+            "find_by_name",
+            "finish",
+            "generate_image",
+            "grep_search",
+            "invoke_subagent",
+            "list_browser_pages",
+            "list_dir",
+            "list_permissions",
+            "list_resources",
+            "manage_inbox",
+            "manage_subagents",
+            "manage_task",
+            "multi_replace_file_content",
+            "notebook_edit",
+            "notebook_execution",
+            "open_browser_url",
+            "read_browser_page",
+            "read_resource",
+            "read_url_content",
+            "replace_file_content",
+            "run_command",
+            "schedule",
+            "search_web",
+            "sed_file",
+            "send_command_input",
+            "send_message",
+            "view_file",
+            "wait",
+            "wait_5_seconds",
+            "write_to_file"
+          ],
+          "observedTools": [],
+          "failedTools": [],
+          "controlProvenance": "antigravity-stream-json-v1"
+        }
+      },
+      {
+        "task": "addressing",
+        "observation": {
+          "kind": "configuration",
+          "agent": "amber",
+          "model": "gemini-3.8-flash-medium",
+          "declaredTools": [
+            "finish"
+          ],
+          "runtimeInventory": [
+            "ask_custom_permission",
+            "ask_permission",
+            "ask_question",
+            "browser_click_element",
+            "browser_drag_pixel_to_pixel",
+            "browser_get_dom",
+            "browser_get_network_request",
+            "browser_input",
+            "browser_list_network_requests",
+            "browser_mouse_down",
+            "browser_mouse_up",
+            "browser_move_mouse",
+            "browser_press_key",
+            "browser_refresh_page",
+            "browser_resize_window",
+            "browser_scroll",
+            "browser_scroll_dom",
+            "browser_select_option",
+            "browser_subagent",
+            "call_mcp_tool",
+            "capture_browser_console_logs",
+            "capture_browser_screenshot",
+            "click_browser_pixel",
+            "command_status",
+            "define_subagent",
+            "delete_knowledge",
+            "execute_browser_javascript",
+            "find_by_name",
+            "finish",
+            "generate_image",
+            "grep_search",
+            "invoke_subagent",
+            "list_browser_pages",
+            "list_dir",
+            "list_permissions",
+            "list_resources",
+            "manage_inbox",
+            "manage_subagents",
+            "manage_task",
+            "multi_replace_file_content",
+            "notebook_edit",
+            "notebook_execution",
+            "open_browser_url",
+            "read_browser_page",
+            "read_resource",
+            "read_url_content",
+            "replace_file_content",
+            "run_command",
+            "schedule",
+            "search_web",
+            "sed_file",
+            "send_command_input",
+            "send_message",
+            "view_file",
+            "wait",
+            "wait_5_seconds",
+            "write_to_file"
+          ],
+          "observedTools": [],
+          "failedTools": [],
+          "controlProvenance": "antigravity-stream-json-v1"
+        }
+      }
+    ],
+    "progress": [
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "admission",
+        "status": "running",
+        "at": 1788875236443
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "admission",
+        "status": "done",
+        "at": 1788875236444
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "planner",
+        "status": "running",
+        "at": 1788875236449
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "planner",
+        "status": "done",
+        "at": 1788875245614
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "query_execution",
+        "status": "running",
+        "at": 1788875245615
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "query_execution",
+        "status": "done",
+        "at": 1788875245615
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "responder",
+        "status": "running",
+        "at": 1788875245615
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "responder",
+        "status": "done",
+        "at": 1788875258324
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "publication",
+        "status": "running",
+        "at": 1788875258325
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "publication",
+        "status": "done",
+        "at": 1788875258325
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "memory",
+        "status": "running",
+        "at": 1788875258336
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "addressing",
+        "status": "running",
+        "at": 1788875258341
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "memory",
+        "status": "done",
+        "at": 1788875266098
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "addressing",
+        "status": "done",
+        "at": 1788875279536
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "finalize",
+        "status": "running",
+        "at": 1788875279537
+      },
+      {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "task": "finalize",
+        "status": "done",
+        "at": 1788875279537
+      }
+    ],
+    "after": {
+      "posts": [
+        {
+          "id": "batch-1:0",
+          "authorId": "alex",
+          "version": 2,
+          "title": "Noted: Local Voice Note Transcription for Mac",
+          "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper, with support for Mandarin.",
+          "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper and supports Mandarin transcription. It runs completely offline, is free to use, and is available at https://noted.example.",
+          "published": true
+        },
+        {
+          "id": "tab-tidy",
+          "authorId": "bea",
+          "version": 3,
+          "title": "Tab tidy",
+          "summary": "A Chrome extension that groups browser tabs by project rather than just by domain.",
+          "detail": "Tab tidy organizes browser tabs into project-based groups instead of grouping solely by domain. This allows related tabs across multiple sites—such as GitHub repositories, documentation, and issue trackers—to stay together in the same group.",
+          "published": true
+        }
+      ],
+      "memories": [
+        {
+          "id": "style",
+          "text": "Keep my posts short and factual. No hype.",
+          "userId": "alex",
+          "version": 1
+        }
+      ],
+      "messages": [
+        {
+          "id": "preview-extracted-question-1",
+          "userId": "alex",
+          "conversationId": "conversation:alex",
+          "role": "assistant",
+          "text": "Does Noted support Mandarin transcription?",
+          "sequence": 1,
+          "turnId": null,
+          "intent": "question",
+          "linkedPostId": "batch-1:0",
+          "pendingCandidateId": null,
+          "addressed": true
+        },
+        {
+          "id": "preview-turn-1:user",
+          "userId": "alex",
+          "conversationId": "conversation:alex",
+          "role": "user",
+          "text": "Noted supports Mandarin. Keep my posts concise and factual.",
+          "sequence": 2,
+          "turnId": "preview-turn-1",
+          "intent": "request",
+          "linkedPostId": null,
+          "pendingCandidateId": null,
+          "addressed": true
+        },
+        {
+          "id": "preview-turn-1:assistant",
+          "userId": "alex",
+          "conversationId": "conversation:alex",
+          "role": "assistant",
+          "text": "I have updated the post for Noted to reflect that it supports Mandarin transcription. I also acknowledge your preference to keep your posts concise and factual.",
+          "sequence": 3,
+          "turnId": "preview-turn-1",
+          "intent": "informational",
+          "linkedPostId": "batch-1:0",
+          "pendingCandidateId": null,
+          "addressed": true
+        }
+      ],
+      "candidates": [],
+      "addressing": {
+        "preview-extracted-question-1": {
+          "outcome": "answered",
+          "reason": "The user directly confirmed that Noted supports Mandarin."
+        }
+      },
+      "turns": {
+        "preview-turn-1": {
+          "status": "completed",
+          "attempts": {
+            "memory": 1,
+            "addressing": 1
+          },
+          "jobs": {
+            "memory": {
+              "task": "memory",
+              "status": "done",
+              "reason": null
+            },
+            "addressing": {
+              "task": "addressing",
+              "status": "done",
+              "reason": null
+            }
+          },
+          "published": {
+            "turn": {
+              "turnId": "preview-turn-1",
+              "userId": "alex",
+              "text": "Noted supports Mandarin. Keep my posts concise and factual.",
+              "userMessageId": "preview-turn-1:user",
+              "cutoffSequence": 2
+            },
+            "userMessage": {
+              "id": "preview-turn-1:user",
+              "userId": "alex",
+              "conversationId": "conversation:alex",
+              "role": "user",
+              "text": "Noted supports Mandarin. Keep my posts concise and factual.",
+              "sequence": 2,
+              "turnId": "preview-turn-1",
+              "intent": "request",
+              "linkedPostId": null,
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "assistantMessage": {
+              "id": "preview-turn-1:assistant",
+              "userId": "alex",
+              "conversationId": "conversation:alex",
+              "role": "assistant",
+              "text": "I have updated the post for Noted to reflect that it supports Mandarin transcription. I also acknowledge your preference to keep your posts concise and factual.",
+              "sequence": 3,
+              "turnId": "preview-turn-1",
+              "intent": "informational",
+              "linkedPostId": "batch-1:0",
+              "pendingCandidateId": null,
+              "addressed": true
+            },
+            "response": {
+              "text": "I have updated the post for Noted to reflect that it supports Mandarin transcription. I also acknowledge your preference to keep your posts concise and factual.",
+              "intent": "informational",
+              "classification": "answer",
+              "postChanges": [
+                {
+                  "postId": "batch-1:0",
+                  "expectedVersion": 1,
+                  "title": "Noted: Local Voice Note Transcription for Mac",
+                  "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper, with support for Mandarin.",
+                  "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper and supports Mandarin transcription. It runs completely offline, is free to use, and is available at https://noted.example.",
+                  "published": true,
+                  "evidence": [
+                    {
+                      "kind": "post",
+                      "id": "batch-1:0",
+                      "version": 1
+                    },
+                    {
+                      "kind": "user_message",
+                      "id": "preview-turn-1:user"
+                    },
+                    {
+                      "kind": "request",
+                      "id": "preview-extracted-question-1"
+                    }
+                  ]
+                }
+              ],
+              "pendingOutcome": {
+                "kind": "none"
+              }
+            },
+            "webEvidence": [],
+            "diffs": [
+              {
+                "postId": "batch-1:0",
+                "before": {
+                  "id": "batch-1:0",
+                  "authorId": "alex",
+                  "version": 1,
+                  "title": "Noted: Local Voice Note Transcription for Mac",
+                  "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+                  "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper. It runs completely offline, is free to use, and is available at https://noted.example.",
+                  "published": true
+                },
+                "after": {
+                  "id": "batch-1:0",
+                  "authorId": "alex",
+                  "version": 2,
+                  "title": "Noted: Local Voice Note Transcription for Mac",
+                  "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper, with support for Mandarin.",
+                  "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper and supports Mandarin transcription. It runs completely offline, is free to use, and is available at https://noted.example.",
+                  "published": true
+                }
+              }
+            ],
+            "candidatePublications": [],
+            "memorySnapshot": [
+              {
+                "id": "style",
+                "userId": "alex",
+                "text": "Keep my posts short and factual. No hype.",
+                "version": 1
+              }
+            ],
+            "requestSnapshot": [
+              {
+                "id": "preview-extracted-question-1",
+                "userId": "alex",
+                "conversationId": "conversation:alex",
+                "role": "assistant",
+                "text": "Does Noted support Mandarin transcription?",
+                "sequence": 1,
+                "turnId": null,
+                "intent": "question",
+                "linkedPostId": "batch-1:0",
+                "pendingCandidateId": null,
+                "addressed": false
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "projection": {
+    "version": 1,
+    "mode": "recorded-real-model",
+    "model": "gemini-3.8-flash-medium",
+    "recordedAt": "2026-09-08T13:47:59.541Z",
+    "disclosure": "Invented Telegram messages processed by the real Gemini extraction and messaging workflows. This preview is not connected to Telegram.",
+    "telegram": {
+      "batchId": "batch-1",
+      "groupId": "ai-builders",
+      "messages": [
+        {
+          "id": "90",
+          "authorId": "dana",
+          "text": "I released Clipbook last month. It saves copied links.",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "101",
+          "authorId": "carl",
+          "text": "The new Gemini announcement looks impressive!",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "102",
+          "authorId": "alex",
+          "text": "I built Noted: voice notes transcribed locally on a Mac. https://noted.example",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "103",
+          "authorId": "bea",
+          "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+          "replyToId": null,
+          "albumId": null
+        },
+        {
+          "id": "104",
+          "authorId": "alex",
+          "text": "It uses Whisper on the device. It is free and works offline.",
+          "replyToId": "102",
+          "albumId": null
+        },
+        {
+          "id": "105",
+          "authorId": "carl",
+          "text": "Does Noted understand Mandarin?",
+          "replyToId": "102",
+          "albumId": null
+        }
+      ],
+      "posts": [
+        {
+          "id": "batch-1:0",
+          "authorId": "alex",
+          "version": 1,
+          "title": "Noted: Local Voice Note Transcription for Mac",
+          "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+          "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper. It runs completely offline, is free to use, and is available at https://noted.example."
+        },
+        {
+          "id": "tab-tidy",
+          "authorId": "bea",
+          "version": 3,
+          "title": "Tab tidy",
+          "summary": "A Chrome extension that groups browser tabs by project rather than just by domain.",
+          "detail": "Tab tidy organizes browser tabs into project-based groups instead of grouping solely by domain. This allows related tabs across multiple sites—such as GitHub repositories, documentation, and issue trackers—to stay together in the same group."
+        }
+      ],
+      "questions": [
+        {
+          "id": "preview-extracted-question-1",
+          "authorId": "alex",
+          "postId": "batch-1:0",
+          "text": "Does Noted support Mandarin transcription?",
+          "needsReply": true
+        }
+      ],
+      "ignored": [
+        {
+          "messageId": "101",
+          "reason": "General AI news reaction rather than personal project work"
+        }
+      ],
+      "diffs": [
+        {
+          "postId": "tab-tidy",
+          "before": {
+            "id": "tab-tidy",
+            "authorId": "bea",
+            "version": 2,
+            "title": "Tab tidy",
+            "summary": "A Chrome extension that groups tabs by domain.",
+            "detail": "Related tabs share a group based on their domain."
+          },
+          "after": {
+            "id": "tab-tidy",
+            "authorId": "bea",
+            "version": 3,
+            "title": "Tab tidy",
+            "summary": "A Chrome extension that groups browser tabs by project rather than just by domain.",
+            "detail": "Tab tidy organizes browser tabs into project-based groups instead of grouping solely by domain. This allows related tabs across multiple sites—such as GitHub repositories, documentation, and issue trackers—to stay together in the same group."
+          }
+        }
+      ]
+    },
+    "messaging": {
+      "input": {
+        "turnId": "preview-turn-1",
+        "userId": "alex",
+        "text": "Noted supports Mandarin. Keep my posts concise and factual."
+      },
+      "assistant": {
+        "id": "preview-turn-1:assistant",
+        "userId": "alex",
+        "conversationId": "conversation:alex",
+        "role": "assistant",
+        "text": "I have updated the post for Noted to reflect that it supports Mandarin transcription. I also acknowledge your preference to keep your posts concise and factual.",
+        "sequence": 3,
+        "turnId": "preview-turn-1",
+        "intent": "informational",
+        "linkedPostId": "batch-1:0",
+        "pendingCandidateId": null,
+        "addressed": true
+      },
+      "diffs": [
+        {
+          "postId": "batch-1:0",
+          "before": {
+            "id": "batch-1:0",
+            "authorId": "alex",
+            "version": 1,
+            "title": "Noted: Local Voice Note Transcription for Mac",
+            "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+            "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper. It runs completely offline, is free to use, and is available at https://noted.example.",
+            "published": true
+          },
+          "after": {
+            "id": "batch-1:0",
+            "authorId": "alex",
+            "version": 2,
+            "title": "Noted: Local Voice Note Transcription for Mac",
+            "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper, with support for Mandarin.",
+            "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper and supports Mandarin transcription. It runs completely offline, is free to use, and is available at https://noted.example.",
+            "published": true
+          }
+        }
+      ],
+      "memoryOperations": [],
+      "finalMemories": [
+        {
+          "id": "style",
+          "text": "Keep my posts short and factual. No hype.",
+          "userId": "alex",
+          "version": 1
+        }
+      ],
+      "addressing": [
+        {
+          "outcome": "answered",
+          "reason": "The user directly confirmed that Noted supports Mandarin.",
+          "requestMessageId": "preview-extracted-question-1"
+        }
+      ],
+      "background": [
+        {
+          "task": "memory",
+          "status": "done",
+          "reason": null
+        },
+        {
+          "task": "addressing",
+          "status": "done",
+          "reason": null
+        }
+      ]
+    }
+  }
+}

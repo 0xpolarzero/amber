@@ -6,6 +6,7 @@
   "scripts": {
     "test": "vitest run testing",
     "test:live": "vitest run workflow.live.test.ts --maxWorkers=1",
+    "test:preview-live": "vitest run preview.live.test.ts --maxWorkers=1",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

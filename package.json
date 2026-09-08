@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "test:telegram": "pnpm --dir poc test:telegram",
-    "test:messaging": "pnpm --dir poc test:messaging"
+    "test:messaging": "pnpm --dir poc test:messaging",
+    "preview:refresh": "pnpm --dir poc/messaging test:preview-live"
   },
   "dependencies": {
     "@tanstack/react-form": "1.33.5",

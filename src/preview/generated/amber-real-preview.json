@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "mode": "recorded-real-model",
+  "model": "gemini-3.8-flash-medium",
+  "recordedAt": "2026-09-08T13:47:59.541Z",
+  "disclosure": "Invented Telegram messages processed by the real Gemini extraction and messaging workflows. This preview is not connected to Telegram.",
+  "telegram": {
+    "batchId": "batch-1",
+    "groupId": "ai-builders",
+    "messages": [
+      {
+        "id": "90",
+        "authorId": "dana",
+        "text": "I released Clipbook last month. It saves copied links.",
+        "replyToId": null,
+        "albumId": null
+      },
+      {
+        "id": "101",
+        "authorId": "carl",
+        "text": "The new Gemini announcement looks impressive!",
+        "replyToId": null,
+        "albumId": null
+      },
+      {
+        "id": "102",
+        "authorId": "alex",
+        "text": "I built Noted: voice notes transcribed locally on a Mac. https://noted.example",
+        "replyToId": null,
+        "albumId": null
+      },
+      {
+        "id": "103",
+        "authorId": "bea",
+        "text": "Tab tidy update: it now groups tabs by project, not just domain. GitHub, docs and issues can stay together.",
+        "replyToId": null,
+        "albumId": null
+      },
+      {
+        "id": "104",
+        "authorId": "alex",
+        "text": "It uses Whisper on the device. It is free and works offline.",
+        "replyToId": "102",
+        "albumId": null
+      },
+      {
+        "id": "105",
+        "authorId": "carl",
+        "text": "Does Noted understand Mandarin?",
+        "replyToId": "102",
+        "albumId": null
+      }
+    ],
+    "posts": [
+      {
+        "id": "batch-1:0",
+        "authorId": "alex",
+        "version": 1,
+        "title": "Noted: Local Voice Note Transcription for Mac",
+        "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+        "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper. It runs completely offline, is free to use, and is available at https://noted.example."
+      },
+      {
+        "id": "tab-tidy",
+        "authorId": "bea",
+        "version": 3,
+        "title": "Tab tidy",
+        "summary": "A Chrome extension that groups browser tabs by project rather than just by domain.",
+        "detail": "Tab tidy organizes browser tabs into project-based groups instead of grouping solely by domain. This allows related tabs across multiple sites—such as GitHub repositories, documentation, and issue trackers—to stay together in the same group."
+      }
+    ],
+    "questions": [
+      {
+        "id": "preview-extracted-question-1",
+        "authorId": "alex",
+        "postId": "batch-1:0",
+        "text": "Does Noted support Mandarin transcription?",
+        "needsReply": true
+      }
+    ],
+    "ignored": [
+      {
+        "messageId": "101",
+        "reason": "General AI news reaction rather than personal project work"
+      }
+    ],
+    "diffs": [
+      {
+        "postId": "tab-tidy",
+        "before": {
+          "id": "tab-tidy",
+          "authorId": "bea",
+          "version": 2,
+          "title": "Tab tidy",
+          "summary": "A Chrome extension that groups tabs by domain.",
+          "detail": "Related tabs share a group based on their domain."
+        },
+        "after": {
+          "id": "tab-tidy",
+          "authorId": "bea",
+          "version": 3,
+          "title": "Tab tidy",
+          "summary": "A Chrome extension that groups browser tabs by project rather than just by domain.",
+          "detail": "Tab tidy organizes browser tabs into project-based groups instead of grouping solely by domain. This allows related tabs across multiple sites—such as GitHub repositories, documentation, and issue trackers—to stay together in the same group."
+        }
+      }
+    ]
+  },
+  "messaging": {
+    "input": {
+      "turnId": "preview-turn-1",
+      "userId": "alex",
+      "text": "Noted supports Mandarin. Keep my posts concise and factual."
+    },
+    "assistant": {
+      "id": "preview-turn-1:assistant",
+      "userId": "alex",
+      "conversationId": "conversation:alex",
+      "role": "assistant",
+      "text": "I have updated the post for Noted to reflect that it supports Mandarin transcription. I also acknowledge your preference to keep your posts concise and factual.",
+      "sequence": 3,
+      "turnId": "preview-turn-1",
+      "intent": "informational",
+      "linkedPostId": "batch-1:0",
+      "pendingCandidateId": null,
+      "addressed": true
+    },
+    "diffs": [
+      {
+        "postId": "batch-1:0",
+        "before": {
+          "id": "batch-1:0",
+          "authorId": "alex",
+          "version": 1,
+          "title": "Noted: Local Voice Note Transcription for Mac",
+          "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper.",
+          "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper. It runs completely offline, is free to use, and is available at https://noted.example.",
+          "published": true
+        },
+        "after": {
+          "id": "batch-1:0",
+          "authorId": "alex",
+          "version": 2,
+          "title": "Noted: Local Voice Note Transcription for Mac",
+          "summary": "A free Mac app for transcribing voice notes locally and offline using on-device Whisper, with support for Mandarin.",
+          "detail": "Noted transcribes voice notes locally on a Mac using on-device Whisper and supports Mandarin transcription. It runs completely offline, is free to use, and is available at https://noted.example.",
+          "published": true
+        }
+      }
+    ],
+    "memoryOperations": [],
+    "finalMemories": [
+      {
+        "id": "style",
+        "text": "Keep my posts short and factual. No hype.",
+        "userId": "alex",
+        "version": 1
+      }
+    ],
+    "addressing": [
+      {
+        "outcome": "answered",
+        "reason": "The user directly confirmed that Noted supports Mandarin.",
+        "requestMessageId": "preview-extracted-question-1"
+      }
+    ],
+    "background": [
+      {
+        "task": "memory",
+        "status": "done",
+        "reason": null
+      },
+      {
+        "task": "addressing",
+        "status": "done",
+        "reason": null
+      }
+    ]
+  }
+}
