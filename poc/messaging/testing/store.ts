@@ -1,5 +1,5 @@
 import { Effect, Schema } from 'effect'
-import { conditionalResolutions, type SavedResolution } from '../../shared/addressing'
+import { AddressingState } from '../../shared/addressing'
 import { OwnerCoordinator } from '../../shared/owner-coordinator'
 import * as S from '../schemas'
 import type { Ports } from '../tools'
@@ -29,9 +29,10 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
 export function messagingStore(
   fixture: Fixture = {},
-  options: { coordinator?: OwnerCoordinator } = {},
+  options: { coordinator?: OwnerCoordinator; addressingState?: AddressingState } = {},
 ) {
   const coordinator = options.coordinator ?? new OwnerCoordinator()
+  const addressingState = options.addressingState ?? new AddressingState()
   const posts = new Map((fixture.posts ?? []).map((item) => [item.id, structuredClone(item)]))
   const memories = new Map((fixture.memories ?? []).map((item) => [item.id, structuredClone(item)]))
   const messages = new Map((fixture.messages ?? []).map((item) => [item.id, structuredClone(item)]))
@@ -40,12 +41,18 @@ export function messagingStore(
   )
   const turns = new Map<string, TurnRecord>()
   const active = new Map<string, string>()
-  const addressingReasons = new Map<string, SavedResolution>()
   const progress: (Parameters<Ports['progress']>[0] & { at: number })[] = []
   const observations: { task: string; observation: Parameters<Ports['observe']>[1] }[] = []
   const matches = (haystack: string, terms: readonly string[]) =>
     terms.some((term) => haystack.toLocaleLowerCase().includes(term.toLocaleLowerCase()))
   let sequence = Math.max(0, ...[...messages.values()].map(({ sequence }) => sequence))
+  for (const message of messages.values())
+    if (message.role === 'assistant' && actionable(message.intent))
+      addressingState.register({
+        id: message.id,
+        ownerId: message.userId,
+        addressed: message.addressed,
+      })
 
   const run = <A>(operation: string, fn: () => A) =>
     Effect.try({
@@ -98,7 +105,7 @@ export function messagingStore(
         (message) =>
           message.role === 'assistant' &&
           actionable(message.intent) &&
-          !message.addressed &&
+          !addressingState.isAddressed(message.id, message.addressed) &&
           message.sequence < cutoff,
       )
       .sort((a, b) => a.sequence - b.sequence)
@@ -503,10 +510,9 @@ export function messagingStore(
         const record = turns.get(published.turn.turnId)
         const saved = record?.jobs.get('addressing')
         if (saved?.status === 'done') return saved
-        const accepted = conditionalResolutions(
+        const accepted = addressingState.apply(
+          published.turn.userId,
           published.requestSnapshot,
-          messages,
-          addressingReasons,
           plan.resolutions,
           published.userMessage.id,
         )
@@ -516,7 +522,6 @@ export function messagingStore(
           if (request.userId !== published.turn.userId)
             throw new Error('Request belongs to another owner.')
           messages.set(request.id, { ...request, addressed: true })
-          addressingReasons.set(request.id, resolution)
         }
         const receipt = { task: 'addressing' as const, status: 'done' as const, reason: null }
         record?.jobs.set('addressing', receipt)
@@ -648,15 +653,23 @@ export function messagingStore(
       addressed: !actionable(decoded.intent),
     }
     messages.set(message.id, message)
+    if (actionable(message.intent))
+      addressingState.register({ id: message.id, ownerId: message.userId, addressed: false })
     return message
   }
 
   const snapshot = () => ({
     posts: [...posts.values()].sort((a, b) => a.id.localeCompare(b.id)),
     memories: [...memories.values()].sort((a, b) => a.id.localeCompare(b.id)),
-    messages: [...messages.values()].sort((a, b) => a.sequence - b.sequence),
+    messages: [...messages.values()]
+      .map((message) =>
+        message.role === 'assistant' && actionable(message.intent)
+          ? { ...message, addressed: addressingState.isAddressed(message.id, message.addressed) }
+          : message,
+      )
+      .sort((a, b) => a.sequence - b.sequence),
     candidates: [...candidates.values()].sort((a, b) => a.id.localeCompare(b.id)),
-    addressing: Object.fromEntries(addressingReasons),
+    addressing: Object.fromEntries(addressingState.resolutionEntries()),
     turns: Object.fromEntries(
       [...turns].map(([id, record]) => [
         id,
@@ -669,5 +682,5 @@ export function messagingStore(
       ]),
     ),
   })
-  return { ports, admitAgentMessage, snapshot, progress, observations, active }
+  return { ports, admitAgentMessage, snapshot, progress, observations, active, addressingState }
 }

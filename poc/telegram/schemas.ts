@@ -44,6 +44,7 @@ export const PublicProject = Schema.Struct({
   ownerId: Id,
   ownerName: text(140),
   project: text(140),
+  summary: text(500),
   knownLinks: Schema.Array(text(2_000)).check(Schema.isMaxLength(8)),
   version: Version,
 })
@@ -64,7 +65,13 @@ export const Candidate = Schema.Struct({
 })
 export const ModelSelection = Schema.Struct({
   candidates: Schema.Array(Candidate).check(Schema.isMaxLength(100)),
-  ignored: Schema.Array(Schema.Struct({ messageId: Id, reason: text(300) })),
+  ignored: Schema.Array(
+    Schema.Struct({
+      messageId: Id,
+      category: Schema.Literals(['chatter', 'non_work', 'duplicate']),
+      reason: text(300),
+    }),
+  ),
   unresolved: Schema.Array(Schema.Struct({ messageId: Id, reason: text(300) })),
 })
 export const Selection = Schema.Struct({
@@ -100,6 +107,7 @@ export const ProjectContext = Schema.Struct({
       title: text(140),
       summary: text(500),
       detail: text(6_000),
+      makerEvidence: Schema.Array(Id).check(Schema.isMinLength(1), Schema.isMaxLength(20)),
     }),
   ),
   memories: Schema.Array(Memory),

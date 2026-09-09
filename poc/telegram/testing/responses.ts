@@ -29,7 +29,13 @@ export const responses: {
         target: { kind: 'existing', targetId: 'tab-tidy' },
       },
     ],
-    ignored: [{ messageId: '101', reason: 'Reaction to AI news, not work the sender made.' }],
+    ignored: [
+      {
+        messageId: '101',
+        category: 'non_work',
+        reason: 'Reaction to AI news, not work the sender made.',
+      },
+    ],
     unresolved: [],
   },
   posts: {

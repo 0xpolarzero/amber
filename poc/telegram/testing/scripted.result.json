@@ -35,7 +35,11 @@
       "role": "assistant",
       "intent": "informational",
       "text": "1 post edited · 1 question asked",
-      "sourceIds": ["102", "104", "https://noted.example"]
+      "sourceIds": [
+        "102",
+        "104",
+        "https://noted.example"
+      ]
     },
     {
       "id": "batch-1:1@0:notification",
@@ -43,7 +47,9 @@
       "role": "assistant",
       "intent": "informational",
       "text": "1 post edited",
-      "sourceIds": ["103"]
+      "sourceIds": [
+        "103"
+      ]
     }
   ],
   "resolutions": {},
@@ -71,6 +77,7 @@
   "ignored": [
     {
       "messageId": "101",
+      "category": "non_work",
       "reason": "Reaction to AI news, not work the sender made."
     }
   ],
@@ -98,8 +105,14 @@
     ]
   },
   "associations": {
-    "102": ["batch-1:0"],
-    "103": ["tab-tidy"],
-    "104": ["batch-1:0"]
+    "102": [
+      "batch-1:0"
+    ],
+    "103": [
+      "tab-tidy"
+    ],
+    "104": [
+      "batch-1:0"
+    ]
   }
 }

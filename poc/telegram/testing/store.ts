@@ -1,5 +1,5 @@
 import { Effect, Schema } from 'effect'
-import { conditionalResolutions, type SavedResolution } from '../../shared/addressing'
+import { AddressingState } from '../../shared/addressing'
 import { OwnerCoordinator } from '../../shared/owner-coordinator'
 import * as S from '../schemas'
 import { type Ports, tools } from '../tools'
@@ -18,6 +18,7 @@ type StoreOptions = {
   projectGroups?: Readonly<Record<string, string>>
   ownerNames?: Readonly<Record<string, string>>
   memories?: Readonly<Record<string, readonly (typeof S.Memory.Type)[]>>
+  addressingState?: AddressingState
 }
 
 const uniqueSources = (items: readonly (typeof S.Source.Type)[]) => [
@@ -31,6 +32,7 @@ export function telegramStore(
   options: StoreOptions = {},
 ) {
   const coordinator = options.coordinator ?? new OwnerCoordinator()
+  const addressingState = options.addressingState ?? new AddressingState()
   const posts = new Map(initialPosts.map((post) => [post.id, structuredClone(post)]))
   const candidates = new Map(
     (options.candidates ?? []).map((candidate) => [candidate.id, structuredClone(candidate)]),
@@ -48,7 +50,12 @@ export function telegramStore(
   const pendingRequests = new Map(
     (options.pendingRequests ?? []).map((request) => [request.id, structuredClone(request)]),
   )
-  const resolutions = new Map<string, SavedResolution>()
+  for (const request of pendingRequests.values())
+    addressingState.register({
+      id: request.id,
+      ownerId: request.ownerId,
+      addressed: request.addressed,
+    })
   const questions: {
     id: string
     authorId: string
@@ -98,6 +105,7 @@ export function telegramStore(
       ownerId: post.authorId,
       ownerName: options.ownerNames?.[post.authorId] ?? post.authorId,
       project: post.title,
+      summary: post.summary,
       knownLinks: uniqueSources(sources.get(post.id) ?? [])
         .filter(
           (source): source is Extract<typeof S.Source.Type, { kind: 'web' }> =>
@@ -114,6 +122,7 @@ export function telegramStore(
       ownerId: candidate.authorId,
       ownerName: options.ownerNames?.[candidate.authorId] ?? candidate.authorId,
       project: candidate.title,
+      summary: candidate.summary,
       knownLinks: [...(candidate.knownLinks ?? [])].slice(0, 8),
       version: candidate.version,
     })),
@@ -187,7 +196,7 @@ export function telegramStore(
             .filter(
               (request) =>
                 request.ownerId === item.ownerId &&
-                !request.addressed &&
+                !addressingState.isAddressed(request.id, request.addressed) &&
                 (targetId === request.linkedPostId || targetId === request.pendingCandidateId),
             )
             .sort((a, b) => a.sequence - b.sequence)
@@ -212,7 +221,7 @@ export function telegramStore(
           .filter(({ targetId }) => targetGroup(targetId) === batch.groupId)
           .filter((project) =>
             matches(
-              `${project.project} ${project.ownerName} ${project.knownLinks.join(' ')}`,
+              `${project.project} ${project.summary} ${project.ownerName} ${project.knownLinks.join(' ')}`,
               queries,
             ),
           )
@@ -237,6 +246,10 @@ export function telegramStore(
             let outcome: typeof S.ProjectResult.Type.outcome = 'skipped'
             if (edit) {
               const before = edit.existingPostId ? posts.get(edit.existingPostId) : undefined
+              const pending =
+                !edit.existingPostId && item.candidate.target.kind === 'existing'
+                  ? candidates.get(item.candidate.target.targetId)
+                  : undefined
               if (edit.existingPostId) {
                 if (
                   item.candidate.target.kind !== 'existing' ||
@@ -246,8 +259,17 @@ export function telegramStore(
                   before.version !== edit.expectedVersion
                 )
                   throw new Error('Stale or unauthorized post version; re-read and regenerate.')
+              } else if (item.candidate.target.kind === 'existing') {
+                if (
+                  !pending ||
+                  pending.authorId !== item.ownerId ||
+                  pending.version !== edit.expectedVersion
+                )
+                  throw new Error(
+                    'Stale or unauthorized candidate version; re-read and regenerate.',
+                  )
               }
-              postId = before?.id ?? item.candidateId
+              postId = before?.id ?? pending?.id ?? item.candidateId
               const after = {
                 id: postId,
                 authorId: item.ownerId,
@@ -257,7 +279,24 @@ export function telegramStore(
                 detail: edit.detail,
               }
               posts.set(postId, after)
-              sources.set(postId, uniqueSources([...(sources.get(postId) ?? []), ...edit.sources]))
+              const makerSources = (pending?.makerEvidence ?? []).map((messageId) => ({
+                kind: 'telegram' as const,
+                messageId,
+              }))
+              sources.set(
+                postId,
+                uniqueSources([...(sources.get(postId) ?? []), ...makerSources, ...edit.sources]),
+              )
+              if (pending) {
+                candidates.delete(pending.id)
+                for (const [requestId, request] of pendingRequests)
+                  if (request.pendingCandidateId === pending.id)
+                    pendingRequests.set(requestId, {
+                      ...request,
+                      linkedPostId: postId,
+                      pendingCandidateId: null,
+                    })
+              }
               for (const source of edit.sources)
                 if (source.kind === 'telegram') {
                   const targets = sourceAssociations.get(source.messageId) ?? new Set<string>()
@@ -267,13 +306,9 @@ export function telegramStore(
               if (before) diffs.push({ postId, before, after })
               outcome = before ? 'updated' : 'created'
             }
-            const currentRequests = new Map(
-              [...pendingRequests].map(([id, request]) => [id, { addressed: request.addressed }]),
-            )
-            const accepted = conditionalResolutions(
+            const accepted = addressingState.apply(
+              item.ownerId,
               context.pendingRequests,
-              currentRequests,
-              resolutions,
               proposal.resolutions,
               key,
             )
@@ -282,7 +317,6 @@ export function telegramStore(
               if (!request || request.ownerId !== item.ownerId)
                 throw new Error('Request owner changed.')
               pendingRequests.set(request.id, { ...request, addressed: true })
-              resolutions.set(request.id, resolution)
             }
             if (!edit && accepted.length) outcome = 'resolved'
             let questionId: string | null = null
@@ -303,6 +337,11 @@ export function telegramStore(
                   intent: 'question',
                   linkedPostId: pendingCandidateId ? null : targetId,
                   pendingCandidateId,
+                  addressed: false,
+                })
+                addressingState.register({
+                  id: questionId,
+                  ownerId: item.ownerId,
                   addressed: false,
                 })
                 questions.push({
@@ -382,7 +421,7 @@ export function telegramStore(
     posts: [...posts.values()].sort((a, b) => a.authorId.localeCompare(b.authorId)),
     questions,
     notifications,
-    resolutions: Object.fromEntries(resolutions),
+    resolutions: Object.fromEntries(addressingState.resolutionEntries()),
     diffs,
     ignored: selection.ignored,
     unresolved: selection.unresolved,
@@ -399,7 +438,8 @@ export function telegramStore(
     sources,
     questions,
     notifications,
-    resolutions,
+    resolutions: addressingState,
+    addressingState,
     diffs,
     retries,
     progress,

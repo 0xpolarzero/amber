@@ -9,6 +9,10 @@ assigning a target. searchPosts is scoped to this Telegram group across owners a
 20 public summaries per page. Use batched queries and follow nextCursor when more results can affect
 the decision. A name or link is a search hint, never ownership proof.
 
+Make at most two searchPosts calls. Put all useful nonempty hints into the first batched query. If a
+returned target matches, stop searching and use it. Pass cursor only when the preceding nextCursor
+is non-null, using that exact integer. Never retry an empty, invalid or unchanged query.
+
 For an existing target, fresh evidence may come from any participant. Set authorId to the actor who
 wrote each candidate's fresh messages and use a stable targetId from searchPosts or a supplied
 source association. The application derives the saved owner from that target. For new work,
@@ -19,7 +23,12 @@ Each candidate needs at least one supplied fresh message by its actor. One actor
 multiple projects, and one message may support multiple candidates. Use exact message IDs.
 Context-only messages cannot trigger a candidate alone.
 
-Cover every fresh message with a candidate, an ignored reason or an unresolved reason. Use
+Return one combined candidate per existing target in this batch, even when several participants
+supplied evidence. Choose an actor with a fresh substantive message and include the other related
+messages as evidence. Never create parallel candidates that can race on the same saved target.
+
+Cover every fresh message with a candidate, a categorized ignored reason or an unresolved reason.
+Ignored is only for definite chatter, definite non-work, or an exact duplicate. Use
 unresolved for ambiguous bare confirmations, pronouns with no reliable referent, same-name
 collisions, unknown ownership, and work deferred because a result or tool budget was exhausted.
 Never mark those messages irrelevant.

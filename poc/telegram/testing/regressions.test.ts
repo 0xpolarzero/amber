@@ -26,7 +26,11 @@ it.each(['irrelevant', 'failed-project'] as const)('handles an %s batch', async 
         return scenario === 'irrelevant'
           ? {
               candidates: [],
-              ignored: batch.newMessageIds.map((messageId) => ({ messageId, reason: 'Chatter' })),
+              ignored: batch.newMessageIds.map((messageId) => ({
+                messageId,
+                category: 'chatter' as const,
+                reason: 'Chatter',
+              })),
               unresolved: [],
             }
           : responses.selection
@@ -72,6 +76,7 @@ it('rejects missing messages, wrong ownership, invented evidence and stale updat
         ownerId: 'bea',
         ownerName: 'Bea',
         project: 'Tab tidy',
+        summary: 'Groups browser tabs by project.',
         knownLinks: [],
         version: 2,
       },

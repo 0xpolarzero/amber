@@ -9,6 +9,7 @@ export function validateSelection(
   const associations = new Map(batch.associations.map((item) => [item.messageId, item]))
   const lookedUp = new Map(selection.lookedUpProjects.map((item) => [item.targetId, item]))
   const covered = new Set<string>()
+  const existingTargets = new Set<string>()
   for (const candidate of selection.candidates) {
     if (
       candidate.messageIds.some((id) => !messages.has(id)) ||
@@ -22,6 +23,9 @@ export function validateSelection(
         throw new Error('New work needs firsthand maker evidence from its proposed owner.')
     } else {
       const targetId = candidate.target.targetId
+      if (existingTargets.has(targetId))
+        throw new Error('Route one combined candidate per existing target in a batch.')
+      existingTargets.add(targetId)
       const known = lookedUp.get(targetId)
       const associated = candidate.messageIds
         .map((id) => associations.get(id))
@@ -41,8 +45,6 @@ export function validateSelection(
     for (const item of items) {
       if (!fresh.has(item.messageId) || covered.has(item.messageId) || disposed.has(item.messageId))
         throw new Error(`${kind} must contain distinct, fresh, unselected messages.`)
-      if (kind === 'ignored' && /capacity|limit|budget|ambiguous|unsure|unclear/i.test(item.reason))
-        throw new Error('Capacity or ambiguity is unresolved work, not irrelevant chatter.')
       disposed.add(item.messageId)
     }
   }
@@ -74,12 +76,44 @@ export function validateDraft(context: typeof S.ProjectContext.Type, draft: type
     if (!request || request.addressed || resolutionIds.has(request.id))
       throw new Error('Resolve each supplied unresolved request at most once.')
     resolutionIds.add(request.id)
+    if (
+      resolution.outcome === 'ignored' &&
+      !resolution.sources.some(
+        (source) =>
+          source.kind === 'clarification' ||
+          (source.kind === 'telegram' &&
+            messages.some(
+              (message) =>
+                message.id === source.messageId && message.authorId === context.work.ownerId,
+            )),
+      )
+    )
+      throw new Error('Only the owner can dismiss or explicitly ignore a pending request.')
   }
   const edit = proposal.postEdit
   if (!edit) return
   if (edit.existingPostId === null) {
+    const pending = context.selectedCandidate
+    if (pending) {
+      if (
+        context.work.candidate.target.kind !== 'existing' ||
+        context.work.candidate.target.targetId !== pending.id ||
+        pending.authorId !== context.work.ownerId ||
+        edit.expectedVersion !== pending.version
+      )
+        throw new Error('Publish only the exact selected owned candidate at its expected version.')
+      if (
+        !pending.makerEvidence.some((id) =>
+          messages.some(
+            (message) => message.id === id && message.authorId === context.work.ownerId,
+          ),
+        )
+      )
+        throw new Error('Pending publication requires its saved firsthand maker evidence.')
+      return
+    }
     if (context.work.candidate.target.kind !== 'new' || edit.expectedVersion !== null)
-      throw new Error('Only a selected new target can create a post without a version.')
+      throw new Error('Only selected new work or a selected pending candidate can create a post.')
     if (
       !edit.sources.some(
         (source) =>
