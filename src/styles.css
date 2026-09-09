@@ -2355,6 +2355,7 @@ dialog::backdrop {
   position: relative;
   min-height: 0;
   overflow-y: auto;
+  overflow-anchor: none;
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-gutter: stable;
@@ -3050,7 +3051,7 @@ dialog::backdrop {
   left: 50%;
   bottom: 14px;
   display: block;
-  width: min(650px, calc(100vw - 28px));
+  width: min(960px, calc(100vw - 28px));
   max-width: none;
   max-height: 46dvh;
   padding: 10px 12px;
@@ -3171,8 +3172,81 @@ dialog::backdrop {
   gap: 6px;
   padding-top: 6px;
 }
+.replay-stages {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 7px 0 0;
+  border-top: 1px solid #e5e5e2;
+  list-style: none;
+}
+.replay-stages button {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  color: var(--quiet);
+  font-size: 9px;
+  line-height: 1.2;
+  text-align: left;
+}
+.replay-stages button:hover:not(:disabled) {
+  background: var(--soft);
+  color: var(--ink);
+}
+.replay-stages button > span {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  place-items: center;
+  border: 1px solid #d8d8d2;
+  border-radius: 50%;
+  font-size: 8px;
+}
+.replay-stages li[data-state="active"] button {
+  background: #fff8e9;
+  color: #6f4c0d;
+}
+.replay-stages li[data-state="active"] button > span {
+  border-color: #c89b47;
+  background: #fff3d8;
+}
+.replay-stages li[data-state="complete"] button > span {
+  border-color: #9aaa8e;
+  background: #f1f5ee;
+  color: #4f6844;
+}
+.replay-stages li[data-state="failed"] button {
+  color: #a13f36;
+}
+.trace-loading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 24px;
+  color: var(--quiet);
+}
+.trace-loading > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #b5842b;
+  animation: replay-pulse 0.7s ease-in-out infinite alternate;
+}
+@keyframes replay-pulse {
+  to {
+    opacity: 0.28;
+    transform: scale(0.75);
+  }
+}
 .guide-active .agent-chat {
-  height: calc(100dvh - 220px);
+  height: calc(100dvh - 248px);
   min-height: 360px;
 }
 main.guide-active ~ .toast {
@@ -3191,6 +3265,12 @@ main.guide-active ~ .toast {
   .guide-main {
     flex-wrap: wrap;
     gap: 6px;
+  }
+  .replay-stages {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .replay-stages button {
+    min-height: 30px;
   }
   .guide-copy {
     flex-basis: 100%;
@@ -3213,7 +3293,7 @@ main.guide-active ~ .toast {
     max-width: 164px;
   }
   .guide-active .agent-chat {
-    height: calc(100dvh - 242px);
+    height: calc(100dvh - 286px);
     min-height: 320px;
   }
   .agent-chat .conversation-history {

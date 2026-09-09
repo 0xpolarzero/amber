@@ -5,7 +5,6 @@ import { AgentProgress } from '../components/agent-progress'
 import { Icon } from '../components/icon'
 import { ReplyComposer } from '../components/reply-composer'
 import { TraceCollection, TraceStep } from '../components/workflow-trace'
-import { AGENT_GUIDE } from '../preview/agent-example'
 import { usePreview } from '../preview/provider'
 import {
   type AgentConversation,
@@ -25,7 +24,7 @@ export function AgentPage({ postId }: { postId?: string }) {
   if (user && agent)
     return (
       <AgentChat
-        key={`${user}-${state.guideStep}-${state.scenarioRevision}`}
+        key={`${user}-${state.scenarioRevision}`}
         user={user}
         agent={agent}
         postId={postId}
@@ -60,10 +59,8 @@ function AgentChat({
 }) {
   const { state, dispatch } = usePreview()
   const navigate = useNavigate()
-  const guide =
-    state.guideStep === null ? undefined : AGENT_GUIDE[state.guideStep]
   const [activePanel, setActivePanel] = useState<'pending' | 'memory' | null>(
-    guide?.revealMemory ? 'memory' : null,
+    null,
   )
   const [pendingIndex, setPendingIndex] = useState(0)
   const [newBelow, setNewBelow] = useState(false)
@@ -113,12 +110,6 @@ function AgentChat({
     }
     previousCount.current = timelineCount
   }, [agent.messages, timelineCount])
-  useLayoutEffect(() => {
-    if (!guide?.targetMessageId) return
-    const message = document.getElementById(`message-${guide.targetMessageId}`)
-    message?.scrollIntoView({ block: 'start' })
-    if (guide.focusMessage) message?.focus({ preventScroll: true })
-  }, [guide])
   const focusPending = (index: number) => {
     const message = pending[index]
     if (!message) return
@@ -201,21 +192,11 @@ function AgentChat({
                 <WorkflowTraceDisclosure
                   source={message.source}
                   trace={message.trace}
-                  open={
-                    Boolean(guide?.revealSource) &&
-                    message.id === guide?.targetMessageId
-                  }
+                  open={false}
                 />
               ) : null}
               {message.changes?.length ? (
-                <AppliedChanges
-                  changes={message.changes}
-                  expandedPostId={
-                    message.id === guide?.targetMessageId
-                      ? guide.expandedChangePostId
-                      : undefined
-                  }
-                />
+                <AppliedChanges changes={message.changes} />
               ) : null}
               {reit(message.memoryEvents) ? (
                 <MemoryReceipt
@@ -224,12 +205,7 @@ function AgentChat({
                 />
               ) : null}
               {message.usedMemories?.length || message.usedHistory?.length ? (
-                <details
-                  className="context-used"
-                  open={
-                    guide?.revealContext && message.id === guide.targetMessageId
-                  }
-                >
+                <details className="context-used">
                   <summary>Context used</summary>
                   {message.usedMemories?.map((memory) => (
                     <p key={memory.id}>
@@ -254,12 +230,6 @@ function AgentChat({
                 key={`reply-${agent.run.messageId}`}
                 run={agent.run}
                 response={publishedResponse}
-                expanded={Boolean(guide?.revealProgress)}
-                expandedPostId={
-                  guide?.targetMessageId === responseId
-                    ? guide?.expandedChangePostId
-                    : undefined
-                }
                 onOpenMemory={() => setActivePanel('memory')}
               />
             ) : null}
@@ -398,14 +368,10 @@ function AgentChat({
 function ReplySlot({
   run,
   response,
-  expanded,
-  expandedPostId,
   onOpenMemory,
 }: {
   run: AgentRun
   response?: AgentMessage
-  expanded: boolean
-  expandedPostId?: string
   onOpenMemory: () => void
 }) {
   return (
@@ -417,12 +383,9 @@ function ReplySlot({
     >
       <span className="chat-sender">Amber</span>
       {response ? <p className="chat-bubble">{response.text}</p> : null}
-      <AgentProgress run={run} expanded={expanded} />
+      <AgentProgress run={run} />
       {response?.changes?.length ? (
-        <AppliedChanges
-          changes={response.changes}
-          expandedPostId={expandedPostId}
-        />
+        <AppliedChanges changes={response.changes} />
       ) : null}
       {reit(response?.memoryEvents) ? (
         <MemoryReceipt

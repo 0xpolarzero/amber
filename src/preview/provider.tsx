@@ -40,6 +40,8 @@ type PreviewContext = {
 }
 const Context = createContext<PreviewContext | null>(null)
 
+export const REPLAY_INTERVAL_MS = 500
+
 export function PreviewProvider({
   feed,
   children,
@@ -139,7 +141,7 @@ function PreviewRunClock({
           memory: run.memory,
           addressing: run.addressing,
         }),
-      run.stage === 'background' ? 1400 : 850,
+      REPLAY_INTERVAL_MS,
     )
     return () => clearTimeout(timer)
   }, [userId, run, dispatch])

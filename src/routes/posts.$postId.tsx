@@ -7,9 +7,9 @@ export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ context, params }) => {
     const feed = await context.queryClient.ensureQueryData(feedQuery)
     const post = feed.posts.find((post) => post.id === params.postId)
-    if (!post && !preview.telegram.posts.some(({ id }) => id === params.postId))
-      throw notFound()
-    return { title: post?.title ?? 'Post' }
+    const recorded = preview.posts.after.find(({ id }) => id === params.postId)
+    if (!post && !recorded) throw notFound()
+    return { title: post?.title ?? recorded?.title ?? 'Post' }
   },
   head: ({ loaderData }) => ({
     meta: [{ title: `${loaderData?.title ?? 'Post'} · Amber` }],

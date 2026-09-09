@@ -182,6 +182,43 @@ export type PreviewProjectionCapture = {
   }
 }
 
+type HistoricalTurn = {
+  input: { turnId: string; userId: string; text: string }
+  receipt: {
+    assistantMessageId: string
+    diffs: readonly {
+      postId: string
+      before: RecordedPost
+      after: RecordedPost
+    }[]
+    background: readonly {
+      task: 'memory' | 'addressing'
+      status: string
+      reason: string | null
+    }[]
+  }
+  calls: readonly MessagingCall[]
+  before: {
+    memories: readonly RecordedMemory[]
+    requests: readonly RecordedMessage[]
+  }
+  after: {
+    memories: readonly RecordedMemory[]
+    requests: readonly RecordedMessage[]
+  }
+}
+
+export type HistoricalMessagingCapture = {
+  provenance: {
+    model: string
+    provider: string
+    storage: string
+    scripted: boolean
+  }
+  sourceProvenance: Record<string, string>
+  turns: readonly HistoricalTurn[]
+}
+
 const unique = <T>(values: readonly T[]) => [...new Set(values)]
 
 const contextPost = ({ id, title, summary }: RecordedPost) => ({
@@ -210,10 +247,14 @@ const messagingCall = <Task extends MessagingCall['task']>(
 
 /** Project the recorded messaging calls into concise browser-safe evidence. */
 export function projectReplyTrace(capture: PreviewProjectionCapture) {
-  const planner = messagingCall(capture.messaging.calls, 'query-planner')
-  const responder = messagingCall(capture.messaging.calls, 'responder')
-  const memory = messagingCall(capture.messaging.calls, 'memory')
-  const addressing = messagingCall(capture.messaging.calls, 'addressing')
+  return projectReplyCalls(capture.messaging.calls)
+}
+
+function projectReplyCalls(calls: readonly MessagingCall[]) {
+  const planner = messagingCall(calls, 'query-planner')
+  const responder = messagingCall(calls, 'responder')
+  const memory = messagingCall(calls, 'memory')
+  const addressing = messagingCall(calls, 'addressing')
   if (!planner || !responder || !memory || !addressing)
     throw new Error('The reply trace is missing a recorded messaging call.')
 
@@ -258,6 +299,66 @@ export function projectReplyTrace(capture: PreviewProjectionCapture) {
     addressing: {
       requests: addressing.input.unaddressedSnapshot.map(recordedMessage),
       resolutions: addressing.output.resolutions,
+    },
+  }
+}
+
+/** Project one historical real-model turn without rerunning or altering its capture. */
+export function projectHistoricalTurn(capture: HistoricalMessagingCapture, turnId: string) {
+  const turn = capture.turns.find(({ input }) => input.turnId === turnId)
+  if (!turn) throw new Error(`The historical capture has no ${turnId}.`)
+  const assistant = turn.after.requests.find(({ id }) => id === turn.receipt.assistantMessageId)
+  if (!assistant) throw new Error(`The historical turn has no ${turn.receipt.assistantMessageId}.`)
+  const userMemoriesBefore = turn.before.memories.filter(
+    ({ userId }) => userId === turn.input.userId,
+  )
+  const userMemoriesAfter = turn.after.memories.filter(({ userId }) => userId === turn.input.userId)
+  const pendingBefore = turn.before.requests.filter(({ role }) => role === 'assistant')
+  const pendingIds = new Set(
+    messagingCall(turn.calls, 'query-planner')?.input.pendingRequests.map(({ id }) => id) ?? [],
+  )
+
+  return {
+    version: 4,
+    mode: 'recorded-real-model',
+    model: capture.provenance.model,
+    disclosure:
+      'Historical Gemini messaging output replayed over invented in-memory records. Simulation timing is browser-only; no model runs in the preview.',
+    source: {
+      file: 'poc/messaging/result.json',
+      turnId,
+      provenance: capture.provenance,
+      sourceProvenance: capture.sourceProvenance,
+    },
+    input: turn.input,
+    assistant: {
+      id: assistant.id,
+      text: assistant.text,
+      intent: assistant.intent,
+      linkedPostId: assistant.linkedPostId,
+    },
+    posts: {
+      before: turn.receipt.diffs.map(({ before }) => before),
+      after: turn.receipt.diffs.map(({ after }) => after),
+      diffs: turn.receipt.diffs,
+    },
+    memory: {
+      before: userMemoriesBefore,
+      after: userMemoriesAfter,
+    },
+    requests: {
+      before: pendingBefore.filter(({ id }) => pendingIds.has(id)).map(recordedMessage),
+      after: turn.after.requests.filter(({ id }) => pendingIds.has(id)).map(recordedMessage),
+    },
+    background: turn.receipt.background,
+    trace: {
+      ...projectReplyCalls(turn.calls),
+      recording: {
+        model: capture.provenance.model,
+        source: 'poc/messaging/result.json',
+        turnId,
+        scripted: capture.provenance.scripted,
+      },
     },
   }
 }

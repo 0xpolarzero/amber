@@ -2,7 +2,6 @@ import { Schema } from 'effect'
 import { AnswerText, CommentText, EditPost, MemoryText } from '../domain/forms'
 import type { Feed, Post } from '../domain/post'
 import {
-  AGENT_GUIDE,
   type AgentScenarioId,
   applyFixturePostChanges,
   buildAgentScenario,
@@ -110,6 +109,12 @@ export type WorkflowTrace = {
   recording: { model: string; disclosure: string }
 }
 export type ReplyWorkflowTrace = {
+  recording?: {
+    model: string
+    source: string
+    turnId: string
+    scripted: boolean
+  }
   planner: {
     pendingRequests: readonly ReplyTraceMessage[]
     queries: readonly {
@@ -224,6 +229,7 @@ export type TurnOutcome = {
 export type AgentRun = {
   messageId: string
   stage: AgentRunStage
+  frame: number
   status: 'running' | 'complete' | 'failed'
   published: boolean
   autoPlay: boolean
@@ -255,19 +261,12 @@ export type PreviewState = Feed & {
   fixtureFeed: Feed
   scenarioId: AgentScenarioId
   scenarioRevision: number
-  guideStep: number | null
-  guideComplete: boolean
   agentPosts: readonly Post[]
 }
 export type PreviewAction =
   | { type: 'role'; role: PreviewRole }
   | { type: 'loadScenario'; id: AgentScenarioId }
-  | { type: 'loadGuideStep'; step: number }
-  | { type: 'completeGuide' }
-  | {
-      type: 'loadGuideAlternative'
-      id: 'retry-exhausted' | 'retry-stale'
-    }
+  | { type: 'restartRun'; playing: boolean }
   | { type: 'save'; postId: string }
   | { type: 'readAgent' }
   | { type: 'draftMessage'; text: string }
@@ -332,8 +331,6 @@ export function createPreviewState(
     fixtureFeed: feed,
     scenarioId: selected,
     scenarioRevision: 0,
-    guideStep: null,
-    guideComplete: false,
     agentPosts: scenario.posts,
   }
 }
@@ -398,9 +395,28 @@ function advanceRun(state: PreviewState, userId: string): PreviewState {
   let posts = state.posts
   let agentPosts = state.agentPosts
   let nextRun = run
-  if (run.stage === 'planning') nextRun = { ...run, stage: 'retrieving' }
-  else if (run.stage === 'retrieving') nextRun = { ...run, stage: 'generating' }
-  else if (run.stage === 'generating') nextRun = { ...run, stage: 'publishing' }
+  const contextRecordCount =
+    run.trace.context.posts.length +
+    run.trace.context.userMessages.length +
+    run.trace.context.assistantMessages.length +
+    run.trace.context.memories.length +
+    run.trace.context.unaddressed.length
+  const frameLimit =
+    run.stage === 'planning'
+      ? Math.max(1, run.trace.planner.queries.length)
+      : run.stage === 'retrieving'
+        ? Math.max(1, contextRecordCount)
+        : run.stage === 'generating'
+          ? Math.max(3, run.trace.response.postChanges.length)
+          : 1
+  if (run.stage !== 'complete' && run.frame < frameLimit) {
+    nextRun = { ...run, frame: run.frame + 1 }
+  } else if (run.stage === 'planning')
+    nextRun = { ...run, stage: 'retrieving', frame: 0 }
+  else if (run.stage === 'retrieving')
+    nextRun = { ...run, stage: 'generating', frame: 0 }
+  else if (run.stage === 'generating')
+    nextRun = { ...run, stage: 'publishing', frame: 0 }
   else if (run.stage === 'publishing') {
     const result = run.outcome
     if (!result) {
@@ -429,6 +445,7 @@ function advanceRun(state: PreviewState, userId: string): PreviewState {
       nextRun = {
         ...run,
         stage: 'background',
+        frame: 0,
         published: true,
         memory: 'running',
         addressing: 'running',
@@ -436,26 +453,23 @@ function advanceRun(state: PreviewState, userId: string): PreviewState {
     }
   } else if (run.stage === 'background') {
     const outcome = run.outcome
-    if (run.memory === 'running') {
-      nextConversation = applyMemoryEvents(
-        nextConversation,
-        outcome?.memoryEvents ?? [],
-      )
-      nextRun = { ...run, memory: 'done' }
-    } else if (run.addressing === 'running') {
-      nextConversation = finishAddressing(
-        nextConversation,
-        outcome?.addressIds ?? [],
-      )
-      nextRun = { ...run, addressing: 'done' }
+    nextConversation = applyMemoryEvents(
+      nextConversation,
+      outcome?.memoryEvents ?? [],
+    )
+    nextConversation = finishAddressing(
+      nextConversation,
+      outcome?.addressIds ?? [],
+    )
+    nextRun = {
+      ...run,
+      stage: 'complete',
+      frame: 0,
+      status: 'complete',
+      autoPlay: false,
+      memory: 'done',
+      addressing: 'done',
     }
-    if (nextRun.memory !== 'running' && nextRun.addressing !== 'running')
-      nextRun = {
-        ...nextRun,
-        stage: 'complete',
-        status: 'complete',
-        autoPlay: false,
-      }
   }
   nextConversation = { ...nextConversation, run: nextRun }
   return {
@@ -474,53 +488,19 @@ export function previewReducer(
     const next = createPreviewState(state.fixtureFeed, action.id)
     return { ...next, scenarioRevision: state.scenarioRevision + 1 }
   }
-  if (action.type === 'loadGuideStep') {
-    const checkpoint = AGENT_GUIDE[action.step]
-    if (!checkpoint) return state
-    let next = createPreviewState(state.fixtureFeed, checkpoint.scenarioId)
-    if (checkpoint.draft) {
-      next = {
-        ...next,
-        agentByUser: {
-          ...next.agentByUser,
-          alex: { ...next.agentByUser.alex, draft: checkpoint.draft },
+  if (action.type === 'restartRun') {
+    const next = createPreviewState(state.fixtureFeed, 'replay')
+    return {
+      ...next,
+      agentByUser: {
+        ...next.agentByUser,
+        alex: {
+          ...next.agentByUser.alex,
+          run: next.agentByUser.alex.run
+            ? { ...next.agentByUser.alex.run, autoPlay: action.playing }
+            : undefined,
         },
-      }
-    }
-    if (checkpoint.recovery) {
-      next = previewReducer(next, {
-        type: 'retryBackground',
-        task: checkpoint.recovery,
-      })
-      const run = next.agentByUser.alex.run
-      if (run)
-        next = previewReducer(next, {
-          type: 'advanceRun',
-          userId: 'alex',
-          messageId: run.messageId,
-          stage: run.stage,
-          memory: run.memory,
-          addressing: run.addressing,
-        })
-    }
-    return {
-      ...next,
-      guideStep: action.step,
-      guideComplete: false,
-      scenarioRevision: state.scenarioRevision + 1,
-    }
-  }
-  if (action.type === 'completeGuide') {
-    if (state.guideStep !== AGENT_GUIDE.length - 1) return state
-    return { ...state, guideComplete: true }
-  }
-  if (action.type === 'loadGuideAlternative') {
-    if (state.guideStep === null) return state
-    const next = createPreviewState(state.fixtureFeed, action.id)
-    return {
-      ...next,
-      guideStep: state.guideStep,
-      guideComplete: false,
+      },
       scenarioRevision: state.scenarioRevision + 1,
     }
   }
@@ -563,6 +543,7 @@ export function previewReducer(
     const nextRun: AgentRun = {
       ...run,
       stage: 'background',
+      frame: 0,
       status: 'running',
       autoPlay: false,
       [action.task]: 'running',

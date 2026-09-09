@@ -18,13 +18,16 @@ const foreground = [
   ['publishing', 'Publish answer and changes'],
 ] as const
 
+const count = (value: number, noun: string) =>
+  `${value} ${noun}${value === 1 ? '' : 's'}`
+
 const stageIndex = (run: AgentRun) => {
   if (run.published || run.stage === 'background' || run.stage === 'complete')
     return 4
   return foreground.findIndex(([stage]) => stage === run.stage)
 }
 
-const taskStatus = (run: AgentRun, index: number): TraceStepStatus => {
+const foregroundStatus = (run: AgentRun, index: number): TraceStepStatus => {
   const current = stageIndex(run)
   if (run.status === 'failed' && index === current) return 'failed'
   if (index < current) return 'complete'
@@ -35,27 +38,17 @@ const taskStatus = (run: AgentRun, index: number): TraceStepStatus => {
 const normalizeBackground = (status: BackgroundStatus): TraceStepStatus =>
   status === 'done' ? 'complete' : status
 
-const backgroundLabel = (status: BackgroundStatus) =>
-  status === 'done'
-    ? 'Complete'
-    : status === 'running'
-      ? 'Running'
-      : status === 'failed'
-        ? 'Failed'
-        : status === 'exhausted'
-          ? 'Retry limit reached'
-          : 'Queued'
+const queryResource = (resource: string) =>
+  resource === 'posts'
+    ? 'Posts'
+    : resource === 'user_messages'
+      ? 'Your messages'
+      : 'Amber messages'
 
-const count = (value: number, noun: string) =>
-  `${value} ${noun}${value === 1 ? '' : 's'}`
+const visibleFrame = (run: AgentRun, status: TraceStepStatus): number =>
+  status === 'complete' ? Number.POSITIVE_INFINITY : run.frame
 
-export function AgentProgress({
-  run,
-  expanded = false,
-}: {
-  run: AgentRun
-  expanded?: boolean
-}) {
+export function AgentProgress({ run }: { run: AgentRun }) {
   const { dispatch, agent } = usePreview()
   const trace = testTrace(run.trace)
   const current =
@@ -66,7 +59,7 @@ export function AgentProgress({
           ? 'Complete'
           : 'Response saved; follow-up needs attention'
         : run.stage === 'background'
-          ? 'Finishing after publication'
+          ? 'Finishing memory + requests in parallel'
           : (foreground.find(([stage]) => stage === run.stage)?.[1] ??
             'Working')
   const failedJobs = (['memory', 'addressing'] as const).filter(
@@ -77,18 +70,17 @@ export function AgentProgress({
     run.stale ||
     run.memory === 'exhausted' ||
     run.addressing === 'exhausted'
-  const foregroundStatuses = foreground.map((_, index) =>
-    taskStatus(run, index),
-  )
+  const statuses = foreground.map((_, index) => foregroundStatus(run, index))
+  const memoryStatus = normalizeBackground(run.memory)
+  const addressingStatus = normalizeBackground(run.addressing)
+
   return (
     <details
       className="workflow-trace reply-workflow-trace agent-progress"
       data-pending-answer={!run.published || undefined}
-      open={
-        !run.published || expanded || run.status === 'running' || needsAttention
-      }
+      open={!run.published || run.status === 'running' || needsAttention}
     >
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: Native summary activation is disabled until publication. */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: Pending output must stay visible. */}
       <summary
         aria-label="Reply workflow"
         aria-disabled={!run.published || undefined}
@@ -113,74 +105,105 @@ export function AgentProgress({
       <div className="workflow-trace-content">
         <ol className="workflow-trace-steps" aria-label="Task progress">
           <TraceStep
+            id="reply-stage-1"
             number={1}
             title="Plan queries"
-            status={foregroundStatuses[0]}
-            summary={plannerSummary(trace, foregroundStatuses[0])}
+            status={statuses[0]}
+            open={statuses[0] === 'running'}
+            summary={plannerSummary(trace, statuses[0], run.frame)}
           >
-            {foregroundStatuses[0] === 'complete' ? (
-              <PlannerEvidence trace={trace} />
+            {statuses[0] === 'complete' || statuses[0] === 'running' ? (
+              <PlannerEvidence
+                trace={trace}
+                visible={visibleFrame(run, statuses[0])}
+              />
             ) : null}
           </TraceStep>
           <TraceStep
+            id="reply-stage-2"
             number={2}
             title="Retrieve context"
-            status={foregroundStatuses[1]}
-            summary={contextSummary(trace, foregroundStatuses[1])}
+            status={statuses[1]}
+            open={statuses[1] === 'running'}
+            summary={contextSummary(trace, statuses[1], run.frame)}
           >
-            {foregroundStatuses[1] === 'complete' ? (
-              <ContextEvidence trace={trace} />
+            {statuses[1] === 'complete' || statuses[1] === 'running' ? (
+              <ContextEvidence
+                trace={trace}
+                visible={visibleFrame(run, statuses[1])}
+              />
             ) : null}
           </TraceStep>
           <TraceStep
+            id="reply-stage-3"
             number={3}
             title="Generate answer"
-            status={foregroundStatuses[2]}
-            summary={generationSummary(trace, foregroundStatuses[2])}
+            status={statuses[2]}
+            open={statuses[2] === 'running'}
+            summary={generationSummary(trace, statuses[2], run.frame)}
           >
-            {foregroundStatuses[2] === 'complete' ? (
-              <GeneratedEvidence trace={trace} />
+            {statuses[2] === 'complete' || statuses[2] === 'running' ? (
+              <GeneratedEvidence
+                trace={trace}
+                visible={visibleFrame(run, statuses[2])}
+              />
             ) : null}
           </TraceStep>
           <TraceStep
+            id="reply-stage-4"
             number={4}
             title="Publish answer and changes"
-            status={foregroundStatuses[3]}
-            summary={publicationSummary(trace, foregroundStatuses[3])}
+            status={statuses[3]}
+            open={statuses[3] === 'running'}
+            summary={publicationSummary(trace, statuses[3], run.frame)}
           >
-            {foregroundStatuses[3] === 'complete' ? (
-              <div className="trace-record">
-                <strong>Published in this reply</strong>
-                <p>
-                  Answer {run.outcome?.responseId ?? 'record'} and its supported
-                  changes are visible above.
-                </p>
-                <span>
-                  {count(trace.response.postChanges.length, 'post change')}{' '}
-                  applied atomically.
-                </span>
-              </div>
+            {statuses[3] === 'complete' || statuses[3] === 'running' ? (
+              <PublicationEvidence
+                trace={trace}
+                responseId={run.outcome?.responseId}
+                visible={visibleFrame(run, statuses[3])}
+              />
             ) : null}
           </TraceStep>
           <TraceStep
+            id="reply-stage-5"
             number={5}
             title="Update memory"
-            status={normalizeBackground(run.memory)}
-            summary={memorySummary(trace, run.memory)}
+            status={memoryStatus}
+            open={memoryStatus === 'running'}
+            summary={memorySummary(trace, run.memory, run.frame)}
           >
-            {run.memory === 'done' ? <MemoryEvidence trace={trace} /> : null}
+            {memoryStatus === 'complete' || memoryStatus === 'running' ? (
+              <MemoryEvidence
+                trace={trace}
+                visible={visibleFrame(run, memoryStatus)}
+              />
+            ) : null}
           </TraceStep>
           <TraceStep
+            id="reply-stage-6"
             number={6}
             title="Resolve requests"
-            status={normalizeBackground(run.addressing)}
-            summary={addressingSummary(trace, run.addressing)}
+            status={addressingStatus}
+            open={addressingStatus === 'running'}
+            summary={addressingSummary(trace, run.addressing, run.frame)}
           >
-            {run.addressing === 'done' ? (
-              <AddressingEvidence trace={trace} />
+            {addressingStatus === 'complete' ||
+            addressingStatus === 'running' ? (
+              <AddressingEvidence
+                trace={trace}
+                visible={visibleFrame(run, addressingStatus)}
+              />
             ) : null}
           </TraceStep>
         </ol>
+        {trace.recording ? (
+          <p className="trace-recording">
+            {trace.recording.source} · {trace.recording.turnId} ·{' '}
+            {trace.recording.model} ·{' '}
+            {trace.recording.scripted ? 'scripted' : 'real model'}
+          </p>
+        ) : null}
         {run.error ? <p className="run-error">{run.error}</p> : null}
         {run.stale ? (
           <p className="run-note">
@@ -225,93 +248,135 @@ function testTrace(trace: ReplyWorkflowTrace): ReplyWorkflowTrace {
   )
 }
 
-const incompleteSummary = (status: TraceStepStatus, running: string) =>
+const waiting = (status: TraceStepStatus, active: string) =>
   status === 'running'
-    ? running
+    ? active
     : status === 'failed'
       ? 'Stopped here. No later output was applied.'
       : 'Waiting for the prior stage.'
 
-function plannerSummary(trace: ReplyWorkflowTrace, status: TraceStepStatus) {
-  if (status !== 'complete')
-    return incompleteSummary(status, 'Choosing the required context.')
-  return trace.planner.queries.length
-    ? `${count(trace.planner.queries.length, 'additional query')} planned.`
-    : 'No additional queries.'
+function plannerSummary(
+  trace: ReplyWorkflowTrace,
+  status: TraceStepStatus,
+  frame: number,
+) {
+  if (status === 'complete')
+    return `${count(trace.planner.queries.length, 'query')} planned.`
+  if (status !== 'running') return waiting(status, '')
+  return frame
+    ? `${count(Math.min(frame, trace.planner.queries.length), 'query')} revealed.`
+    : 'Loading recorded query plan…'
 }
 
-function contextSummary(trace: ReplyWorkflowTrace, status: TraceStepStatus) {
-  if (status !== 'complete')
-    return incompleteSummary(status, 'Loading supplied and queried records.')
-  const records =
-    trace.context.posts.length +
-    trace.context.userMessages.length +
-    trace.context.assistantMessages.length +
-    trace.context.memories.length +
-    trace.context.unaddressed.length
-  return `${count(records, 'context record')} supplied.`
+const contextCount = (trace: ReplyWorkflowTrace) =>
+  trace.context.posts.length +
+  trace.context.userMessages.length +
+  trace.context.assistantMessages.length +
+  trace.context.memories.length +
+  trace.context.unaddressed.length
+
+function contextSummary(
+  trace: ReplyWorkflowTrace,
+  status: TraceStepStatus,
+  frame: number,
+) {
+  if (status === 'complete')
+    return `${count(contextCount(trace), 'record')} retrieved.`
+  if (status !== 'running') return waiting(status, '')
+  return frame
+    ? `${count(Math.min(frame, contextCount(trace)), 'record')} revealed.`
+    : 'Loading recorded context…'
 }
 
-function generationSummary(trace: ReplyWorkflowTrace, status: TraceStepStatus) {
-  if (status !== 'complete')
-    return incompleteSummary(status, 'Preparing a supported answer.')
-  return `${count(trace.response.postChanges.length, 'post change')} prepared with the answer.`
+function generationSummary(
+  trace: ReplyWorkflowTrace,
+  status: TraceStepStatus,
+  frame: number,
+) {
+  if (status === 'complete')
+    return `Answer and ${count(trace.response.postChanges.length, 'change')} prepared.`
+  if (status !== 'running') return waiting(status, '')
+  return frame
+    ? 'Revealing recorded answer and changes…'
+    : 'Loading recorded generation…'
 }
 
 function publicationSummary(
   trace: ReplyWorkflowTrace,
   status: TraceStepStatus,
+  frame: number,
 ) {
-  if (status !== 'complete')
-    return incompleteSummary(
-      status,
-      'Applying the answer and post changes atomically.',
-    )
-  return `Answer published with ${count(trace.response.postChanges.length, 'post change')}.`
+  if (status === 'complete')
+    return `Answer published atomically with ${count(trace.response.postChanges.length, 'change')}.`
+  if (status !== 'running') return waiting(status, '')
+  return frame
+    ? 'Recorded answer and all changes ready for one atomic commit.'
+    : 'Loading recorded publication set…'
 }
 
-function memorySummary(trace: ReplyWorkflowTrace, status: BackgroundStatus) {
-  if (status !== 'done')
-    return status === 'running'
-      ? 'Checking for durable preference changes.'
-      : backgroundLabel(status)
-  return trace.memory.operations.length
-    ? `${count(trace.memory.operations.length, 'memory change')} saved.`
-    : 'Existing preference retained; no duplicate memory.'
+function memorySummary(
+  trace: ReplyWorkflowTrace,
+  status: BackgroundStatus,
+  frame: number,
+) {
+  if (status === 'done')
+    return `${count(trace.memory.operations.length, 'memory operation')} saved.`
+  if (status === 'running')
+    return frame
+      ? 'Recorded memory operation revealed.'
+      : 'Loading recorded memory output in parallel…'
+  return status === 'failed'
+    ? 'Failed'
+    : status === 'exhausted'
+      ? 'Retry limit reached'
+      : 'Waiting for atomic publication.'
 }
 
 function addressingSummary(
   trace: ReplyWorkflowTrace,
   status: BackgroundStatus,
+  frame: number,
 ) {
-  if (status !== 'done')
-    return status === 'running'
-      ? 'Checking which requests the answer addressed.'
-      : backgroundLabel(status)
-  return `${count(trace.addressing.resolutions.length, 'request')} resolved after publication.`
+  if (status === 'done')
+    return trace.addressing.resolutions.length
+      ? `${count(trace.addressing.resolutions.length, 'request')} resolved.`
+      : `${count(trace.addressing.requests.length, 'request')} remains pending; no resolution recorded.`
+  if (status === 'running')
+    return frame
+      ? 'Recorded resolution output revealed.'
+      : 'Loading recorded resolution output in parallel…'
+  return status === 'failed'
+    ? 'Failed'
+    : status === 'exhausted'
+      ? 'Retry limit reached'
+      : 'Waiting for atomic publication.'
 }
 
-const queryResource = (resource: string) =>
-  resource === 'posts'
-    ? 'Posts'
-    : resource === 'user_messages'
-      ? 'Your messages'
-      : 'Amber messages'
+function LoadingEvidence({ label }: { label: string }) {
+  return (
+    <div className="trace-loading" role="status">
+      <span aria-hidden="true" />
+      {label}
+    </div>
+  )
+}
 
-function PlannerEvidence({ trace }: { trace: ReplyWorkflowTrace }) {
-  if (!trace.planner.queries.length)
-    return (
-      <div className="trace-record">
-        <strong>No additional queries</strong>
-        <p>The linked request already identified the relevant post.</p>
-      </div>
-    )
+function PlannerEvidence({
+  trace,
+  visible,
+}: {
+  trace: ReplyWorkflowTrace
+  visible: number
+}) {
+  const queries = trace.planner.queries.slice(0, visible)
+  if (!queries.length)
+    return <LoadingEvidence label="Waiting for first recorded query…" />
   return (
     <div className="trace-messages">
-      {trace.planner.queries.map((query) => (
+      {queries.map((query) => (
         <div
           className="trace-record"
-          key={`${query.resource}-${query.terms.join('-')}-${query.limit}`}
+          key={`${query.resource}-${query.terms.join('-')}`}
         >
           <strong>Database: {queryResource(query.resource)}</strong>
           <p>Terms: {query.terms.join(', ')}</p>
@@ -322,88 +387,117 @@ function PlannerEvidence({ trace }: { trace: ReplyWorkflowTrace }) {
   )
 }
 
-function ContextEvidence({ trace }: { trace: ReplyWorkflowTrace }) {
-  const linkedIds = new Set(trace.context.linkedRequestPostIds)
-  const linked = trace.context.posts.filter(({ id }) => linkedIds.has(id))
-  const queried = trace.context.posts.filter(({ id }) => !linkedIds.has(id))
+function ContextEvidence({
+  trace,
+  visible,
+}: {
+  trace: ReplyWorkflowTrace
+  visible: number
+}) {
+  let remaining = visible
+  const take = <T,>(items: readonly T[]) => {
+    const shown = items.slice(0, remaining)
+    remaining = Math.max(0, remaining - items.length)
+    return shown
+  }
+  const posts = take(trace.context.posts)
+  const userMessages = take(trace.context.userMessages)
+  const assistantMessages = take(trace.context.assistantMessages)
+  const memories = take(trace.context.memories)
+  const requests = take(trace.context.unaddressed)
+  if (!visible)
+    return <LoadingEvidence label="Waiting for first recorded result…" />
   return (
     <>
       <TraceCollection
-        title="Linked post context"
-        empty="No linked post context was supplied."
-        items={linked.map((post) => ({
+        title="Post results"
+        empty="No post results revealed yet."
+        items={posts.map((post) => ({
           id: post.id,
           title: `${post.title} · v${post.version}`,
           text: `${post.summary}\n${post.detail}`,
         }))}
       />
-      {trace.planner.queries.some(({ resource }) => resource === 'posts') ? (
+      {userMessages.length ? (
         <TraceCollection
-          title="Post query results"
-          empty="No posts matched the recorded query."
-          items={queried.map((post) => ({
-            id: post.id,
-            title: `${post.title} · v${post.version}`,
-            text: post.summary,
+          title="User message results"
+          empty="No user messages."
+          items={userMessages.map((message) => ({
+            id: message.id,
+            title: message.id,
+            text: message.text,
           }))}
         />
       ) : null}
-      <TraceCollection
-        title="User message results"
-        empty="No user message results."
-        items={trace.context.userMessages.map((message) => ({
-          id: message.id,
-          title: message.id,
-          text: message.text,
-        }))}
-      />
-      <TraceCollection
-        title="Amber message results"
-        empty="No Amber message results."
-        items={trace.context.assistantMessages.map((message) => ({
-          id: message.id,
-          title: message.id,
-          text: message.text,
-        }))}
-      />
-      <TraceCollection
-        title="Saved preferences"
-        empty="No saved preferences were supplied."
-        items={trace.context.memories.map((memory) => ({
-          id: memory.id,
-          title: 'Writing preference',
-          text: memory.text,
-        }))}
-      />
-      <TraceCollection
-        title="Pending requests"
-        empty="No pending requests were supplied."
-        items={trace.context.unaddressed.map((request) => ({
-          id: request.id,
-          title: request.linkedPostId
-            ? `Linked to ${request.linkedPostId}`
-            : 'Conversation request',
-          text: request.text,
-        }))}
-      />
+      {assistantMessages.length ? (
+        <TraceCollection
+          title="Amber message results"
+          empty="No Amber messages."
+          items={assistantMessages.map((message) => ({
+            id: message.id,
+            title: message.id,
+            text: message.text,
+          }))}
+        />
+      ) : null}
+      {memories.length ? (
+        <TraceCollection
+          title="Saved preference"
+          empty="No saved preference."
+          items={memories.map((memory) => ({
+            id: memory.id,
+            title: `${memory.id} · v${memory.version}`,
+            text: memory.text,
+          }))}
+        />
+      ) : null}
+      {requests.length ? (
+        <TraceCollection
+          title="Pending request"
+          empty="No pending request."
+          items={requests.map((request) => ({
+            id: request.id,
+            title: request.linkedPostId
+              ? `Linked to ${request.linkedPostId}`
+              : request.id,
+            text: request.text,
+          }))}
+        />
+      ) : null}
     </>
   )
 }
 
-function GeneratedEvidence({ trace }: { trace: ReplyWorkflowTrace }) {
+function partialWords(text: string, frame: number) {
+  if (!Number.isFinite(frame)) return text
+  const words = text.split(' ')
+  return words
+    .slice(0, Math.ceil((words.length * Math.min(frame, 3)) / 3))
+    .join(' ')
+}
+
+function GeneratedEvidence({
+  trace,
+  visible,
+}: {
+  trace: ReplyWorkflowTrace
+  visible: number
+}) {
+  if (!visible)
+    return <LoadingEvidence label="Waiting for recorded answer text…" />
   return (
     <>
       <div className="trace-record">
-        <strong>Generated answer</strong>
-        <p>{trace.response.text}</p>
+        <strong>Recorded answer</strong>
+        <p>{partialWords(trace.response.text, visible)}</p>
         <span>
           {trace.response.classification} · {trace.response.intent}
         </span>
       </div>
       <TraceCollection
         title="Prepared post changes"
-        empty="No post changes were prepared."
-        items={trace.response.postChanges.map((change) => ({
+        empty="No post changes revealed yet."
+        items={trace.response.postChanges.slice(0, visible).map((change) => ({
           id: change.postId,
           title: `${change.title} · from v${change.expectedVersion}`,
           text: `${change.summary}\n${change.detail}`,
@@ -413,39 +507,73 @@ function GeneratedEvidence({ trace }: { trace: ReplyWorkflowTrace }) {
   )
 }
 
-function MemoryEvidence({ trace }: { trace: ReplyWorkflowTrace }) {
+function PublicationEvidence({
+  trace,
+  responseId,
+  visible,
+}: {
+  trace: ReplyWorkflowTrace
+  responseId?: string
+  visible: number
+}) {
+  if (!visible)
+    return <LoadingEvidence label="Preparing one atomic publication…" />
   return (
-    <>
-      {trace.memory.operations.length ? (
-        <TraceCollection
-          title="Memory changes"
-          empty="No memory changes."
-          items={trace.memory.operations.map((operation, index) => ({
-            id: `${operation.id}-${index}`,
-            title: `${operation.kind} ${operation.id}`,
-            text: operation.text ?? 'Preference removed.',
-          }))}
-        />
-      ) : (
-        <div className="trace-record">
-          <strong>No new memory saved</strong>
-          <p>The matching preference already existed, so Amber kept it once.</p>
-        </div>
-      )}
-      <TraceCollection
-        title="Existing preference retained"
-        empty="No existing preference was supplied."
-        items={trace.memory.existing.map((memory) => ({
-          id: memory.id,
-          title: 'Writing preference',
-          text: memory.text,
-        }))}
-      />
-    </>
+    <div className="trace-record">
+      <strong>Atomic publication set</strong>
+      <p>
+        {responseId} +{' '}
+        {trace.response.postChanges.map(({ postId }) => postId).join(', ')}
+      </p>
+      <span>
+        Answer and {count(trace.response.postChanges.length, 'post change')}{' '}
+        commit together.
+      </span>
+    </div>
   )
 }
 
-function AddressingEvidence({ trace }: { trace: ReplyWorkflowTrace }) {
+function MemoryEvidence({
+  trace,
+  visible,
+}: {
+  trace: ReplyWorkflowTrace
+  visible: number
+}) {
+  if (!visible)
+    return <LoadingEvidence label="Waiting for recorded memory operation…" />
+  return (
+    <TraceCollection
+      title="Memory operations"
+      empty="No memory operation recorded."
+      items={trace.memory.operations.map((operation, index) => ({
+        id: `${operation.id}-${index}`,
+        title: `${operation.kind} ${operation.id} · from v${operation.expectedVersion}`,
+        text: operation.text ?? 'Preference removed.',
+      }))}
+    />
+  )
+}
+
+function AddressingEvidence({
+  trace,
+  visible,
+}: {
+  trace: ReplyWorkflowTrace
+  visible: number
+}) {
+  if (!visible)
+    return <LoadingEvidence label="Waiting for recorded resolution output…" />
+  if (!trace.addressing.resolutions.length)
+    return (
+      <div className="trace-record">
+        <strong>No resolution recorded</strong>
+        {trace.addressing.requests.map((request) => (
+          <p key={request.id}>{request.text}</p>
+        ))}
+        <span>The request remains pending after this recorded turn.</span>
+      </div>
+    )
   return (
     <div className="trace-messages">
       {trace.addressing.resolutions.map((resolution) => {

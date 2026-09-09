@@ -1,6 +1,7 @@
 {
   "name": "@amber/pocs",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@11.1.3",
   "scripts": {
     "typecheck": "pnpm -r typecheck",

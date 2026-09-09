@@ -20,6 +20,7 @@ const statusLabel = (status: TraceStepStatus) =>
           : 'Queued'
 
 export function TraceStep({
+  id,
   number,
   title,
   summary,
@@ -27,6 +28,7 @@ export function TraceStep({
   open = false,
   children,
 }: {
+  id?: string
   number: number
   title: string
   summary: string
@@ -37,7 +39,7 @@ export function TraceStep({
   const effectiveStatus = status ?? 'complete'
   return (
     <li data-status={effectiveStatus}>
-      <details className="workflow-trace-step" open={open}>
+      <details id={id} className="workflow-trace-step" open={open}>
         <summary>
           <span className="trace-step-number">
             {status === 'complete' ? <Icon name="check" /> : number}

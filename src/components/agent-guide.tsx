@@ -1,120 +1,126 @@
 import { useNavigate } from '@tanstack/react-router'
-import {
-  AGENT_GUIDE,
-  AGENT_SCENARIOS,
-  type AgentScenarioId,
-} from '../preview/agent-example'
 import { usePreview } from '../preview/provider'
+import type { AgentRun, AgentRunStage } from '../preview/state'
 import { isAgentBusy } from '../preview/state'
+
+const stages = [
+  ['planning', 'Plan queries'],
+  ['retrieving', 'Retrieve context'],
+  ['generating', 'Generate answer'],
+  ['publishing', 'Publish answer and changes'],
+  ['background', 'Update memory'],
+  ['background', 'Resolve requests'],
+] as const satisfies readonly (readonly [AgentRunStage, string])[]
+
+const foregroundStages: readonly AgentRunStage[] = [
+  'planning',
+  'retrieving',
+  'generating',
+  'publishing',
+]
+
+function stageState(run: AgentRun | undefined, index: number) {
+  if (!run) return 'queued'
+  if (run.stage === 'complete') {
+    if (index < 4) return 'complete'
+    const status = index === 4 ? run.memory : run.addressing
+    return status === 'done'
+      ? 'complete'
+      : status === 'failed' || status === 'exhausted'
+        ? 'failed'
+        : 'queued'
+  }
+  if (run.stage === 'background') return index < 4 ? 'complete' : 'active'
+  const active = foregroundStages.indexOf(run.stage)
+  if (index < active) return 'complete'
+  if (index === active) return run.status === 'failed' ? 'failed' : 'active'
+  return 'queued'
+}
+
+function inspectStage(index: number) {
+  const outer = document.querySelector<HTMLDetailsElement>(
+    'details.reply-workflow-trace',
+  )
+  const stage = document.getElementById(
+    `reply-stage-${index + 1}`,
+  ) as HTMLDetailsElement | null
+  if (!outer || !stage) return
+  outer.open = true
+  stage.open = true
+  stage.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+}
 
 export function AgentGuide() {
   const { state, user, openDialog, dispatch } = usePreview()
   const navigate = useNavigate()
   const run = user ? state.agentByUser[user]?.run : undefined
-  const step = state.guideStep
-  const checkpoint = step === null ? undefined : AGENT_GUIDE[step]
-  const complete = state.guideComplete
-  const goToStep = (next: number) => {
+  const running = isAgentBusy(run)
+  const start = (playing: boolean) => {
     openDialog(null)
-    dispatch({ type: 'loadGuideStep', step: next })
-    void navigate({
-      to: '/agent',
-      search: {},
-      resetScroll: false,
-    })
+    dispatch({ type: 'restartRun', playing })
+    void navigate({ to: '/agent', search: {}, resetScroll: false })
   }
+  const current = !run
+    ? 'Ready to replay'
+    : run.status === 'complete'
+      ? run.memory === 'done' && run.addressing === 'done'
+        ? 'Replay complete'
+        : 'Background needs attention'
+      : run.status === 'failed'
+        ? 'Simulation stopped'
+        : run.stage === 'background'
+          ? 'Update memory + Resolve requests'
+          : stages.find(([stage]) => stage === run.stage)?.[1]
+
   return (
     <aside
       className="preview-controls agent-guide"
-      data-active={step !== null}
-      aria-label="Amber guided preview"
+      data-active={running || undefined}
+      aria-label="Amber recorded replay"
     >
       <div className="guide-main">
         <div className="guide-copy" role="status" aria-live="polite">
           <span className="guide-kicker">
-            {checkpoint
-              ? complete
-                ? `${AGENT_GUIDE.length} of ${AGENT_GUIDE.length} · Complete · Recorded Gemini run`
-                : `${(step ?? 0) + 1} of ${AGENT_GUIDE.length} · Recorded Gemini run · Fake Telegram`
-              : 'Amber guided preview'}
+            Simulated timing · 0.5s per reveal · recorded Gemini output
           </span>
-          <strong>
-            {complete ? 'You’ve seen the full flow' : checkpoint?.title}
-          </strong>
-          <p>
-            {complete
-              ? `Replay the ${AGENT_GUIDE.length} checkpoints or use More controls to inspect labeled simulations.`
-              : (checkpoint?.notice ??
-                'See a recorded real Gemini workflow over invented Telegram messages; no model runs in the browser.')}
-          </p>
+          <strong>{current}</strong>
+          <p>Historical turn live-turn-2. No model runs in this preview.</p>
         </div>
         <div className="guide-actions">
-          {step === null ? (
-            <button
-              type="button"
-              className="guide-primary"
-              onClick={() => goToStep(0)}
-            >
-              Start
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                disabled={step === 0 && !complete}
-                onClick={() => goToStep(complete ? step : step - 1)}
-              >
-                Back
-              </button>
-              <button type="button" onClick={() => goToStep(0)}>
-                {complete ? 'Replay' : 'Restart'}
-              </button>
-              {!complete ? (
-                <button
-                  type="button"
-                  className="guide-primary"
-                  onClick={() => {
-                    if (step === AGENT_GUIDE.length - 1)
-                      dispatch({ type: 'completeGuide' })
-                    else goToStep(step + 1)
-                  }}
-                >
-                  Next
-                </button>
-              ) : null}
-            </>
-          )}
+          <button type="button" onClick={() => start(false)}>
+            Restart
+          </button>
+          <button
+            type="button"
+            className="guide-primary"
+            onClick={() => {
+              if (!running) start(true)
+              else
+                dispatch({
+                  type: 'setRunPlaying',
+                  playing: !(run?.autoPlay ?? false),
+                })
+            }}
+          >
+            {running && run?.autoPlay ? 'Pause' : 'Play'}
+          </button>
         </div>
       </div>
-      {checkpoint?.scenarioId === 'failure-addressing' ? (
-        <details className="guide-alternatives">
-          <summary>Retry safeguards</summary>
-          <div>
+      <ol className="replay-stages" aria-label="Replay stages">
+        {stages.map(([, label], index) => (
+          <li key={label} data-state={stageState(run, index)}>
             <button
               type="button"
-              onClick={() =>
-                dispatch({
-                  type: 'loadGuideAlternative',
-                  id: 'retry-exhausted',
-                })
-              }
+              disabled={!run}
+              onClick={() => inspectStage(index)}
+              aria-label={`Inspect stage ${index + 1}: ${label}`}
             >
-              Retry limit
+              <span>{index + 1}</span>
+              {label}
             </button>
-            <button
-              type="button"
-              onClick={() =>
-                dispatch({
-                  type: 'loadGuideAlternative',
-                  id: 'retry-stale',
-                })
-              }
-            >
-              Stale retry
-            </button>
-          </div>
-        </details>
-      ) : null}
+          </li>
+        ))}
+      </ol>
       <details className="preview-more">
         <summary>More controls</summary>
         <div className="preview-more-row">
@@ -141,60 +147,24 @@ export function AgentGuide() {
               <option value="author">Author</option>
             </select>
           </label>
-          <label className="scenario-control">
-            <span>Scenario</span>
-            <select
-              aria-label="Agent scenario"
-              autoComplete="off"
-              value={state.scenarioId}
-              onChange={(event) => {
-                openDialog(null)
-                dispatch({
-                  type: 'loadScenario',
-                  id: event.target.value as AgentScenarioId,
-                })
-              }}
-            >
-              {AGENT_SCENARIOS.map(([id, label]) => (
-                <option key={id} value={id}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
           <button
             type="button"
             onClick={() =>
-              dispatch({ type: 'loadScenario', id: state.scenarioId })
-            }
-          >
-            Reset
-          </button>
-          <button
-            type="button"
-            disabled={!run || !isAgentBusy(run)}
-            onClick={() =>
-              run && dispatch({ type: 'setRunPlaying', playing: !run.autoPlay })
-            }
-          >
-            {run?.autoPlay ? 'Pause' : 'Play'}
-          </button>
-          <button
-            type="button"
-            disabled={!run || !isAgentBusy(run)}
-            onClick={() =>
-              run &&
               dispatch({
-                type: 'advanceRun',
-                userId: user ?? 'alex',
-                messageId: run.messageId,
-                stage: run.stage,
-                memory: run.memory,
-                addressing: run.addressing,
+                type: 'loadScenario',
+                id: 'failure-before-publication',
               })
             }
           >
-            Step
+            Foreground failure
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              dispatch({ type: 'loadScenario', id: 'failure-addressing' })
+            }
+          >
+            Background failure
           </button>
           <a href="/plan" target="_blank" rel="noreferrer">
             Plan ↗
