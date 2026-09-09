@@ -72,9 +72,25 @@ export function AgentGuide() {
             Simulated timing · 0.5s per reveal · recorded Gemini output
           </span>
           <strong>{current}</strong>
-          <p>Historical turn live-turn-2. No model runs in this preview.</p>
+          <p>
+            {state.scenarioId === 'question-example'
+              ? 'Recorded Telegram question and reply.'
+              : 'Historical turn live-turn-2.'}{' '}
+            No model runs in this preview.
+          </p>
         </div>
         <div className="guide-actions">
+          <button
+            type="button"
+            aria-pressed={state.scenarioId === 'question-example'}
+            onClick={() => {
+              openDialog(null)
+              dispatch({ type: 'loadScenario', id: 'question-example' })
+              void navigate({ to: '/agent', search: {}, resetScroll: false })
+            }}
+          >
+            Question
+          </button>
           <button type="button" onClick={() => start(false)}>
             Restart
           </button>

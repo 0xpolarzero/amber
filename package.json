@@ -20,7 +20,7 @@
     "test:telegram": "pnpm --dir poc test:telegram",
     "test:messaging": "pnpm --dir poc test:messaging",
     "preview:refresh": "pnpm --dir poc/messaging test:preview-live",
-    "preview:project": "node poc/project-historical-preview.ts"
+    "preview:project": "node poc/project-historical-preview.ts && node poc/project-question-preview.ts"
   },
   "dependencies": {
     "@tanstack/react-form": "1.33.5",

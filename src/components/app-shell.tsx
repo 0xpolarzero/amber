@@ -73,7 +73,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main
         id="main"
         tabIndex={-1}
-        className={state.scenarioId === 'replay' ? 'guide-active' : undefined}
+        className={
+          state.scenarioId === 'replay' ||
+          state.scenarioId === 'question-example'
+            ? 'guide-active'
+            : undefined
+        }
       >
         {children}
       </main>

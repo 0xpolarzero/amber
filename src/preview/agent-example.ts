@@ -1,4 +1,5 @@
 import type { Feed, Post } from '../domain/post'
+import questionCapture from './generated/amber-question-preview'
 import captured from './generated/amber-real-preview'
 import type {
   AgentConversation,
@@ -11,6 +12,7 @@ import type {
 
 export const AGENT_SCENARIOS = [
   ['replay', 'Recorded replay'],
+  ['question-example', 'Telegram question'],
   ['rich-complete', 'Recorded result'],
   ['empty', 'Empty conversation'],
   ['failure-before-publication', 'Foreground failure'],
@@ -68,7 +70,7 @@ function projectedPosts(feed: Feed, values: readonly RecordedPost[]) {
   )
 }
 
-const changeFields = (diff: (typeof captured.posts.diffs)[number]) =>
+const changeFields = (diff: { before: RecordedPost; after: RecordedPost }) =>
   (['title', 'summary', 'detail'] as const)
     .filter((field) => diff.before[field] !== diff.after[field])
     .map((field) => ({
@@ -177,10 +179,76 @@ function completeRun(feed: Feed): AgentRun {
   }
 }
 
+function questionExample(feed: Feed): AgentScenario {
+  const { question, source, trace, replyTrace, messaging } = questionCapture
+  const posts = projectedPosts(
+    feed,
+    messaging.diffs.map(({ after }) => after),
+  )
+  const changes: readonly PostChange[] = messaging.diffs.map((diff) => ({
+    kind: 'updated',
+    postId: diff.postId,
+    project: diff.after.title,
+    fields: changeFields(diff),
+    fromVersion: diff.before.version,
+    toVersion: diff.after.version,
+  }))
+  const run: AgentRun = {
+    ...completeRun(feed),
+    messageId: `${messaging.input.turnId}:user`,
+    trace: replyTrace,
+    outcome: {
+      responseId: messaging.assistant.id,
+      text: messaging.assistant.text,
+      changes,
+      memoryEvents: [],
+      addressIds: messaging.addressing.map(
+        ({ requestMessageId }) => requestMessageId,
+      ),
+    },
+  }
+  return {
+    role: 'author',
+    posts,
+    conversation: {
+      ...baseConversation(
+        [
+          {
+            id: question.id,
+            sender: 'amber',
+            text: question.text,
+            postId: question.postId,
+            intent: 'question',
+            needsReply: true,
+            resolution: messaging.addressing[0]?.outcome,
+            addressedBy: messaging.assistant.id,
+            source,
+            trace,
+          },
+          { id: run.messageId, sender: 'user', text: messaging.input.text },
+          {
+            id: messaging.assistant.id,
+            sender: 'amber',
+            text: messaging.assistant.text,
+            changes,
+          },
+        ],
+        messaging.finalMemories.map(({ id, text, version }) => ({
+          id,
+          text,
+          version,
+        })),
+      ),
+      run,
+    },
+  }
+}
+
 export function buildAgentScenario(
   feed: Feed,
   id: AgentScenarioId,
 ): AgentScenario {
+  if (id === 'question-example') return questionExample(feed)
   const before = projectedPosts(feed, captured.posts.before)
   const after = projectedPosts(feed, captured.posts.after)
   if (id === 'empty')

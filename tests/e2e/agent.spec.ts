@@ -232,3 +232,57 @@ test('keeps failure controls secondary and preserves published output on retry',
     slot.getByRole('region', { name: 'Applied post changes' }),
   ).toHaveCount(1)
 })
+
+test('shows the recorded Telegram question and its reply with separate compact traces', async ({
+  page,
+  isMobile,
+}) => {
+  await page.goto('/agent')
+  await controls(page)
+    .getByRole('button', { name: 'Question', exact: true })
+    .click()
+  const question = page
+    .locator('article')
+    .filter({ has: page.locator('details.extraction-workflow-trace') })
+  await expect(question).toBeVisible()
+  const trace = question.locator('details.extraction-workflow-trace')
+  await expect(trace).toHaveAttribute('open', '')
+  const stages = trace.locator('details.workflow-trace-step')
+  await expect(stages).toHaveCount(4)
+  await stages.nth(0).locator('summary').first().click()
+  await expect(stages.nth(0)).toContainText(
+    'I built Noted: voice notes transcribed locally on a Mac.',
+  )
+  await expect(stages.nth(0)).toContainText('Does Noted understand Mandarin?')
+  await stages.nth(0).locator('summary').first().click()
+  await stages.nth(2).locator('summary').first().click()
+  const created = stages.nth(2).locator('details.post-update')
+  await created.locator('summary').click()
+  await expect(created.locator('ins')).toHaveCount(3)
+  await expect(created.locator('del')).toHaveCount(0)
+  await stages.nth(2).locator('summary').first().click()
+  await stages.nth(3).locator('summary').click()
+  await expect(stages.nth(3)).toContainText('Does Noted understand Mandarin?')
+  await expect(trace).toContainText('ai-builders · gemini-3.8-flash-medium')
+  await trace.screenshot({
+    path: isMobile
+      ? '/private/tmp/amber-question-trace-mobile.png'
+      : '/private/tmp/amber-question-trace-desktop.png',
+  })
+  const reply = page.getByRole('article', { name: 'Amber reply' })
+  await expect(reply.locator(':scope > .chat-bubble')).toContainText(
+    'supports Mandarin',
+  )
+  await reply
+    .getByRole('button', { name: '1 post edited', exact: true })
+    .click()
+  await expect(
+    reply.getByRole('region', { name: 'Applied post changes' }),
+  ).toBeVisible()
+  await expect(page.locator('[id*="-stage-"]')).toHaveCount(6)
+  await controls(page)
+    .getByRole('button', { name: 'Restart', exact: true })
+    .click()
+  await expect(page.locator('details.extraction-workflow-trace')).toHaveCount(0)
+  await expect(controls(page)).toContainText('Plan queries')
+})

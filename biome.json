@@ -24,7 +24,8 @@
         "poc/telegram/native-web-result.json",
         "poc/telegram/fetched-page-result.json",
         "poc/preview-result.json",
-        "src/preview/generated/amber-real-preview.ts"
+        "src/preview/generated/amber-real-preview.ts",
+        "src/preview/generated/amber-question-preview.ts"
       ],
       "formatter": { "enabled": false }
     }

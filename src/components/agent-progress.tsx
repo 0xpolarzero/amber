@@ -356,6 +356,8 @@ function PlannerEvidence({
   visible: number
 }) {
   const queries = trace.planner.queries.slice(0, visible)
+  if (!trace.planner.queries.length && visible > 0)
+    return <p>No additional searches needed.</p>
   if (!queries.length)
     return <LoadingEvidence label="Looking for relevant searches…" />
   return (
