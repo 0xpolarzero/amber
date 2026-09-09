@@ -358,18 +358,23 @@ it('records and semantically checks one coherent lifecycle from long Telegram ba
       ...(question.pendingCandidateId ? { pendingCandidateId: question.pendingCandidateId } : {}),
     })
   }
-  for (const notification of secondResult.notifications)
+  for (const notification of secondResult.notifications) {
+    if (notification.authorId !== 'maya') continue
+    const notificationPost = secondResult.posts.find(
+      ({ authorId }) => authorId === notification.authorId,
+    )
     privateStore.admitAgentMessage({
       id: notification.id,
       userId: notification.authorId,
       text: `${notification.text}. Sources: ${notification.sourceIds.join(', ')}.`,
       intent: 'informational',
-      ...(mayaPost.id ? { linkedPostId: mayaPost.id } : {}),
+      ...(notificationPost ? { linkedPostId: notificationPost.id } : {}),
     })
+  }
   const privateInput = {
     turnId: 'maya-private-final',
     userId: 'maya',
-    text: 'For Orbit 0.4, patch export excludes attachments and direct push is unavailable. Only explicitly connected repositories are imported. Replace my detailed-writing preference: keep posts concise and factual.',
+    text: 'For Orbit 0.4, patch export also records assignee changes. Attachments remain excluded and direct push is unavailable. Replace my detailed-writing preference: keep posts concise and factual.',
   }
   const privateCallsStart = artifact.attempts.length
   const beforePrivate = privateStore.snapshot()
