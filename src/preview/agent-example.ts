@@ -179,7 +179,7 @@ function completeRun(feed: Feed): AgentRun {
   }
 }
 
-function questionExample(feed: Feed): AgentScenario {
+function lifecycleExample(feed: Feed, completed: boolean): AgentScenario {
   const { question, source, trace, replyTrace, messaging } = questionCapture
   const posts = projectedPosts(
     feed,
@@ -194,50 +194,68 @@ function questionExample(feed: Feed): AgentScenario {
     toVersion: diff.after.version,
   }))
   const run: AgentRun = {
-    ...completeRun(feed),
+    ...(completed ? completeRun(feed) : activeRun(feed)),
     messageId: `${messaging.input.turnId}:user`,
     trace: replyTrace,
     outcome: {
       responseId: messaging.assistant.id,
       text: messaging.assistant.text,
       changes,
-      memoryEvents: [],
+      memoryEvents: replyTrace.memory.operations.map((operation) => ({
+        kind: 'replaced' as const,
+        id: operation.id,
+        before: replyTrace.memory.existing.find(({ id }) => id === operation.id)
+          ?.text,
+        after: operation.text,
+      })),
       addressIds: messaging.addressing.map(
         ({ requestMessageId }) => requestMessageId,
       ),
     },
   }
+  const messages: AgentMessage[] = [
+    {
+      id: question.id,
+      sender: 'amber',
+      text: question.text,
+      postId: question.postId,
+      intent: 'question',
+      needsReply: true,
+      resolution: trace.telegramUpdate?.resolution.outcome,
+      addressedBy: messaging.notification.id,
+      source,
+      trace,
+    },
+    {
+      id: messaging.notification.id,
+      sender: 'amber',
+      text: messaging.notification.text,
+      postId: messaging.notification.linkedPostId ?? undefined,
+      intent: 'informational',
+    },
+    { id: run.messageId, sender: 'user', text: messaging.input.text },
+  ]
+  if (completed)
+    messages.push({
+      id: messaging.assistant.id,
+      sender: 'amber',
+      text: messaging.assistant.text,
+      changes,
+    })
   return {
     role: 'author',
-    posts,
+    posts: completed
+      ? posts
+      : projectedPosts(
+          feed,
+          messaging.diffs.map(({ before }) => before),
+        ),
     conversation: {
       ...baseConversation(
-        [
-          {
-            id: question.id,
-            sender: 'amber',
-            text: question.text,
-            postId: question.postId,
-            intent: 'question',
-            needsReply: true,
-            resolution: messaging.addressing[0]?.outcome,
-            addressedBy: messaging.assistant.id,
-            source,
-            trace,
-          },
-          { id: run.messageId, sender: 'user', text: messaging.input.text },
-          {
-            id: messaging.assistant.id,
-            sender: 'amber',
-            text: messaging.assistant.text,
-            changes,
-          },
-        ],
-        messaging.finalMemories.map(({ id, text, version }) => ({
-          id,
-          text,
-          version,
-        })),
+        messages,
+        (completed ? messaging.finalMemories : captured.memory.before).map(
+          ({ id, text, version }) => ({ id, text, version }),
+        ),
       ),
       run,
     },
@@ -248,7 +266,9 @@ export function buildAgentScenario(
   feed: Feed,
   id: AgentScenarioId,
 ): AgentScenario {
-  if (id === 'question-example') return questionExample(feed)
+  if (id === 'question-example' || id === 'rich-complete')
+    return lifecycleExample(feed, true)
+  if (id === 'replay') return lifecycleExample(feed, false)
   const before = projectedPosts(feed, captured.posts.before)
   const after = projectedPosts(feed, captured.posts.after)
   if (id === 'empty')
@@ -257,30 +277,6 @@ export function buildAgentScenario(
       conversation: baseConversation([], []),
       posts: before,
     }
-  if (id === 'rich-complete')
-    return {
-      role: 'author',
-      conversation: {
-        ...baseConversation(
-          [pendingRequest(), inputMessage(), response(feed)],
-          afterMemory,
-        ),
-        readThrough: 2,
-        run: completeRun(feed),
-      },
-      posts: after,
-    }
-  if (id === 'replay') {
-    const run = activeRun(feed)
-    return {
-      role: 'author',
-      conversation: {
-        ...baseConversation([pendingRequest(), inputMessage()], beforeMemory),
-        run,
-      },
-      posts: before,
-    }
-  }
   if (id === 'failure-before-publication') {
     const run = activeRun(feed)
     run.stage = 'generating'

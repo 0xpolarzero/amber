@@ -17,6 +17,9 @@ export function QuestionWorkflowTrace({
   )
   const post = trace.publication.post
   const created = !trace.publication.output.existingPostId
+  const update = trace.telegramUpdate
+  const stageId = (number: number) =>
+    `question-${trace.questionId}-stage-${number}`
   return (
     <details className="workflow-trace extraction-workflow-trace" open={open}>
       <summary aria-label="Question workflow">
@@ -33,6 +36,7 @@ export function QuestionWorkflowTrace({
           aria-label="Question task progress"
         >
           <TraceStep
+            id={stageId(1)}
             number={1}
             title="Group messages"
             status="complete"
@@ -65,6 +69,7 @@ export function QuestionWorkflowTrace({
             ) : null}
           </TraceStep>
           <TraceStep
+            id={stageId(2)}
             number={2}
             title="Gather context"
             status="complete"
@@ -119,6 +124,7 @@ export function QuestionWorkflowTrace({
             ) : null}
           </TraceStep>
           <TraceStep
+            id={stageId(3)}
             number={3}
             title="Publish post"
             status="complete"
@@ -153,6 +159,7 @@ export function QuestionWorkflowTrace({
             )}
           </TraceStep>
           <TraceStep
+            id={stageId(4)}
             number={4}
             title="Ask question"
             status="complete"
@@ -168,6 +175,63 @@ export function QuestionWorkflowTrace({
                 </div>
               ))}
           </TraceStep>
+          {update ? (
+            <TraceStep
+              id={stageId(5)}
+              number={5}
+              title="Apply Telegram update"
+              status="complete"
+              summary={update.notification.text}
+            >
+              <div className="trace-messages">
+                {update.messages
+                  .filter(({ id }) => update.selectedMessageIds.includes(id))
+                  .map((message) => (
+                    <div className="trace-record" key={message.id}>
+                      <span>{name(message.authorId)}</span>
+                      <p>{message.text}</p>
+                    </div>
+                  ))}
+              </div>
+              <section
+                className="trace-post-diffs"
+                aria-label="Telegram post update"
+              >
+                <PostChangeDiff
+                  expanded={false}
+                  change={{
+                    kind: 'updated',
+                    postId: update.after.id,
+                    project: update.after.title,
+                    fromVersion: update.before.version,
+                    toVersion: update.after.version,
+                    fields: (['title', 'summary', 'detail'] as const)
+                      .filter(
+                        (field) => update.before[field] !== update.after[field],
+                      )
+                      .map((field) => ({
+                        field,
+                        before: update.before[field],
+                        after: update.after[field],
+                      })),
+                  }}
+                />
+              </section>
+              <p>Sources: {update.notification.sourceIds.join(' · ')}</p>
+            </TraceStep>
+          ) : null}
+          {update ? (
+            <TraceStep
+              id={stageId(6)}
+              number={6}
+              title="Resolve question"
+              status="complete"
+              summary={`Question ${update.resolution.outcome}`}
+            >
+              <p>{update.resolution.reason}</p>
+              <p>Sources: {update.resolution.sourceIds.join(' · ')}</p>
+            </TraceStep>
+          ) : null}
         </ol>
         <p className="trace-recording">
           {source.groupId} · {trace.recording.model}

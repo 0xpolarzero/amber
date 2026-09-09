@@ -553,6 +553,7 @@ function AddressingEvidence({
   visible: number
 }) {
   if (!visible) return <LoadingEvidence label="Checking requests…" />
+  if (!trace.addressing.requests.length) return <p>No pending requests.</p>
   if (!trace.addressing.resolutions.length)
     return (
       <div className="trace-record">

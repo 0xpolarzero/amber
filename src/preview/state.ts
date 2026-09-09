@@ -90,6 +90,35 @@ export type WorkflowTrace = {
     }
   }
   question: string
+  telegramUpdate?: {
+    batchId: string
+    selectedMessageIds: readonly string[]
+    messages: TelegramSource['messages']
+    before: {
+      id: string
+      version: number
+      title: string
+      summary: string
+      detail: string
+    }
+    after: {
+      id: string
+      version: number
+      title: string
+      summary: string
+      detail: string
+    }
+    notification: {
+      id: string
+      text: string
+      sourceIds: readonly string[]
+    }
+    resolution: {
+      outcome: 'answered' | 'ignored'
+      reason: string
+      sourceIds: readonly string[]
+    }
+  }
   related: readonly {
     authorId: string
     project: string

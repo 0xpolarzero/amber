@@ -1,9 +1,6 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import historical from '../../poc/messaging/result.json'
-import {
-  type HistoricalMessagingCapture,
-  projectHistoricalTurn,
-} from '../../poc/preview-projection'
+import lifecycle from '../../src/preview/generated/amber-question-preview'
 import projection from '../../src/preview/generated/amber-real-preview'
 import {
   createPreviewState,
@@ -42,69 +39,61 @@ function advanceUntil(
   return current
 }
 
-describe('historical replay projection', () => {
-  it('is regenerated exactly from real historical turn two', () => {
-    expect(projection).toEqual(
-      projectHistoricalTurn(
-        historical as unknown as HistoricalMessagingCapture,
-        'live-turn-2',
-      ),
+describe('recorded lifecycle projection', () => {
+  it('points to one complete real-model run', () => {
+    const capture = JSON.parse(
+      readFileSync(projection.source.file, 'utf8'),
+    ) as {
+      provenance: { runId: string; scripted: boolean; model: string }
+      stages: {
+        telegramCreate: { input: unknown }
+        telegramEvidence: { input: unknown }
+        privateReply: { input: unknown; receipt: { diffs: unknown } }
+      }
+    }
+    expect(projection.source.runId).toBe(capture.provenance.runId)
+    expect(capture.provenance).toMatchObject({
+      scripted: false,
+      model: 'gemini-3.8-flash-medium',
+    })
+    expect(capture.stages.telegramCreate.input).toBeDefined()
+    expect(capture.stages.telegramEvidence.input).toBeDefined()
+    expect(projection.input).toEqual(capture.stages.privateReply.input)
+    expect(projection.posts.diffs).toEqual(
+      capture.stages.privateReply.receipt.diffs,
     )
   })
 
-  it('retains the complete touched before/after set and recorded evidence', () => {
-    const turn = historical.turns[1]
-    const planner = turn.calls.find(({ task }) => task === 'query-planner')
-    const responder = turn.calls.find(({ task }) => task === 'responder')
-    const memory = turn.calls.find(({ task }) => task === 'memory')
-    const addressing = turn.calls.find(({ task }) => task === 'addressing')
-    if (
-      planner?.task !== 'query-planner' ||
-      responder?.task !== 'responder' ||
-      memory?.task !== 'memory' ||
-      addressing?.task !== 'addressing'
-    )
-      throw new Error('Historical turn is missing a recorded call')
-    expect(projection.input).toEqual(turn.input)
-    expect(projection.posts.diffs).toEqual(turn.receipt.diffs)
-    expect(projection.posts.before).toEqual(
-      turn.receipt.diffs.map(({ before }) => before),
-    )
-    expect(projection.posts.after).toEqual(
-      turn.receipt.diffs.map(({ after }) => after),
-    )
-    expect(projection.trace.planner.queries).toEqual(planner.output.queries)
-    expect(projection.trace.planner.queries).toHaveLength(3)
-    expect(projection.trace.context.posts).toEqual(
-      responder.input.queryResults?.posts.map(
-        ({ id, version, title, summary, detail }) => ({
-          id,
-          version,
-          title,
-          summary,
-          detail,
-        }),
-      ),
-    )
-    expect(projection.trace.memory.operations).toEqual(memory.output.operations)
-    expect(projection.trace.addressing.resolutions).toEqual(
-      addressing.output.resolutions,
-    )
-    expect(projection.trace.addressing.resolutions).toEqual([])
-    expect(projection.requests.before).toEqual(projection.requests.after)
-    expect(projection.memory.before[0].text).toBe(
-      'Prefer detailed factual posts.',
-    )
-    expect(projection.memory.after[0].text).toBe('Prefer concise posts.')
-    expect(projection.source).toMatchObject({
-      file: 'poc/messaging/result.json',
-      turnId: 'live-turn-2',
-      provenance: { scripted: false, model: 'gemini-3.8-flash-medium' },
+  it('retains the coherent question, Telegram resolution, and private reply', () => {
+    expect(lifecycle.question).toMatchObject({
+      id: 'north-1:0@0:question',
+      postId: 'north-1:0',
+      needsReply: true,
     })
+    expect(lifecycle.trace.telegramUpdate).toMatchObject({
+      resolution: { outcome: 'answered', sourceIds: ['n2-23'] },
+      notification: { id: 'north-2:0@0:notification' },
+    })
+    expect(lifecycle.messaging.notification.id).toBe(
+      lifecycle.trace.telegramUpdate.notification.id,
+    )
+    expect(lifecycle.messaging.diffs).toEqual(projection.posts.diffs)
+    expect(projection.trace.planner.queries).toHaveLength(1)
+    expect(projection.trace.addressing.resolutions).toEqual([])
+    expect(projection.requests.before[0].id).toBe(lifecycle.question.id)
+    expect(projection.requests.after).toEqual([])
+    expect(projection.memory.before.map(({ text }) => text)).toContain(
+      'Prefer detailed explanations.',
+    )
+    expect(projection.memory.after.map(({ text }) => text)).toContain(
+      'Keep posts concise and factual.',
+    )
     expect(JSON.stringify(projection)).not.toMatch(
       /accessToken|authorization|refreshToken|sessionCookie/i,
     )
-    expect(JSON.stringify(projection)).not.toMatch(/Clipwise/)
+    expect(JSON.stringify(lifecycle)).not.toMatch(
+      /accessToken|authorization|refreshToken|sessionCookie/i,
+    )
   })
 })
 
@@ -117,7 +106,7 @@ describe('deterministic replay state', () => {
       frame: 0,
       published: false,
     })
-    expect(state.agentByUser.alex.messages).toHaveLength(2)
+    expect(state.agentByUser.alex.messages).toHaveLength(3)
     expect(state.posts.map(({ summary }) => summary)).toEqual(
       projection.posts.before.map(({ summary }) => summary),
     )
@@ -135,7 +124,7 @@ describe('deterministic replay state', () => {
       state,
       (current) => current.agentByUser.alex.run?.stage === 'generating',
     )
-    expect(state.agentByUser.alex.messages).toHaveLength(2)
+    expect(state.agentByUser.alex.messages).toHaveLength(3)
     state = tick(state)
     expect(run()).toMatchObject({ stage: 'generating', frame: 1 })
     state = advanceUntil(
@@ -144,7 +133,7 @@ describe('deterministic replay state', () => {
     )
     state = tick(state)
     expect(run()).toMatchObject({ stage: 'publishing', frame: 1 })
-    expect(state.agentByUser.alex.messages).toHaveLength(2)
+    expect(state.agentByUser.alex.messages).toHaveLength(3)
 
     state = tick(state)
     expect(run()).toMatchObject({
@@ -182,7 +171,7 @@ describe('deterministic replay state', () => {
     )
     expect(
       state.agentByUser.alex.messages.filter(isUnaddressed).map(({ id }) => id),
-    ).toEqual([projection.requests.after[0].id])
+    ).toEqual([])
     expect(isAgentBusy(run())).toBe(false)
   })
 

@@ -250,7 +250,7 @@ export function projectReplyTrace(capture: PreviewProjectionCapture) {
   return projectReplyCalls(capture.messaging.calls)
 }
 
-function projectReplyCalls(calls: readonly MessagingCall[]) {
+export function projectReplyCalls(calls: readonly MessagingCall[]) {
   const planner = messagingCall(calls, 'query-planner')
   const responder = messagingCall(calls, 'responder')
   const memory = messagingCall(calls, 'memory')

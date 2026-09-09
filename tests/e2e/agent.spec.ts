@@ -22,9 +22,13 @@ test('replays recorded output progressively and preserves publication boundaries
 
   await replay.getByRole('button', { name: 'Restart', exact: true }).click()
   await expect(page).toHaveURL(/\/agent$/)
-  await expect(page.getByText(preview.requests.before[0].text)).toBeVisible()
-  await expect(page.getByText(preview.input.text)).toBeVisible()
   const history = page.getByRole('log', { name: 'Conversation history' })
+  await expect(
+    history.getByText(preview.requests.before[0].text, { exact: true }),
+  ).toBeVisible()
+  await expect(
+    history.getByText(preview.input.text, { exact: true }),
+  ).toBeVisible()
   const slot = history.getByRole('article', { name: 'Amber reply' })
   const trace = slot.locator('details.reply-workflow-trace')
   const stages = trace.locator('details.workflow-trace-step')
@@ -38,7 +42,7 @@ test('replays recorded output progressively and preserves publication boundaries
 
   const play = replay.getByRole('button', { name: 'Play', exact: true })
   await play.click()
-  await expect(stages.nth(0)).toContainText('Atlas')
+  await expect(stages.nth(0)).toContainText('Orbit')
   await replay.getByRole('button', { name: 'Pause', exact: true }).click()
   const pausedQueries = await stages.nth(0).locator('.trace-record').count()
   expect(pausedQueries).toBeGreaterThan(0)
@@ -50,25 +54,23 @@ test('replays recorded output progressively and preserves publication boundaries
 
   await replay.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(stages.nth(1)).toHaveAttribute('open', '', { timeout: 5_000 })
-  await expect(stages.nth(1)).toContainText('Noted')
+  await expect(stages.nth(1)).toContainText('Orbit')
   const retrievedPost = stages
     .nth(1)
     .locator('details.trace-post-preview')
-    .filter({ hasText: 'Noted' })
+    .filter({ hasText: 'Orbit' })
   await expect(retrievedPost).not.toHaveAttribute('open', '')
   await retrievedPost.locator('summary').click()
   await expect(retrievedPost).toHaveAttribute('open', '')
   await expect(stages.nth(1)).toContainText(
-    'Offline voice transcription for macOS.',
+    'Version 0.4 adds patch export for titles and labels',
   )
   await replay.getByRole('button', { name: 'Pause', exact: true }).click()
   await expect(slot.locator(':scope > .chat-bubble')).toHaveCount(0)
 
   await replay.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(stages.nth(2)).toHaveAttribute('open', '', { timeout: 6_000 })
-  await expect(slot.locator(':scope > .chat-bubble')).toContainText(
-    'Atlas has been updated',
-  )
+  await expect(stages.nth(2)).toContainText('Writing answer and changes')
   await replay.getByRole('button', { name: 'Pause', exact: true }).click()
   await expect(slot.locator(':scope > .chat-bubble')).not.toContainText(
     preview.assistant.text,
@@ -80,7 +82,7 @@ test('replays recorded output progressively and preserves publication boundaries
     'aria-busy',
     'true',
   )
-  await expect(stages.nth(2)).not.toContainText('Atlas has been updated')
+  await expect(stages.nth(2)).not.toContainText(preview.assistant.text)
   await expect(
     slot.getByRole('region', { name: 'Applied post changes' }),
   ).toHaveCount(0)
@@ -88,7 +90,7 @@ test('replays recorded output progressively and preserves publication boundaries
   await replay.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(stages.nth(3)).toHaveAttribute('open', '', { timeout: 4_000 })
   await expect(stages.nth(3)).toContainText(
-    'Publishing answer and edits together',
+    'Answer and edits ready to publish together',
   )
   await expect(slot.locator(':scope > .chat-bubble')).toHaveAttribute(
     'aria-busy',
@@ -103,12 +105,10 @@ test('replays recorded output progressively and preserves publication boundaries
   )
   await replay.getByRole('button', { name: 'Pause', exact: true }).click()
   const applied = slot.getByRole('region', { name: 'Applied post changes' })
-  await slot
-    .getByRole('button', { name: '3 posts edited', exact: true })
-    .click()
+  await slot.getByRole('button', { name: '1 post edited', exact: true }).click()
   await expect(stages.nth(3)).toHaveAttribute('open', '')
   await expect(applied).toBeVisible()
-  await applied.locator('summary').filter({ hasText: 'Atlas' }).click()
+  await applied.locator('summary').filter({ hasText: 'Orbit' }).click()
   await expect(applied.locator('del').first()).toBeVisible()
   await expect(applied.locator('ins').first()).toBeVisible()
   await page.screenshot({
@@ -116,29 +116,28 @@ test('replays recorded output progressively and preserves publication boundaries
       ? '/private/tmp/amber-compact-diff-mobile.png'
       : '/private/tmp/amber-compact-diff-desktop.png',
   })
-  await expect(applied.locator('summary')).toHaveCount(3)
+  await expect(applied.locator('summary')).toHaveCount(1)
   await expect(replay).toContainText('Update memory + Resolve requests')
   await expect(stages.nth(4)).toHaveAttribute('open', '')
   await expect(stages.nth(5)).toHaveAttribute('open', '')
   await expect(send).toBeDisabled()
-  await page.getByRole('button', { name: 'Open memory (1 saved)' }).click()
+  await page.getByRole('button', { name: 'Open memory (2 saved)' }).click()
   await expect(page.getByRole('region', { name: 'Memory' })).toContainText(
-    'Prefer detailed factual posts.',
+    'Prefer detailed explanations.',
   )
 
   await replay.getByRole('button', { name: 'Play', exact: true }).click()
-  await expect(stages.nth(4)).toContainText('Prefer concise posts.')
-  await expect(stages.nth(5)).toContainText('Still pending')
-  await expect(stages.nth(5)).toContainText(preview.requests.after[0].text)
+  await expect(stages.nth(4)).toContainText('Keep posts concise and factual.')
+  await expect(stages.nth(5)).toContainText('No pending requests.')
   await replay.getByRole('button', { name: 'Pause', exact: true }).click()
   await expect(send).toBeDisabled()
 
   await replay.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(replay).toContainText('Replay complete')
   await expect(page.getByRole('region', { name: 'Memory' })).toContainText(
-    'Prefer concise posts.',
+    'Keep posts concise and factual.',
   )
-  await expect(page.getByText('Unanswered', { exact: true })).toBeVisible()
+  await expect(page.getByText('Answered', { exact: true })).toBeVisible()
   await expect(send).toBeEnabled()
   await expect(composer).toHaveValue('Draft stays local while the replay runs.')
   await slot
@@ -146,9 +145,11 @@ test('replays recorded output progressively and preserves publication boundaries
     .click()
   await expect(stages.nth(4)).toHaveAttribute('open', '')
   await expect(stages.nth(4).locator('del')).toHaveText(
-    'Prefer detailed factual posts.',
+    'Prefer detailed explanations.',
   )
-  await expect(stages.nth(4).locator('ins')).toHaveText('Prefer concise posts.')
+  await expect(stages.nth(4).locator('ins')).toHaveText(
+    'Keep posts concise and factual.',
+  )
   await expect(stages.nth(4).locator('ins')).toBeInViewport()
   await expect(slot.locator(':scope > .applied-changes')).toHaveCount(0)
   await expect(slot.locator(':scope > .memory-saved')).toHaveCount(0)
@@ -162,12 +163,12 @@ test('replays recorded output progressively and preserves publication boundaries
   await expect(slot.locator(':scope > .chat-bubble')).toHaveCount(0)
   await expect(composer).toHaveValue('')
   await expect(stages.nth(0)).toHaveAttribute('open', '')
-  await page.getByRole('button', { name: 'Open memory (1 saved)' }).click()
+  await page.getByRole('button', { name: 'Open memory (2 saved)' }).click()
   await expect(page.getByRole('region', { name: 'Memory' })).toContainText(
-    'Prefer detailed factual posts.',
+    'Prefer detailed explanations.',
   )
   await expect(
-    page.getByText('Prefer concise posts.', { exact: true }),
+    page.getByText('Keep posts concise and factual.', { exact: true }),
   ).toHaveCount(0)
   expect(
     await page.evaluate(
@@ -208,8 +209,8 @@ test('keeps active evidence open and completed stages inspectable', async ({
   ).toBeVisible()
   await expect(trace).toHaveAttribute('open', '')
   await expect(stages.nth(0)).toHaveAttribute('open', '')
-  await expect(stages.nth(0)).toContainText('Atlas')
-  await expect(stages.nth(0)).toContainText('Aurora')
+  await expect(stages.nth(0)).toContainText('Orbit')
+  await expect(stages.nth(0)).toContainText('0.4')
 })
 
 test('keeps failure controls secondary and preserves published output on retry', async ({
@@ -225,9 +226,7 @@ test('keeps failure controls secondary and preserves published output on retry',
   )
   await page.getByRole('button', { name: 'Retry request resolution' }).click()
   await expect(slot.locator(':scope > .chat-bubble')).toHaveCount(1)
-  await slot
-    .getByRole('button', { name: '3 posts edited', exact: true })
-    .click()
+  await slot.getByRole('button', { name: '1 post edited', exact: true }).click()
   await expect(
     slot.getByRole('region', { name: 'Applied post changes' }),
   ).toHaveCount(1)
@@ -238,17 +237,19 @@ test('shows the recorded Telegram question and its reply with separate compact t
   isMobile,
 }) => {
   await page.goto('/agent')
-  await controls(page)
-    .getByRole('button', { name: 'Question', exact: true })
-    .click()
+  const replay = controls(page)
+  await replay.getByRole('button', { name: 'Restart', exact: true }).click()
+  await replay.getByRole('button', { name: 'Play', exact: true }).click()
+  await expect(replay).toContainText('Replay complete', { timeout: 12_000 })
   const question = page
     .locator('article')
     .filter({ has: page.locator('details.extraction-workflow-trace') })
   await expect(question).toBeVisible()
   const trace = question.locator('details.extraction-workflow-trace')
+  await trace.locator(':scope > summary').click()
   await expect(trace).toHaveAttribute('open', '')
   const stages = trace.locator('details.workflow-trace-step')
-  await expect(stages).toHaveCount(4)
+  await expect(stages).toHaveCount(6)
   const questionCheck = stages.nth(0).locator('.trace-step-number svg')
   const replyCheck = page
     .locator('.reply-workflow-trace .trace-step-number svg')
@@ -259,9 +260,11 @@ test('shows the recorded Telegram question and its reply with separate compact t
   await expect(replyCheck).toHaveCSS('height', '13px')
   await stages.nth(0).locator('summary').first().click()
   await expect(stages.nth(0)).toContainText(
-    'I built Noted: voice notes transcribed locally on a Mac.',
+    'I built Orbit, a local-first issue tracker for small hardware teams.',
   )
-  await expect(stages.nth(0)).toContainText('Does Noted understand Mandarin?')
+  await expect(stages.nth(0)).toContainText(
+    'Maya, which desktop operating systems does the tracker build support?',
+  )
   await stages.nth(0).locator('summary').first().click()
   await stages.nth(2).locator('summary').first().click()
   const created = stages.nth(2).locator('details.post-update')
@@ -270,8 +273,19 @@ test('shows the recorded Telegram question and its reply with separate compact t
   await expect(created.locator('del')).toHaveCount(0)
   await stages.nth(2).locator('summary').first().click()
   await stages.nth(3).locator('summary').click()
-  await expect(stages.nth(3)).toContainText('Does Noted understand Mandarin?')
-  await expect(trace).toContainText('ai-builders · gemini-3.8-flash-medium')
+  await expect(stages.nth(3)).toContainText(
+    'Maya, which desktop operating systems does the tracker build support?',
+  )
+  await stages.nth(3).locator('summary').click()
+  await stages.nth(4).locator(':scope > summary').click()
+  await expect(stages.nth(4)).toContainText('macOS 14 and Windows 11')
+  await expect(stages.nth(4)).toContainText(
+    '1 post edited · 1 question answered',
+  )
+  await stages.nth(4).locator(':scope > summary').click()
+  await stages.nth(5).locator(':scope > summary').click()
+  await expect(stages.nth(5)).toContainText('Question answered')
+  await expect(trace).toContainText('makers-north · gemini-3.8-flash-medium')
   await trace.screenshot({
     path: isMobile
       ? '/private/tmp/amber-question-trace-mobile.png'
@@ -279,7 +293,7 @@ test('shows the recorded Telegram question and its reply with separate compact t
   })
   const reply = page.getByRole('article', { name: 'Amber reply' })
   await expect(reply.locator(':scope > .chat-bubble')).toContainText(
-    'supports Mandarin',
+    'assignee changes',
   )
   await reply
     .getByRole('button', { name: '1 post edited', exact: true })
@@ -287,10 +301,12 @@ test('shows the recorded Telegram question and its reply with separate compact t
   await expect(
     reply.getByRole('region', { name: 'Applied post changes' }),
   ).toBeVisible()
-  await expect(page.locator('[id*="-stage-"]')).toHaveCount(6)
-  await controls(page)
-    .getByRole('button', { name: 'Restart', exact: true })
-    .click()
-  await expect(page.locator('details.extraction-workflow-trace')).toHaveCount(0)
-  await expect(controls(page)).toContainText('Plan queries')
+  const stageIds = await page
+    .locator('[id*="-stage-"]')
+    .evaluateAll((nodes) => nodes.map(({ id }) => id))
+  expect(stageIds).toHaveLength(12)
+  expect(new Set(stageIds).size).toBe(stageIds.length)
+  await replay.getByRole('button', { name: 'Restart', exact: true }).click()
+  await expect(page.locator('details.extraction-workflow-trace')).toHaveCount(1)
+  await expect(replay).toContainText('Plan queries')
 })

@@ -1,161 +1,107 @@
-// Generated from poc/messaging/result.json by poc/project-historical-preview.ts.
+// Generated from poc/amber-lifecycle-runs/20260909T172000Z-gemini-complete.json by poc/project-lifecycle-preview.ts.
 export default {
-  "version": 4,
+  "version": 5,
   "mode": "recorded-real-model",
   "model": "gemini-3.8-flash-medium",
-  "disclosure": "Historical Gemini messaging output replayed over invented in-memory records. Simulation timing is browser-only; no model runs in the preview.",
+  "disclosure": "Synthetic Telegram and private messages processed by the real Gemini workflows. Replay timing is browser-only.",
   "source": {
-    "file": "poc/messaging/result.json",
-    "turnId": "live-turn-2",
+    "file": "poc/amber-lifecycle-runs/20260909T172000Z-gemini-complete.json",
+    "runId": "20260909T172000Z-gemini-complete",
     "provenance": {
       "model": "gemini-3.8-flash-medium",
       "provider": "Google subscription through Antigravity CLI",
-      "storage": "invented in-memory fixture; not deployed durability",
-      "scripted": false
+      "scripted": false,
+      "storage": "shared synchronized in-memory PoC; no process-restart or database durability claim",
+      "recordedAt": "2026-09-09T15:18:29.095Z",
+      "runId": "20260909T172000Z-gemini-complete",
+      "runFile": "poc/amber-lifecycle-runs/20260909T172000Z-gemini-complete.json",
+      "resumedFrom": "poc/amber-lifecycle-runs/20260909T170500Z-gemini-stress-split.json",
+      "reusedStages": [
+        "telegramCreate",
+        "telegramEvidence",
+        "privateReply",
+        "telegramStress",
+        "heldOutSelection"
+      ]
     },
-    "sourceProvenance": {
-      "workflow.ts": "sha256:d191f7a2d492a31871a788076916d4b0b21402d35205db90d1c2d167df39d359",
-      "agents.ts": "sha256:daec6932bfce4adbfb863aad85a0be1556555bca32d0700f61ad9c4c4a8c31cb",
-      "model.ts": "sha256:0676e9d7ab6e448131902a2c95425c8b409e38a36be8742062fccfb600f178d4",
-      "schemas.ts": "sha256:726c83fd458fa7dbb7377421fc16b02f1ba4c57d1201315cf9cf69126334b86b",
-      "testing/store.ts": "sha256:7856d72c8b8cf668dd0d3d010bdf00fe5072854fda17580d5010443c1475da24",
-      "prompts/query-planner.mdx": "sha256:201b78adbe625d9298f3ad1799ed9d63b23c95f480420f78eec9d0bf3960e419",
-      "prompts/responder.mdx": "sha256:53055be68e9acd0ad15dab2f12a7a172588b9d62acbeae39726d5682708eade7",
-      "prompts/memory.mdx": "sha256:3592390702f1f0b30fc344393a5b087735e6c7149eba7f92d519676c290b8c95",
-      "prompts/addressing.mdx": "sha256:4970f43ddd11df5e800b12154ee1217e885b40a2af94bb9524af5f4804858bdb"
+    "sourceHashes": {
+      "../telegram/schemas.ts": "sha256:0ba51cd5fb10921353ce49f0ffc52fb47b2522546bfc9944fd41ba7c77bd36cf",
+      "../telegram/guards.ts": "sha256:896682bff9c53b45af7014fa9fed4d06ee92702173efc3e71b4ba2b10ca131f8",
+      "../telegram/agents.ts": "sha256:81dab404f72c8b47ff74ab7b3270d1ba2fb13c52166da7648a62af3d3f0d6824",
+      "../telegram/testing/store.ts": "sha256:5ef4fdb7071e2f5270f07bf2009aa358b85ff7c5f5a17c14d5cb1e00bde46b24",
+      "../telegram/testing/long-conversations.ts": "sha256:e87fbb1f0fc79c9e1aaacca105269a1a9ce2884866c9f22b29b5b87ed9db26fb",
+      "../telegram/prompts/selection.mdx": "sha256:db6846f682dfdb7c56cf915fa15301440fc925c53b1e2dfbb902e381ce53c85d",
+      "../telegram/prompts/post.mdx": "sha256:7091ecd44eec7f630c7291a78c8b30a027374d88c2066acbdb49fd18abad4822",
+      "./schemas.ts": "sha256:726c83fd458fa7dbb7377421fc16b02f1ba4c57d1201315cf9cf69126334b86b",
+      "./guards.ts": "sha256:0ceb15c1d02c18d036bb798e5f80c7a91e130229b42e0c0a542a96acb54b2200",
+      "./agents.ts": "sha256:daec6932bfce4adbfb863aad85a0be1556555bca32d0700f61ad9c4c4a8c31cb",
+      "./testing/store.ts": "sha256:e15fccef54bb541105958284f6db20671b23c09e7e074be851d844efc37b0233",
+      "./prompts/query-planner.mdx": "sha256:201b78adbe625d9298f3ad1799ed9d63b23c95f480420f78eec9d0bf3960e419",
+      "./prompts/responder.mdx": "sha256:4c823c94420995907bd511ef60b8a301d91fd91acf58bd8da5146f60bd1d190d",
+      "./prompts/memory.mdx": "sha256:3592390702f1f0b30fc344393a5b087735e6c7149eba7f92d519676c290b8c95",
+      "./prompts/addressing.mdx": "sha256:4970f43ddd11df5e800b12154ee1217e885b40a2af94bb9524af5f4804858bdb"
     }
   },
   "input": {
-    "turnId": "live-turn-2",
-    "userId": "user-amber",
-    "text": "Update Atlas to say it works offline and Noted to emphasize on-device transcription. PDF export is planned for the next release; defer the other export formats. Aurora should stay invite-only, as I said before. I no longer want detailed posts; keep them concise."
+    "turnId": "maya-private-final",
+    "userId": "maya",
+    "text": "For Orbit 0.4, patch export also records assignee changes. Attachments remain excluded and direct push is unavailable. Replace my detailed-writing preference: keep posts concise and factual."
   },
   "assistant": {
-    "id": "live-turn-2:assistant",
-    "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts.",
+    "id": "maya-private-final:assistant",
+    "userId": "maya",
+    "conversationId": "conversation:maya",
+    "role": "assistant",
+    "text": "I have updated the Orbit post to reflect that version 0.4 patch exports record assignee changes, while attachments remain excluded and direct push is unavailable. I also acknowledge your preference to keep posts concise and factual.",
+    "sequence": 13,
+    "turnId": "maya-private-final",
     "intent": "informational",
-    "linkedPostId": "atlas"
+    "linkedPostId": "north-1:0",
+    "pendingCandidateId": null,
+    "addressed": true
   },
   "posts": {
     "before": [
       {
-        "id": "atlas",
-        "authorId": "user-amber",
-        "version": 4,
-        "title": "Atlas",
-        "summary": "A visual workspace for research.",
-        "detail": "Atlas connects notes and sources.",
-        "published": true
-      },
-      {
-        "id": "noted",
-        "authorId": "user-amber",
-        "version": 3,
-        "title": "Noted",
-        "summary": "Offline voice transcription for macOS.",
-        "detail": "Noted transcribes English and Mandarin voice notes on device.",
-        "published": true
-      },
-      {
-        "id": "aurora",
-        "authorId": "user-amber",
-        "version": 1,
-        "title": "Aurora",
-        "summary": "A collaborative planning tool in public beta.",
-        "detail": "Aurora helps teams plan launches. Public beta access is available.",
+        "id": "north-1:0",
+        "authorId": "maya",
+        "version": 2,
+        "title": "Orbit",
+        "summary": "Orbit is a local-first issue tracker for small hardware teams that imports GitHub issues from explicitly connected repositories and supports offline edits. Version 0.4 adds patch export for titles and labels (excluding attachments), while direct push remains unavailable. Desktop builds support macOS 14 and Windows 11 (Linux untested). Beta access is invite-only.",
+        "detail": "Orbit is a local-first issue tracker designed for small hardware teams.\n\n### Key Features\n- **Offline Editing & GitHub Import**: Imports GitHub issues from explicitly connected repositories and keeps edits offline. It never auto-syncs every repository.\n- **Patch Export**: Version 0.4 adds patch export for edited issues. Exported patch files include issue titles and labels, but exclude attachments. Direct push remains unavailable.\n- **Platform Support**: Desktop builds support macOS 14 and Windows 11; Linux is untested.\n\n### Access\n- The public beta is currently invite-only.",
         "published": true
       }
     ],
     "after": [
       {
-        "id": "atlas",
-        "authorId": "user-amber",
-        "version": 5,
-        "title": "Atlas",
-        "summary": "An offline visual workspace for research.",
-        "detail": "Atlas connects notes and sources and works offline.",
-        "published": true
-      },
-      {
-        "id": "noted",
-        "authorId": "user-amber",
-        "version": 4,
-        "title": "Noted",
-        "summary": "On-device voice transcription for macOS.",
-        "detail": "Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.",
-        "published": true
-      },
-      {
-        "id": "aurora",
-        "authorId": "user-amber",
-        "version": 2,
-        "title": "Aurora",
-        "summary": "An invite-only collaborative planning tool.",
-        "detail": "Aurora helps teams plan launches. Access is invite-only.",
+        "id": "north-1:0",
+        "authorId": "maya",
+        "version": 3,
+        "title": "Orbit",
+        "summary": "Orbit is a local-first issue tracker for small hardware teams that imports GitHub issues from explicitly connected repositories and supports offline edits. Version 0.4 adds patch export for titles, labels, and assignee changes (excluding attachments), while direct push remains unavailable. Desktop builds support macOS 14 and Windows 11 (Linux untested). Beta access is invite-only.",
+        "detail": "Orbit is a local-first issue tracker designed for small hardware teams.\n\n### Key Features\n- **Offline Editing & GitHub Import**: Imports GitHub issues from explicitly connected repositories and keeps edits offline. It never auto-syncs every repository.\n- **Patch Export**: Version 0.4 adds patch export for edited issues. Exported patch files include issue titles, labels, and assignee changes, but exclude attachments. Direct push remains unavailable.\n- **Platform Support**: Desktop builds support macOS 14 and Windows 11; Linux is untested.\n\n### Access\n- The public beta is currently invite-only.",
         "published": true
       }
     ],
     "diffs": [
       {
-        "postId": "atlas",
+        "postId": "north-1:0",
         "before": {
-          "id": "atlas",
-          "authorId": "user-amber",
-          "version": 4,
-          "title": "Atlas",
-          "summary": "A visual workspace for research.",
-          "detail": "Atlas connects notes and sources.",
-          "published": true
-        },
-        "after": {
-          "id": "atlas",
-          "authorId": "user-amber",
-          "version": 5,
-          "title": "Atlas",
-          "summary": "An offline visual workspace for research.",
-          "detail": "Atlas connects notes and sources and works offline.",
-          "published": true
-        }
-      },
-      {
-        "postId": "noted",
-        "before": {
-          "id": "noted",
-          "authorId": "user-amber",
-          "version": 3,
-          "title": "Noted",
-          "summary": "Offline voice transcription for macOS.",
-          "detail": "Noted transcribes English and Mandarin voice notes on device.",
-          "published": true
-        },
-        "after": {
-          "id": "noted",
-          "authorId": "user-amber",
-          "version": 4,
-          "title": "Noted",
-          "summary": "On-device voice transcription for macOS.",
-          "detail": "Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.",
-          "published": true
-        }
-      },
-      {
-        "postId": "aurora",
-        "before": {
-          "id": "aurora",
-          "authorId": "user-amber",
-          "version": 1,
-          "title": "Aurora",
-          "summary": "A collaborative planning tool in public beta.",
-          "detail": "Aurora helps teams plan launches. Public beta access is available.",
-          "published": true
-        },
-        "after": {
-          "id": "aurora",
-          "authorId": "user-amber",
+          "id": "north-1:0",
+          "authorId": "maya",
           "version": 2,
-          "title": "Aurora",
-          "summary": "An invite-only collaborative planning tool.",
-          "detail": "Aurora helps teams plan launches. Access is invite-only.",
+          "title": "Orbit",
+          "summary": "Orbit is a local-first issue tracker for small hardware teams that imports GitHub issues from explicitly connected repositories and supports offline edits. Version 0.4 adds patch export for titles and labels (excluding attachments), while direct push remains unavailable. Desktop builds support macOS 14 and Windows 11 (Linux untested). Beta access is invite-only.",
+          "detail": "Orbit is a local-first issue tracker designed for small hardware teams.\n\n### Key Features\n- **Offline Editing & GitHub Import**: Imports GitHub issues from explicitly connected repositories and keeps edits offline. It never auto-syncs every repository.\n- **Patch Export**: Version 0.4 adds patch export for edited issues. Exported patch files include issue titles and labels, but exclude attachments. Direct push remains unavailable.\n- **Platform Support**: Desktop builds support macOS 14 and Windows 11; Linux is untested.\n\n### Access\n- The public beta is currently invite-only.",
+          "published": true
+        },
+        "after": {
+          "id": "north-1:0",
+          "authorId": "maya",
+          "version": 3,
+          "title": "Orbit",
+          "summary": "Orbit is a local-first issue tracker for small hardware teams that imports GitHub issues from explicitly connected repositories and supports offline edits. Version 0.4 adds patch export for titles, labels, and assignee changes (excluding attachments), while direct push remains unavailable. Desktop builds support macOS 14 and Windows 11 (Linux untested). Beta access is invite-only.",
+          "detail": "Orbit is a local-first issue tracker designed for small hardware teams.\n\n### Key Features\n- **Offline Editing & GitHub Import**: Imports GitHub issues from explicitly connected repositories and keeps edits offline. It never auto-syncs every repository.\n- **Patch Export**: Version 0.4 adds patch export for edited issues. Exported patch files include issue titles, labels, and assignee changes, but exclude attachments. Direct push remains unavailable.\n- **Platform Support**: Desktop builds support macOS 14 and Windows 11; Linux is untested.\n\n### Access\n- The public beta is currently invite-only.",
           "published": true
         }
       }
@@ -164,36 +110,44 @@ export default {
   "memory": {
     "before": [
       {
+        "id": "scope",
+        "userId": "maya",
+        "text": "Never imply imports sync automatically.",
+        "version": 1
+      },
+      {
         "id": "style",
-        "userId": "user-amber",
-        "text": "Prefer detailed factual posts.",
-        "version": 2
+        "userId": "maya",
+        "text": "Prefer detailed explanations.",
+        "version": 1
       }
     ],
     "after": [
       {
+        "id": "scope",
+        "userId": "maya",
+        "text": "Never imply imports sync automatically.",
+        "version": 1
+      },
+      {
         "id": "style",
-        "userId": "user-amber",
-        "text": "Prefer concise posts.",
-        "version": 3
+        "userId": "maya",
+        "text": "Keep posts concise and factual.",
+        "version": 2
       }
     ]
   },
   "requests": {
     "before": [
       {
-        "id": "live-request-exports",
-        "text": "Which three export formats will Noted support?",
-        "linkedPostId": "noted"
+        "id": "north-1:0@0:question",
+        "text": "Which desktop operating systems does the tracker build support?",
+        "intent": "question",
+        "linkedPostId": "north-1:0",
+        "role": "assistant"
       }
     ],
-    "after": [
-      {
-        "id": "live-request-exports",
-        "text": "Which three export formats will Noted support?",
-        "linkedPostId": "noted"
-      }
-    ]
+    "after": []
   },
   "background": [
     {
@@ -209,34 +163,14 @@ export default {
   ],
   "trace": {
     "planner": {
-      "pendingRequests": [
-        {
-          "id": "live-request-exports",
-          "text": "Which three export formats will Noted support?",
-          "linkedPostId": "noted"
-        }
-      ],
+      "pendingRequests": [],
       "queries": [
         {
           "limit": 5,
           "resource": "posts",
           "terms": [
-            "Atlas"
-          ]
-        },
-        {
-          "limit": 5,
-          "resource": "posts",
-          "terms": [
-            "Aurora"
-          ]
-        },
-        {
-          "limit": 5,
-          "resource": "user_messages",
-          "terms": [
-            "Aurora",
-            "invite-only"
+            "Orbit",
+            "0.4"
           ]
         }
       ]
@@ -244,125 +178,56 @@ export default {
     "context": {
       "posts": [
         {
-          "id": "noted",
-          "version": 3,
-          "title": "Noted",
-          "summary": "Offline voice transcription for macOS.",
-          "detail": "Noted transcribes English and Mandarin voice notes on device."
-        },
-        {
-          "id": "atlas",
-          "version": 4,
-          "title": "Atlas",
-          "summary": "A visual workspace for research.",
-          "detail": "Atlas connects notes and sources."
-        },
-        {
-          "id": "aurora",
-          "version": 1,
-          "title": "Aurora",
-          "summary": "A collaborative planning tool in public beta.",
-          "detail": "Aurora helps teams plan launches. Public beta access is available."
+          "id": "north-1:0",
+          "version": 2,
+          "title": "Orbit",
+          "summary": "Orbit is a local-first issue tracker for small hardware teams that imports GitHub issues from explicitly connected repositories and supports offline edits. Version 0.4 adds patch export for titles and labels (excluding attachments), while direct push remains unavailable. Desktop builds support macOS 14 and Windows 11 (Linux untested). Beta access is invite-only.",
+          "detail": "Orbit is a local-first issue tracker designed for small hardware teams.\n\n### Key Features\n- **Offline Editing & GitHub Import**: Imports GitHub issues from explicitly connected repositories and keeps edits offline. It never auto-syncs every repository.\n- **Patch Export**: Version 0.4 adds patch export for edited issues. Exported patch files include issue titles and labels, but exclude attachments. Direct push remains unavailable.\n- **Platform Support**: Desktop builds support macOS 14 and Windows 11; Linux is untested.\n\n### Access\n- The public beta is currently invite-only."
         }
       ],
-      "userMessages": [
-        {
-          "id": "history-1:user",
-          "text": "Aurora should remain invite-only.",
-          "linkedPostId": null
-        }
-      ],
+      "userMessages": [],
       "assistantMessages": [],
-      "linkedRequestPostIds": [
-        "noted"
-      ],
+      "linkedRequestPostIds": [],
       "memories": [
         {
           "id": "style",
-          "text": "Prefer detailed factual posts.",
-          "version": 2
+          "text": "Prefer detailed explanations.",
+          "version": 1
+        },
+        {
+          "id": "scope",
+          "text": "Never imply imports sync automatically.",
+          "version": 1
         }
       ],
-      "unaddressed": [
-        {
-          "id": "live-request-exports",
-          "text": "Which three export formats will Noted support?",
-          "linkedPostId": "noted"
-        }
-      ]
+      "unaddressed": []
     },
     "response": {
       "classification": "answer",
       "intent": "informational",
-      "text": "Atlas has been updated to state that it works offline, Noted has been updated to emphasize on-device transcription with PDF export planned for the next release while deferring other formats, and Aurora has been updated to invite-only status. Understood regarding your preference for concise posts.",
+      "text": "I have updated the Orbit post to reflect that version 0.4 patch exports record assignee changes, while attachments remain excluded and direct push is unavailable. I also acknowledge your preference to keep posts concise and factual.",
       "pendingOutcome": {
         "kind": "none"
       },
       "postChanges": [
         {
-          "detail": "Atlas connects notes and sources and works offline.",
+          "detail": "Orbit is a local-first issue tracker designed for small hardware teams.\n\n### Key Features\n- **Offline Editing & GitHub Import**: Imports GitHub issues from explicitly connected repositories and keeps edits offline. It never auto-syncs every repository.\n- **Patch Export**: Version 0.4 adds patch export for edited issues. Exported patch files include issue titles, labels, and assignee changes, but exclude attachments. Direct push remains unavailable.\n- **Platform Support**: Desktop builds support macOS 14 and Windows 11; Linux is untested.\n\n### Access\n- The public beta is currently invite-only.",
           "evidence": [
             {
-              "id": "atlas",
+              "id": "north-1:0",
               "kind": "post",
-              "version": 4
+              "version": 2
             },
             {
-              "id": "live-turn-2:user",
+              "id": "maya-private-final:user",
               "kind": "user_message"
             }
           ],
-          "expectedVersion": 4,
-          "postId": "atlas",
+          "expectedVersion": 2,
+          "postId": "north-1:0",
           "published": true,
-          "summary": "An offline visual workspace for research.",
-          "title": "Atlas"
-        },
-        {
-          "detail": "Noted transcribes English and Mandarin voice notes on device. PDF export is planned for the next release.",
-          "evidence": [
-            {
-              "id": "noted",
-              "kind": "post",
-              "version": 3
-            },
-            {
-              "id": "live-turn-2:user",
-              "kind": "user_message"
-            },
-            {
-              "id": "live-request-exports",
-              "kind": "request"
-            }
-          ],
-          "expectedVersion": 3,
-          "postId": "noted",
-          "published": true,
-          "summary": "On-device voice transcription for macOS.",
-          "title": "Noted"
-        },
-        {
-          "detail": "Aurora helps teams plan launches. Access is invite-only.",
-          "evidence": [
-            {
-              "id": "aurora",
-              "kind": "post",
-              "version": 1
-            },
-            {
-              "id": "live-turn-2:user",
-              "kind": "user_message"
-            },
-            {
-              "id": "history-1:user",
-              "kind": "user_message"
-            }
-          ],
-          "expectedVersion": 1,
-          "postId": "aurora",
-          "published": true,
-          "summary": "An invite-only collaborative planning tool.",
-          "title": "Aurora"
+          "summary": "Orbit is a local-first issue tracker for small hardware teams that imports GitHub issues from explicitly connected repositories and supports offline edits. Version 0.4 adds patch export for titles, labels, and assignee changes (excluding attachments), while direct push remains unavailable. Desktop builds support macOS 14 and Windows 11 (Linux untested). Beta access is invite-only.",
+          "title": "Orbit"
         }
       ]
     },
@@ -370,34 +235,27 @@ export default {
       "existing": [
         {
           "id": "style",
-          "text": "Prefer detailed factual posts.",
-          "version": 2
+          "text": "Prefer detailed explanations.",
+          "version": 1
+        },
+        {
+          "id": "scope",
+          "text": "Never imply imports sync automatically.",
+          "version": 1
         }
       ],
       "operations": [
         {
-          "expectedVersion": 2,
+          "expectedVersion": 1,
           "id": "style",
           "kind": "update",
-          "text": "Prefer concise posts."
+          "text": "Keep posts concise and factual."
         }
       ]
     },
     "addressing": {
-      "requests": [
-        {
-          "id": "live-request-exports",
-          "text": "Which three export formats will Noted support?",
-          "linkedPostId": "noted"
-        }
-      ],
+      "requests": [],
       "resolutions": []
-    },
-    "recording": {
-      "model": "gemini-3.8-flash-medium",
-      "source": "poc/messaging/result.json",
-      "turnId": "live-turn-2",
-      "scripted": false
     }
   }
 } as const

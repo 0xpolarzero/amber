@@ -73,24 +73,11 @@ export function AgentGuide() {
           </span>
           <strong>{current}</strong>
           <p>
-            {state.scenarioId === 'question-example'
-              ? 'Recorded Telegram question and reply.'
-              : 'Historical turn live-turn-2.'}{' '}
-            No model runs in this preview.
+            Recorded Telegram-to-private lifecycle. No model runs in this
+            preview.
           </p>
         </div>
         <div className="guide-actions">
-          <button
-            type="button"
-            aria-pressed={state.scenarioId === 'question-example'}
-            onClick={() => {
-              openDialog(null)
-              dispatch({ type: 'loadScenario', id: 'question-example' })
-              void navigate({ to: '/agent', search: {}, resetScroll: false })
-            }}
-          >
-            Question
-          </button>
           <button type="button" onClick={() => start(false)}>
             Restart
           </button>
