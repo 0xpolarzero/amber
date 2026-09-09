@@ -76,27 +76,39 @@ it('records and semantically checks one coherent lifecycle from long Telegram ba
         stages: Record<string, unknown>
       })
     : undefined
-  const reusableStageNames = ['telegramCreate', 'telegramEvidence', 'privateReply'] as const
+  const reusableStageNames = [
+    'telegramCreate',
+    'telegramEvidence',
+    'privateReply',
+    'telegramStress',
+    'heldOutSelection',
+  ] as const
   const reusableCallIds = new Set(
     reusableStageNames.flatMap((name) => {
-      const stage = resumed?.stages[name] as { calls?: string[] } | undefined
-      return stage?.calls ?? []
+      const stage = resumed?.stages[name] as
+        | { calls?: string[] }
+        | { calls?: string[] }[]
+        | undefined
+      return Array.isArray(stage) ? stage.flatMap(({ calls }) => calls ?? []) : (stage?.calls ?? [])
     }),
   )
   const resumedStages = Object.fromEntries(
     reusableStageNames.flatMap((name) => {
       const stage = resumed?.stages[name]
-      return stage
-        ? [
-            [
-              name,
-              {
-                ...(structuredClone(stage) as Record<string, unknown>),
-                reusedFrom: `poc/amber-lifecycle-runs/${resumeRunId}.json#stages.${name}`,
-              },
-            ],
-          ]
-        : []
+      if (!stage) return []
+      const reusedFrom = `poc/amber-lifecycle-runs/${resumeRunId}.json#stages.${name}`
+      const cloned = structuredClone(stage)
+      return [
+        [
+          name,
+          Array.isArray(cloned)
+            ? cloned.map((item, index) => ({
+                ...(item as Record<string, unknown>),
+                reusedFrom: `${reusedFrom}[${index}]`,
+              }))
+            : { ...(cloned as Record<string, unknown>), reusedFrom },
+        ],
+      ]
     }),
   )
   const artifact: {
@@ -475,44 +487,64 @@ it('records and semantically checks one coherent lifecycle from long Telegram ba
       after: afterPrivate,
     }
   }
-  const stressStages: Record<string, unknown>[] = []
-  for (const stressBatch of stressBatches) {
-    const store = telegramStore(stressBatch, [])
-    const callsStart = artifact.attempts.length
-    const tasks = createModelTasks({
-      ...store.ports,
-      model: capture('telegram') as TelegramPorts['model'],
-    })
-    const generated = await Effect.runPromise(
-      tasks
-        .generate(
-          TS.ModelSelection,
-          'selection',
-          selectionPrompt,
-          stressBatch,
-          { batchId: stressBatch.batchId, groupId: stressBatch.groupId },
-          ['searchPosts'],
-        )
-        .pipe(Effect.retry({ times: 1 }), Effect.timeout('8 minutes')),
-    )
-    const selection: typeof TS.Selection.Type = {
-      ...generated.value,
-      lookedUpProjects: generated.evidence.projects,
+  type StressStage = {
+    batchId: string
+    input: typeof TS.BatchContext.Type
+    output: typeof TS.Selection.Type
+    freshMessageCount: number
+  } & Record<string, unknown>
+  const recordedStress = artifact.stages.telegramStress as StressStage[] | undefined
+  const stressStages: StressStage[] = []
+  if (recordedStress) {
+    expect(recordedStress).toHaveLength(stressBatches.length)
+    for (const [index, stage] of recordedStress.entries()) {
+      const stressBatch = stressBatches[index]
+      expect(stage.batchId).toBe(stressBatch.batchId)
+      expect(stage.input).toEqual(stressBatch)
+      expect(stage.freshMessageCount).toBe(stressBatch.newMessageIds.length)
+      validateSelection(stressBatch, stage.output)
+      expect(stage.output.candidates.every(({ target }) => target.kind === 'new')).toBe(true)
+      stressStages.push(stage)
     }
-    validateSelection(stressBatch, selection)
-    expect(selection.candidates.every(({ target }) => target.kind === 'new')).toBe(true)
-    const stage = {
-      batchId: stressBatch.batchId,
-      input: stressBatch,
-      inputHash: `sha256:${createHash('sha256').update(JSON.stringify(stressBatch)).digest('hex')}`,
-      sourceHashes: structuredClone(sourceHashes),
-      calls: artifact.attempts.slice(callsStart).map(({ id }) => id),
-      output: selection,
-      freshMessageCount: stressBatch.newMessageIds.length,
+  } else {
+    for (const stressBatch of stressBatches) {
+      const store = telegramStore(stressBatch, [])
+      const callsStart = artifact.attempts.length
+      const tasks = createModelTasks({
+        ...store.ports,
+        model: capture('telegram') as TelegramPorts['model'],
+      })
+      const generated = await Effect.runPromise(
+        tasks
+          .generate(
+            TS.ModelSelection,
+            'selection',
+            selectionPrompt,
+            stressBatch,
+            { batchId: stressBatch.batchId, groupId: stressBatch.groupId },
+            ['searchPosts'],
+          )
+          .pipe(Effect.retry({ times: 1 }), Effect.timeout('8 minutes')),
+      )
+      const selection: typeof TS.Selection.Type = {
+        ...generated.value,
+        lookedUpProjects: generated.evidence.projects,
+      }
+      validateSelection(stressBatch, selection)
+      expect(selection.candidates.every(({ target }) => target.kind === 'new')).toBe(true)
+      const stage: StressStage = {
+        batchId: stressBatch.batchId,
+        input: stressBatch,
+        inputHash: `sha256:${createHash('sha256').update(JSON.stringify(stressBatch)).digest('hex')}`,
+        sourceHashes: structuredClone(sourceHashes),
+        calls: artifact.attempts.slice(callsStart).map(({ id }) => id),
+        output: selection,
+        freshMessageCount: stressBatch.newMessageIds.length,
+      }
+      stressStages.push(stage)
+      artifact.stages.telegramStress = stressStages
+      await save()
     }
-    stressStages.push(stage)
-    artifact.stages.telegramStress = stressStages
-    await save()
   }
 
   const heldOutStore = telegramStore(heldOutBatch, firstResult.posts, {
@@ -520,43 +552,57 @@ it('records and semantically checks one coherent lifecycle from long Telegram ba
     ownerNames: { maya: 'Maya Chen', iris: 'Iris Park', zoe: 'Zoe Bell' },
   })
   const heldOutCallsStart = artifact.attempts.length
-  const heldOutTasks = createModelTasks({
-    ...heldOutStore.ports,
-    model: capture('telegram') as TelegramPorts['model'],
-  })
-  const heldOutGenerated = await Effect.runPromise(
-    heldOutTasks
-      .generate(
-        TS.ModelSelection,
-        'selection',
-        selectionPrompt,
-        heldOutBatch,
-        { batchId: heldOutBatch.batchId, groupId: heldOutBatch.groupId },
-        ['searchPosts'],
-      )
-      .pipe(Effect.retry({ times: 1 }), Effect.timeout('8 minutes')),
-  )
-  const heldOutSelection: typeof TS.Selection.Type = {
-    ...heldOutGenerated.value,
-    lookedUpProjects: heldOutGenerated.evidence.projects,
+  const recordedHeldOut = artifact.stages.heldOutSelection as
+    | { calls: string[]; output: typeof TS.Selection.Type; input: typeof TS.BatchContext.Type }
+    | undefined
+  let heldOutSelection: typeof TS.Selection.Type
+  let heldOutCallIds: readonly string[]
+  if (recordedHeldOut) {
+    expect(recordedHeldOut.input).toEqual(heldOutBatch)
+    heldOutSelection = recordedHeldOut.output
+    heldOutCallIds = recordedHeldOut.calls
+  } else {
+    const heldOutTasks = createModelTasks({
+      ...heldOutStore.ports,
+      model: capture('telegram') as TelegramPorts['model'],
+    })
+    const heldOutGenerated = await Effect.runPromise(
+      heldOutTasks
+        .generate(
+          TS.ModelSelection,
+          'selection',
+          selectionPrompt,
+          heldOutBatch,
+          { batchId: heldOutBatch.batchId, groupId: heldOutBatch.groupId },
+          ['searchPosts'],
+        )
+        .pipe(Effect.retry({ times: 1 }), Effect.timeout('8 minutes')),
+    )
+    heldOutSelection = {
+      ...heldOutGenerated.value,
+      lookedUpProjects: heldOutGenerated.evidence.projects,
+    }
+    heldOutCallIds = artifact.attempts.slice(heldOutCallsStart).map(({ id }) => id)
   }
   validateSelection(heldOutBatch, heldOutSelection)
   expect(heldOutSelection.candidates.every(({ target }) => target.kind === 'existing')).toBe(true)
+  const heldOutCallIdSet = new Set(heldOutCallIds)
   const publicSearchObservations = artifact.attempts
-    .slice(heldOutCallsStart)
+    .filter(({ id }) => heldOutCallIdSet.has(id))
     .flatMap(({ observations }) => observations)
     .filter(
       (item): item is { kind: string; name: string; output: unknown } =>
         typeof item === 'object' && item !== null && 'name' in item && item.name === 'searchPosts',
     )
   expect(JSON.stringify(publicSearchObservations)).not.toContain('"detail"')
-  artifact.stages.heldOutSelection = {
-    input: heldOutBatch,
-    inputHash: `sha256:${createHash('sha256').update(JSON.stringify(heldOutBatch)).digest('hex')}`,
-    sourceHashes: structuredClone(sourceHashes),
-    calls: artifact.attempts.slice(heldOutCallsStart).map(({ id }) => id),
-    output: heldOutSelection,
-  }
+  if (!recordedHeldOut)
+    artifact.stages.heldOutSelection = {
+      input: heldOutBatch,
+      inputHash: `sha256:${createHash('sha256').update(JSON.stringify(heldOutBatch)).digest('hex')}`,
+      sourceHashes: structuredClone(sourceHashes),
+      calls: heldOutCallIds,
+      output: heldOutSelection,
+    }
   const published = afterPrivate.turns[privateInput.turnId]?.published
   const privatePlannerInput = artifact.attempts.find(
     ({ task, workflow }) => task === 'query-planner' && workflow === 'private',
@@ -604,7 +650,14 @@ it('records and semantically checks one coherent lifecycle from long Telegram ba
       { turnId: 'maya-history-5' },
     ],
   })
-  expect(afterPrivate.posts.every(({ authorId }) => authorId === 'maya')).toBe(true)
+  expect(
+    privateReceipt.diffs.every(
+      ({ before, after }) => before.authorId === 'maya' && after.authorId === 'maya',
+    ),
+  ).toBe(true)
+  expect(afterPrivate.posts.filter(({ authorId }) => authorId !== 'maya')).toEqual(
+    beforePrivate.posts.filter(({ authorId }) => authorId !== 'maya'),
+  )
   expect(afterPrivate.memories.some(({ text }) => /concise/i.test(text))).toBe(true)
   expect(afterPrivate.memories.some(({ text }) => /detailed explanations/i.test(text))).toBe(false)
   expect(privateReceipt.diffs.length).toBeGreaterThan(0)
