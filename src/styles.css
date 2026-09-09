@@ -2911,7 +2911,67 @@ dialog::backdrop {
   margin-top: 6px;
 }
 .trace-post-diffs .post-update {
-  margin-top: 6px;
+  margin-top: 0;
+  border: 0;
+  border-radius: 0;
+}
+.trace-post-diffs .post-update + .post-update {
+  border-top: 1px solid var(--line);
+}
+.trace-post-diffs .post-update > summary {
+  min-height: 38px;
+  padding: 0 8px;
+  font-weight: 550;
+}
+.trace-evidence:has(> .trace-post-diffs) {
+  padding: 0 10px 6px;
+}
+.trace-post-diffs .field-diff h2 {
+  padding: 4px 8px;
+  border-top: 0;
+  font-size: 10px;
+  font-weight: 450;
+}
+.trace-post-diffs .field-diff + .field-diff {
+  margin-top: 5px;
+  border-top: 0;
+}
+.trace-post-diffs .diff-line,
+.trace-preference-diffs .diff-line {
+  grid-template-columns: 9px minmax(0, 1fr);
+  gap: 5px;
+  padding: 5px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.post-diff-link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  width: fit-content;
+  min-height: 32px;
+  margin-left: auto;
+  padding: 0 8px;
+  font-size: 10px;
+  color: var(--quiet);
+}
+.post-diff-link:hover {
+  color: var(--ink);
+}
+.post-diff-link svg {
+  width: 12px;
+  height: 12px;
+}
+.post-created-label {
+  color: var(--quiet);
+  font-size: 10px;
+  font-weight: 450;
+}
+@media (pointer: coarse) {
+  .trace-post-diffs .post-update > summary {
+    min-height: 44px;
+  }
 }
 .trace-preference-diffs .field-diff {
   margin: 0;

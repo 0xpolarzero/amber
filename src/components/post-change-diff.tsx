@@ -17,29 +17,13 @@ export function PostChangeDiff({
   return (
     <details className="post-update" open={expanded}>
       <summary>
-        <span>
-          {change.kind === 'created' ? 'Created' : 'Updated'} {change.project}
-        </span>
-        <span className="post-version">v{change.toVersion}</span>
+        <span>{change.project}</span>
+        {change.kind === 'created' ? (
+          <span className="post-created-label">New</span>
+        ) : null}
         <Icon name="chevronDown" />
       </summary>
       <section aria-label={`Changes to ${change.project}`}>
-        <div className="post-update-header">
-          <span>
-            {change.fields.length}{' '}
-            {change.fields.length === 1 ? 'field' : 'fields'}
-          </span>
-          {post ? (
-            <Link
-              to="/posts/$postId"
-              params={{ postId: post.id }}
-              aria-label={`View ${change.project} post`}
-            >
-              View post
-              <Icon name="chevron" />
-            </Link>
-          ) : null}
-        </div>
         {change.fields.map((field) => (
           <FieldDiff
             key={field.field}
@@ -47,6 +31,16 @@ export function PostChangeDiff({
             created={change.kind === 'created'}
           />
         ))}
+        {post ? (
+          <Link
+            className="post-diff-link"
+            to="/posts/$postId"
+            params={{ postId: post.id }}
+            aria-label={`View ${change.project} post`}
+          >
+            View post <Icon name="chevron" />
+          </Link>
+        ) : null}
       </section>
     </details>
   )

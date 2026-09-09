@@ -108,10 +108,15 @@ test('replays recorded output progressively and preserves publication boundaries
     .click()
   await expect(stages.nth(3)).toHaveAttribute('open', '')
   await expect(applied).toBeVisible()
-  await applied.locator('summary').filter({ hasText: 'Updated Atlas' }).click()
+  await applied.locator('summary').filter({ hasText: 'Atlas' }).click()
   await expect(applied.locator('del').first()).toBeVisible()
   await expect(applied.locator('ins').first()).toBeVisible()
-  await expect(applied.getByText(/^Updated /)).toHaveCount(3)
+  await page.screenshot({
+    path: isMobile
+      ? '/private/tmp/amber-compact-diff-mobile.png'
+      : '/private/tmp/amber-compact-diff-desktop.png',
+  })
+  await expect(applied.locator('summary')).toHaveCount(3)
   await expect(replay).toContainText('Update memory + Resolve requests')
   await expect(stages.nth(4)).toHaveAttribute('open', '')
   await expect(stages.nth(5)).toHaveAttribute('open', '')
