@@ -2737,7 +2737,7 @@ dialog::backdrop {
 }
 .workflow-trace > summary {
   display: grid;
-  grid-template-columns: 48px 1fr auto;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
   align-items: center;
   min-height: 36px;
   padding: 0 9px 0 0;
@@ -2791,9 +2791,6 @@ dialog::backdrop {
 }
 .reply-workflow-trace {
   margin-top: 8px;
-}
-.reply-workflow-trace > summary {
-  grid-template-columns: 48px minmax(0, 1fr) auto;
 }
 .reply-workflow-trace .agent-progress-current {
   color: var(--quiet);
@@ -3119,8 +3116,7 @@ dialog::backdrop {
   font-size: 11px;
   box-shadow: 0 3px 12px #0000000b;
 }
-.reply-workflow-trace
-  .workflow-trace-steps
+.workflow-trace-steps
   > li:is([data-status="failed"], [data-status="exhausted"])
   .trace-step-number {
   border-color: #d8aaa5;
@@ -3153,25 +3149,16 @@ dialog::backdrop {
 .background-retries button:hover {
   background: var(--soft);
 }
-.reply-workflow-trace
-  .workflow-trace-steps
-  > li[data-status="running"]
-  .trace-step-number {
+.workflow-trace-steps > li[data-status="running"] .trace-step-number {
   border-color: #c89b47;
   background: #fff9ed;
   color: #80580e;
 }
-.reply-workflow-trace
-  .workflow-trace-steps
-  > li[data-status="queued"]
-  .trace-step-copy,
-.reply-workflow-trace
-  .workflow-trace-steps
-  > li[data-status="queued"]
-  .trace-step-number {
+.workflow-trace-steps > li[data-status="queued"] .trace-step-copy,
+.workflow-trace-steps > li[data-status="queued"] .trace-step-number {
   opacity: 0.62;
 }
-.reply-workflow-trace .trace-step-number svg {
+.trace-step-number svg {
   width: 13px;
   height: 13px;
 }

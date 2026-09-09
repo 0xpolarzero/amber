@@ -249,6 +249,14 @@ test('shows the recorded Telegram question and its reply with separate compact t
   await expect(trace).toHaveAttribute('open', '')
   const stages = trace.locator('details.workflow-trace-step')
   await expect(stages).toHaveCount(4)
+  const questionCheck = stages.nth(0).locator('.trace-step-number svg')
+  const replyCheck = page
+    .locator('.reply-workflow-trace .trace-step-number svg')
+    .first()
+  await expect(questionCheck).toHaveCSS('width', '13px')
+  await expect(questionCheck).toHaveCSS('height', '13px')
+  await expect(replyCheck).toHaveCSS('width', '13px')
+  await expect(replyCheck).toHaveCSS('height', '13px')
   await stages.nth(0).locator('summary').first().click()
   await expect(stages.nth(0)).toContainText(
     'I built Noted: voice notes transcribed locally on a Mac.',
