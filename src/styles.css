@@ -3237,6 +3237,14 @@ dialog::backdrop {
   margin-top: 7px;
   border-top: 1px solid #e5e5e2;
 }
+.preview-controls:not(.agent-guide) .preview-more {
+  margin-top: 0;
+  border-top: 0;
+}
+.preview-controls:not(.agent-guide) .preview-more > summary {
+  min-height: auto;
+  padding-top: 0;
+}
 .agent-guide:has(.preview-more[open]) .guide-main,
 .agent-guide:has(.preview-more[open]) .guide-alternatives {
   display: none;

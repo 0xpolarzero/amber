@@ -7,7 +7,10 @@ import {
   ChangeLinks,
 } from '../components/agent-progress'
 import { Icon } from '../components/icon'
-import { QuestionWorkflowTrace } from '../components/question-workflow-trace'
+import {
+  QuestionWorkflowTrace,
+  TelegramUpdateWorkflowTrace,
+} from '../components/question-workflow-trace'
 import { ReplyComposer } from '../components/reply-composer'
 import { usePreview } from '../preview/provider'
 import {
@@ -195,6 +198,11 @@ function AgentChat({
                   source={message.source}
                   trace={message.trace}
                   open={state.scenarioId === 'question-example'}
+                />
+              ) : null}
+              {message.telegramUpdateTrace ? (
+                <TelegramUpdateWorkflowTrace
+                  trace={message.telegramUpdateTrace}
                 />
               ) : null}
               {message.replyRun ? (

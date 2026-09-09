@@ -56,6 +56,42 @@ export type TelegramSource = {
     ignored: readonly { messageId: string; reason: string }[]
   }
 }
+export type TelegramUpdateTrace = {
+  batchId: string
+  groupId: string
+  project: string
+  target: {
+    kind: 'existing'
+    targetId: string
+  }
+  recording: { model: string; disclosure: string }
+  selectedMessageIds: readonly string[]
+  messages: TelegramSource['messages']
+  before: {
+    id: string
+    version: number
+    title: string
+    summary: string
+    detail: string
+  }
+  after: {
+    id: string
+    version: number
+    title: string
+    summary: string
+    detail: string
+  }
+  notification: {
+    id: string
+    text: string
+    sourceIds: readonly string[]
+  }
+  resolution: {
+    outcome: 'answered' | 'ignored'
+    reason: string
+    sourceIds: readonly string[]
+  }
+}
 export type WorkflowTrace = {
   questionId: string
   authorId: string
@@ -90,35 +126,7 @@ export type WorkflowTrace = {
     }
   }
   question: string
-  telegramUpdate?: {
-    batchId: string
-    selectedMessageIds: readonly string[]
-    messages: TelegramSource['messages']
-    before: {
-      id: string
-      version: number
-      title: string
-      summary: string
-      detail: string
-    }
-    after: {
-      id: string
-      version: number
-      title: string
-      summary: string
-      detail: string
-    }
-    notification: {
-      id: string
-      text: string
-      sourceIds: readonly string[]
-    }
-    resolution: {
-      outcome: 'answered' | 'ignored'
-      reason: string
-      sourceIds: readonly string[]
-    }
-  }
+  telegramUpdate?: TelegramUpdateTrace
   related: readonly {
     authorId: string
     project: string
@@ -228,6 +236,7 @@ export type AgentMessage = {
   usedHistory?: readonly string[]
   source?: TelegramSource
   trace?: WorkflowTrace
+  telegramUpdateTrace?: TelegramUpdateTrace
   replyRun?: AgentRun
 }
 export const isUnaddressed = (message: AgentMessage) =>

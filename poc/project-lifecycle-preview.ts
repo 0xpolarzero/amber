@@ -117,6 +117,14 @@ const trace = {
   question: question.text,
   telegramUpdate: {
     batchId: update.input.batchId,
+    groupId: update.input.groupId,
+    project: updateCandidate.project,
+    target: updateCandidate.target,
+    recording: {
+      model: capture.provenance.model,
+      disclosure:
+        'Synthetic Telegram and private messages processed by the real Gemini workflows. Replay timing is browser-only.',
+    },
     selectedMessageIds: updateCandidate.messageIds,
     messages: update.input.messages,
     before: updateDiff.before,

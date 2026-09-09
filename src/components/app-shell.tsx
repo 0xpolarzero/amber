@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import { type ReactNode, useRef } from 'react'
 import { PreviewDialogs } from '../preview/dialogs'
 import { usePreview } from '../preview/provider'
@@ -6,8 +6,10 @@ import { AccountMenu } from './account-menu'
 import { AgentGuide } from './agent-guide'
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { state, user, openDialog, dispatch, notice, unreadCount } =
-    usePreview()
+  const { user, openDialog, dispatch, notice, unreadCount } = usePreview()
+  const onAgentPage = useRouterState({
+    select: ({ location }) => location.pathname === '/agent',
+  })
   const signIn = useRef<HTMLButtonElement>(null)
   return (
     <>
@@ -73,12 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main
         id="main"
         tabIndex={-1}
-        className={
-          state.scenarioId === 'replay' ||
-          state.scenarioId === 'question-example'
-            ? 'guide-active'
-            : undefined
-        }
+        className={onAgentPage ? 'guide-active' : undefined}
       >
         {children}
       </main>

@@ -296,6 +296,16 @@ export default {
     "question": "Which desktop operating systems does the tracker build support?",
     "telegramUpdate": {
       "batchId": "north-2",
+      "groupId": "makers-north",
+      "project": "Orbit",
+      "target": {
+        "kind": "existing",
+        "targetId": "north-1:0"
+      },
+      "recording": {
+        "model": "gemini-3.8-flash-medium",
+        "disclosure": "Synthetic Telegram and private messages processed by the real Gemini workflows. Replay timing is browser-only."
+      },
       "selectedMessageIds": [
         "n2-1",
         "n2-4",

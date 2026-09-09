@@ -179,7 +179,11 @@ function completeRun(feed: Feed): AgentRun {
   }
 }
 
-function lifecycleExample(feed: Feed, completed: boolean): AgentScenario {
+function lifecycleExample(
+  feed: Feed,
+  completed: boolean,
+  hasUnread = false,
+): AgentScenario {
   const { question, source, trace, replyTrace, messaging } = questionCapture
   const posts = projectedPosts(
     feed,
@@ -229,9 +233,11 @@ function lifecycleExample(feed: Feed, completed: boolean): AgentScenario {
     {
       id: messaging.notification.id,
       sender: 'amber',
-      text: messaging.notification.text,
+      text:
+        trace.telegramUpdate?.notification.text ?? messaging.notification.text,
       postId: messaging.notification.linkedPostId ?? undefined,
       intent: 'informational',
+      telegramUpdateTrace: trace.telegramUpdate,
     },
     { id: run.messageId, sender: 'user', text: messaging.input.text },
   ]
@@ -257,6 +263,7 @@ function lifecycleExample(feed: Feed, completed: boolean): AgentScenario {
           ({ id, text, version }) => ({ id, text, version }),
         ),
       ),
+      readThrough: hasUnread ? messages.length - 1 : messages.length,
       run,
     },
   }
@@ -266,8 +273,8 @@ export function buildAgentScenario(
   feed: Feed,
   id: AgentScenarioId,
 ): AgentScenario {
-  if (id === 'question-example' || id === 'rich-complete')
-    return lifecycleExample(feed, true)
+  if (id === 'question-example') return lifecycleExample(feed, true)
+  if (id === 'rich-complete') return lifecycleExample(feed, true, true)
   if (id === 'replay') return lifecycleExample(feed, false)
   const before = projectedPosts(feed, captured.posts.before)
   const after = projectedPosts(feed, captured.posts.after)

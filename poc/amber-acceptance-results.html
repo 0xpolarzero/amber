@@ -84,6 +84,11 @@
       <a href="amber-screenshots/recorded-replay-desktop.png">Desktop screenshot</a>
       and <a href="amber-screenshots/recorded-replay-mobile.png">mobile screenshot</a>
     </li>
+    <li>
+      Open Telegram update trace:
+      <a href="amber-screenshots/telegram-update-trace-desktop.png">desktop</a>
+      and <a href="amber-screenshots/telegram-update-trace-mobile.png">mobile</a>
+    </li>
   </ul>
   <h2>Current contributing calls</h2>
   <ul>
@@ -119,9 +124,11 @@
   <h2>Validation</h2>
   <p>
     <code>pnpm check</code>
-    passed. The focused recorded lifecycle E2E suite passed 8/8. An additional full 42-test sweep
-    passed 37 and exposed five unrelated feed-preview failures; the implementation did not change
-    the existing UI.
+    passed. The focused recorded lifecycle E2E suite passed 8/8 and the full Playwright suite passed
+    42/42. The prior 37/42 result was two verified preview regressions, not unrelated failures: the
+    fixed replay panel intercepted three feed/post interactions, and the completed lifecycle marked
+    the final Amber reply as read, removing the expected unread badge. Route-scoping the full replay
+    panel and restoring the recorded-result unread boundary fixed all five failures.
   </p>
   <h2>Residual limitations</h2>
   <ul>

@@ -8,7 +8,7 @@ test('replays recorded output progressively and preserves publication boundaries
   page,
   isMobile,
 }) => {
-  await page.goto('/')
+  await page.goto('/agent')
   const replay = controls(page)
   await expect(replay).toContainText(
     'Simulated timing · 0.5s per reveal · recorded Gemini output',
@@ -232,65 +232,129 @@ test('keeps failure controls secondary and preserves published output on retry',
   ).toHaveCount(1)
 })
 
-test('shows the recorded Telegram question and its reply with separate compact traces', async ({
+test('keeps the Telegram update on its own inspectable notification trace', async ({
   page,
   isMobile,
 }) => {
   await page.goto('/agent')
   const replay = controls(page)
+  await replay.getByText('More controls', { exact: true }).click()
+  await replay
+    .getByRole('combobox', { name: 'Preview account' })
+    .selectOption('author')
+  const completedNotification = page
+    .locator('article')
+    .filter({ has: page.locator('details.telegram-update-workflow-trace') })
+  await expect(
+    completedNotification.locator(':scope > .chat-bubble'),
+  ).toHaveText('1 post edited · 1 question answered')
+  await expect(
+    completedNotification.locator('details.telegram-update-workflow-trace'),
+  ).not.toHaveAttribute('open', '')
+  await replay.getByText('More controls', { exact: true }).click()
   await replay.getByRole('button', { name: 'Restart', exact: true }).click()
-  await replay.getByRole('button', { name: 'Play', exact: true }).click()
-  await expect(replay).toContainText('Replay complete', { timeout: 12_000 })
   const question = page
     .locator('article')
     .filter({ has: page.locator('details.extraction-workflow-trace') })
   await expect(question).toBeVisible()
-  const trace = question.locator('details.extraction-workflow-trace')
-  await trace.locator(':scope > summary').click()
-  await expect(trace).toHaveAttribute('open', '')
-  const stages = trace.locator('details.workflow-trace-step')
-  await expect(stages).toHaveCount(6)
-  const questionCheck = stages.nth(0).locator('.trace-step-number svg')
-  const replyCheck = page
-    .locator('.reply-workflow-trace .trace-step-number svg')
+  const questionTrace = question.locator('details.extraction-workflow-trace')
+  await questionTrace.locator(':scope > summary').click()
+  await expect(questionTrace).toHaveAttribute('open', '')
+  const questionStages = questionTrace.locator('details.workflow-trace-step')
+  await expect(questionStages).toHaveCount(4)
+  const questionCheck = questionStages.nth(0).locator('.trace-step-number svg')
+  const updateCheck = page
+    .locator('.telegram-update-workflow-trace .trace-step-number svg')
     .first()
   await expect(questionCheck).toHaveCSS('width', '13px')
   await expect(questionCheck).toHaveCSS('height', '13px')
-  await expect(replyCheck).toHaveCSS('width', '13px')
-  await expect(replyCheck).toHaveCSS('height', '13px')
-  await stages.nth(0).locator('summary').first().click()
-  await expect(stages.nth(0)).toContainText(
+  await expect(updateCheck).toHaveCSS('width', '13px')
+  await expect(updateCheck).toHaveCSS('height', '13px')
+  await questionStages.nth(0).locator('summary').first().click()
+  await expect(questionStages.nth(0)).toContainText(
     'I built Orbit, a local-first issue tracker for small hardware teams.',
   )
-  await expect(stages.nth(0)).toContainText(
+  await expect(questionStages.nth(0)).toContainText(
     'Maya, which desktop operating systems does the tracker build support?',
   )
-  await stages.nth(0).locator('summary').first().click()
-  await stages.nth(2).locator('summary').first().click()
-  const created = stages.nth(2).locator('details.post-update')
+  await questionStages.nth(0).locator('summary').first().click()
+  await questionStages.nth(2).locator('summary').first().click()
+  const created = questionStages.nth(2).locator('details.post-update')
   await created.locator('summary').click()
   await expect(created.locator('ins')).toHaveCount(3)
   await expect(created.locator('del')).toHaveCount(0)
-  await stages.nth(2).locator('summary').first().click()
-  await stages.nth(3).locator('summary').click()
-  await expect(stages.nth(3)).toContainText(
+  await questionStages.nth(2).locator('summary').first().click()
+  await questionStages.nth(3).locator('summary').click()
+  await expect(questionStages.nth(3)).toContainText(
     'Maya, which desktop operating systems does the tracker build support?',
   )
-  await stages.nth(3).locator('summary').click()
-  await stages.nth(4).locator(':scope > summary').click()
-  await expect(stages.nth(4)).toContainText('macOS 14 and Windows 11')
-  await expect(stages.nth(4)).toContainText(
+  await questionStages.nth(3).locator('summary').click()
+  await expect(questionTrace).not.toContainText('Apply Telegram update')
+  await expect(questionTrace).not.toContainText('Close question')
+
+  const notification = page
+    .locator('article')
+    .filter({ has: page.locator('details.telegram-update-workflow-trace') })
+  await expect(notification.locator(':scope > .chat-bubble')).toHaveText(
     '1 post edited · 1 question answered',
   )
-  await stages.nth(4).locator(':scope > summary').click()
-  await stages.nth(5).locator(':scope > summary').click()
-  await expect(stages.nth(5)).toContainText('Question answered')
-  await expect(trace).toContainText('makers-north · gemini-3.8-flash-medium')
-  await trace.screenshot({
+  await expect(notification.locator(':scope > .chat-bubble')).not.toContainText(
+    'Sources:',
+  )
+  const updateTrace = notification.locator(
+    'details.telegram-update-workflow-trace',
+  )
+  await expect(updateTrace).not.toHaveAttribute('open', '')
+  await updateTrace.locator(':scope > summary').click()
+  await expect(updateTrace).toHaveAttribute('open', '')
+  const updateStages = updateTrace.locator('details.workflow-trace-step')
+  await expect(updateStages).toHaveCount(4)
+  await expect(updateStages.nth(0)).toContainText(
+    '8 messages · existing Orbit post',
+  )
+  await updateStages.nth(0).locator(':scope > summary').click()
+  await expect(updateStages.nth(0)).toContainText(
+    'Patch export shipped in tracker version 0.4',
+  )
+  await expect(updateStages.nth(0)).toContainText(
+    'The desktop build supports macOS 14 and Windows 11; Linux is untested.',
+  )
+  await expect(
+    updateStages.nth(0).locator('details.trace-post-preview'),
+  ).toContainText('Orbit')
+  await updateStages.nth(1).locator(':scope > summary').click()
+  await expect(updateStages.nth(1).locator('.trace-record')).toHaveCount(6)
+  await expect(updateStages.nth(1)).toContainText(
+    'The tracker never auto-syncs every repository.',
+  )
+  await updateStages.nth(2).locator(':scope > summary').click()
+  const updated = updateStages.nth(2).locator('details.post-update')
+  await updated.locator('summary').click()
+  await expect(updated.locator('del')).toHaveCount(2)
+  await expect(updated.locator('ins')).toHaveCount(2)
+  await expect(updated).toContainText('Platform Support')
+  await updateStages.nth(3).locator(':scope > summary').click()
+  await expect(updateStages.nth(3)).toContainText('Question answered')
+  await expect(updateStages.nth(3)).toContainText(
+    'Maya confirmed desktop builds support macOS 14 and Windows 11, with Linux untested.',
+  )
+  await expect(updateTrace).toContainText(
+    'makers-north · gemini-3.8-flash-medium',
+  )
+  await updateStages.nth(0).locator(':scope > summary').click()
+  await updateStages.nth(1).locator(':scope > summary').click()
+  await updated.locator('summary').click()
+  await updateStages.nth(2).locator(':scope > summary').click()
+  await updateStages.nth(3).scrollIntoViewIfNeeded()
+  await page.screenshot({
     path: isMobile
-      ? '/private/tmp/amber-question-trace-mobile.png'
-      : '/private/tmp/amber-question-trace-desktop.png',
+      ? 'poc/amber-screenshots/telegram-update-trace-mobile.png'
+      : 'poc/amber-screenshots/telegram-update-trace-desktop.png',
   })
+
+  await replay.getByRole('button', { name: 'Play', exact: true }).click()
+  await expect(replay).toContainText('Replay complete', { timeout: 12_000 })
+  await expect(updateTrace).toHaveAttribute('open', '')
   const reply = page.getByRole('article', { name: 'Amber reply' })
   await expect(reply.locator(':scope > .chat-bubble')).toContainText(
     'assignee changes',
@@ -304,9 +368,15 @@ test('shows the recorded Telegram question and its reply with separate compact t
   const stageIds = await page
     .locator('[id*="-stage-"]')
     .evaluateAll((nodes) => nodes.map(({ id }) => id))
-  expect(stageIds).toHaveLength(12)
+  expect(stageIds).toHaveLength(14)
   expect(new Set(stageIds).size).toBe(stageIds.length)
   await replay.getByRole('button', { name: 'Restart', exact: true }).click()
   await expect(page.locator('details.extraction-workflow-trace')).toHaveCount(1)
+  await expect(
+    page.locator('details.telegram-update-workflow-trace'),
+  ).toHaveCount(1)
+  await expect(
+    page.locator('details.telegram-update-workflow-trace'),
+  ).not.toHaveAttribute('open', '')
   await expect(replay).toContainText('Plan queries')
 })

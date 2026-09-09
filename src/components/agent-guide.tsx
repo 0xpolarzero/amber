@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { usePreview } from '../preview/provider'
 import type { AgentRun, AgentRunStage } from '../preview/state'
 import { isAgentBusy } from '../preview/state'
@@ -41,6 +41,9 @@ function stageState(run: AgentRun | undefined, index: number) {
 export function AgentGuide() {
   const { state, user, openDialog, dispatch } = usePreview()
   const navigate = useNavigate()
+  const onAgentPage = useRouterState({
+    select: ({ location }) => location.pathname === '/agent',
+  })
   const run = user ? state.agentByUser[user]?.run : undefined
   const running = isAgentBusy(run)
   const start = (playing: boolean) => {
@@ -59,14 +62,66 @@ export function AgentGuide() {
         : run.stage === 'background'
           ? 'Update memory + Resolve requests'
           : stages.find(([stage]) => stage === run.stage)?.[1]
+  const moreControls = (
+    <details className="preview-more">
+      <summary>More controls</summary>
+      <div className="preview-more-row">
+        <label>
+          <span>Account</span>
+          <select
+            aria-label="Preview account"
+            autoComplete="off"
+            value={state.role}
+            onChange={(event) => {
+              const role = event.target.value
+              if (
+                role === 'visitor' ||
+                role === 'member' ||
+                role === 'author'
+              ) {
+                openDialog(null)
+                dispatch({ type: 'role', role })
+              }
+            }}
+          >
+            <option value="visitor">Visitor</option>
+            <option value="member">Member</option>
+            <option value="author">Author</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          onClick={() =>
+            dispatch({
+              type: 'loadScenario',
+              id: 'failure-before-publication',
+            })
+          }
+        >
+          Foreground failure
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            dispatch({ type: 'loadScenario', id: 'failure-addressing' })
+          }
+        >
+          Background failure
+        </button>
+        <a href="/plan" target="_blank" rel="noreferrer">
+          Plan ↗
+        </a>
+      </div>
+    </details>
+  )
 
   return (
     <aside
-      className="preview-controls agent-guide"
+      className={`preview-controls${onAgentPage ? ' agent-guide' : ''}`}
       data-active={running || undefined}
       aria-label="Amber recorded replay"
     >
-      <div className="guide-main">
+      <div className="guide-main" hidden={!onAgentPage}>
         <div className="guide-copy" role="status" aria-live="polite">
           <span className="guide-kicker">
             Simulated timing · 0.5s per reveal · recorded Gemini output
@@ -97,7 +152,11 @@ export function AgentGuide() {
           </button>
         </div>
       </div>
-      <ol className="replay-stages" aria-label="Replay stages">
+      <ol
+        className="replay-stages"
+        aria-label="Replay stages"
+        hidden={!onAgentPage}
+      >
         {stages.map(([, label], index) => (
           <li key={label} data-state={stageState(run, index)}>
             <button
@@ -115,56 +174,7 @@ export function AgentGuide() {
           </li>
         ))}
       </ol>
-      <details className="preview-more">
-        <summary>More controls</summary>
-        <div className="preview-more-row">
-          <label>
-            <span>Account</span>
-            <select
-              aria-label="Preview account"
-              autoComplete="off"
-              value={state.role}
-              onChange={(event) => {
-                const role = event.target.value
-                if (
-                  role === 'visitor' ||
-                  role === 'member' ||
-                  role === 'author'
-                ) {
-                  openDialog(null)
-                  dispatch({ type: 'role', role })
-                }
-              }}
-            >
-              <option value="visitor">Visitor</option>
-              <option value="member">Member</option>
-              <option value="author">Author</option>
-            </select>
-          </label>
-          <button
-            type="button"
-            onClick={() =>
-              dispatch({
-                type: 'loadScenario',
-                id: 'failure-before-publication',
-              })
-            }
-          >
-            Foreground failure
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              dispatch({ type: 'loadScenario', id: 'failure-addressing' })
-            }
-          >
-            Background failure
-          </button>
-          <a href="/plan" target="_blank" rel="noreferrer">
-            Plan ↗
-          </a>
-        </div>
-      </details>
+      {moreControls}
     </aside>
   )
 }

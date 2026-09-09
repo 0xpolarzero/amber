@@ -71,12 +71,24 @@ describe('recorded lifecycle projection', () => {
       needsReply: true,
     })
     expect(lifecycle.trace.telegramUpdate).toMatchObject({
+      groupId: 'makers-north',
+      project: 'Orbit',
+      target: { kind: 'existing', targetId: 'north-1:0' },
       resolution: { outcome: 'answered', sourceIds: ['n2-23'] },
       notification: { id: 'north-2:0@0:notification' },
     })
     expect(lifecycle.messaging.notification.id).toBe(
       lifecycle.trace.telegramUpdate.notification.id,
     )
+    const replay = scenario('replay').agentByUser.alex.messages
+    const notification = replay.find(
+      ({ id }) => id === lifecycle.messaging.notification.id,
+    )
+    expect(notification).toMatchObject({
+      text: '1 post edited · 1 question answered',
+      telegramUpdateTrace: lifecycle.trace.telegramUpdate,
+    })
+    expect(notification?.text).not.toContain('Sources:')
     expect(lifecycle.messaging.diffs).toEqual(projection.posts.diffs)
     expect(projection.trace.planner.queries).toHaveLength(1)
     expect(projection.trace.addressing.resolutions).toEqual([])
@@ -98,6 +110,14 @@ describe('recorded lifecycle projection', () => {
 })
 
 describe('deterministic replay state', () => {
+  it('leaves the completed recorded reply unread until Agent is opened', () => {
+    const state = createPreviewState(fixtures)
+    const agent = state.agentByUser.alex
+    expect(agent.messages.slice(agent.readThrough)).toMatchObject([
+      { id: lifecycle.messaging.assistant.id, sender: 'amber' },
+    ])
+  })
+
   it('reveals frames, publishes atomically, then completes both parallel jobs', () => {
     let state = scenario('replay')
     const run = () => state.agentByUser.alex.run

@@ -1,4 +1,8 @@
-import type { TelegramSource, WorkflowTrace } from '../preview/state'
+import type {
+  TelegramSource,
+  TelegramUpdateTrace,
+  WorkflowTrace,
+} from '../preview/state'
 import { Icon } from './icon'
 import { PostChangeDiff } from './post-change-diff'
 import { TraceCollection, TraceStep } from './workflow-trace'
@@ -17,7 +21,6 @@ export function QuestionWorkflowTrace({
   )
   const post = trace.publication.post
   const created = !trace.publication.output.existingPostId
-  const update = trace.telegramUpdate
   const stageId = (number: number) =>
     `question-${trace.questionId}-stage-${number}`
   return (
@@ -175,66 +178,141 @@ export function QuestionWorkflowTrace({
                 </div>
               ))}
           </TraceStep>
-          {update ? (
-            <TraceStep
-              id={stageId(5)}
-              number={5}
-              title="Apply Telegram update"
-              status="complete"
-              summary={update.notification.text}
-            >
-              <div className="trace-messages">
-                {update.messages
-                  .filter(({ id }) => update.selectedMessageIds.includes(id))
-                  .map((message) => (
-                    <div className="trace-record" key={message.id}>
-                      <span>{name(message.authorId)}</span>
-                      <p>{message.text}</p>
-                    </div>
-                  ))}
-              </div>
-              <section
-                className="trace-post-diffs"
-                aria-label="Telegram post update"
-              >
-                <PostChangeDiff
-                  expanded={false}
-                  change={{
-                    kind: 'updated',
-                    postId: update.after.id,
-                    project: update.after.title,
-                    fromVersion: update.before.version,
-                    toVersion: update.after.version,
-                    fields: (['title', 'summary', 'detail'] as const)
-                      .filter(
-                        (field) => update.before[field] !== update.after[field],
-                      )
-                      .map((field) => ({
-                        field,
-                        before: update.before[field],
-                        after: update.after[field],
-                      })),
-                  }}
-                />
-              </section>
-              <p>Sources: {update.notification.sourceIds.join(' · ')}</p>
-            </TraceStep>
-          ) : null}
-          {update ? (
-            <TraceStep
-              id={stageId(6)}
-              number={6}
-              title="Resolve question"
-              status="complete"
-              summary={`Question ${update.resolution.outcome}`}
-            >
-              <p>{update.resolution.reason}</p>
-              <p>Sources: {update.resolution.sourceIds.join(' · ')}</p>
-            </TraceStep>
-          ) : null}
         </ol>
         <p className="trace-recording">
           {source.groupId} · {trace.recording.model}
+        </p>
+      </div>
+    </details>
+  )
+}
+
+export function TelegramUpdateWorkflowTrace({
+  trace,
+}: {
+  trace: TelegramUpdateTrace
+}) {
+  const selected = trace.messages.filter(({ id }) =>
+    trace.selectedMessageIds.includes(id),
+  )
+  const cited = trace.messages.filter(({ id }) =>
+    trace.notification.sourceIds.includes(id),
+  )
+  const stageId = (number: number) =>
+    `telegram-update-${trace.notification.id}-stage-${number}`
+  return (
+    <details className="workflow-trace telegram-update-workflow-trace">
+      <summary aria-label="Telegram update workflow">
+        <span className="workflow-trace-toggle-icons">
+          <Icon name="telegram" />
+          <Icon name="chevronDown" className="workflow-trace-caret" />
+        </span>
+        <span>Telegram update workflow</span>
+        <span className="workflow-trace-count">Complete</span>
+      </summary>
+      <div className="workflow-trace-content">
+        <ol
+          className="workflow-trace-steps"
+          aria-label="Telegram update progress"
+        >
+          <TraceStep
+            id={stageId(1)}
+            number={1}
+            title="Match update"
+            status="complete"
+            summary={`${selected.length} messages · ${trace.target.kind} ${trace.project} post`}
+          >
+            <details className="trace-post-preview">
+              <summary>
+                {trace.before.title}
+                <Icon name="chevronDown" />
+              </summary>
+              <div>
+                <p>{trace.before.summary}</p>
+              </div>
+            </details>
+            <TraceCollection
+              title="Selected Telegram messages"
+              empty="No messages selected."
+              items={selected.map((message) => ({
+                id: message.id,
+                title: name(message.authorId),
+                text: message.text,
+              }))}
+            />
+          </TraceStep>
+          <TraceStep
+            id={stageId(2)}
+            number={2}
+            title="Verify sources"
+            status="complete"
+            summary={`${cited.length} messages cited`}
+          >
+            <TraceCollection
+              title="Cited Telegram messages"
+              empty="No cited messages."
+              items={cited.map((message) => ({
+                id: message.id,
+                title: name(message.authorId),
+                text: message.text,
+              }))}
+            />
+          </TraceStep>
+          <TraceStep
+            id={stageId(3)}
+            number={3}
+            title="Update post"
+            status="complete"
+            summary={`${trace.project} · version ${trace.before.version} to ${trace.after.version}`}
+          >
+            <section
+              className="trace-post-diffs"
+              aria-label="Telegram post update"
+            >
+              <PostChangeDiff
+                expanded={false}
+                change={{
+                  kind: 'updated',
+                  postId: trace.after.id,
+                  project: trace.after.title,
+                  fromVersion: trace.before.version,
+                  toVersion: trace.after.version,
+                  fields: (['title', 'summary', 'detail'] as const)
+                    .filter(
+                      (field) => trace.before[field] !== trace.after[field],
+                    )
+                    .map((field) => ({
+                      field,
+                      before: trace.before[field],
+                      after: trace.after[field],
+                    })),
+                }}
+              />
+            </section>
+          </TraceStep>
+          <TraceStep
+            id={stageId(4)}
+            number={4}
+            title="Close question"
+            status="complete"
+            summary={`Question ${trace.resolution.outcome}`}
+          >
+            <p>{trace.resolution.reason}</p>
+            <TraceCollection
+              title="Answer evidence"
+              empty="No answer evidence."
+              items={trace.messages
+                .filter(({ id }) => trace.resolution.sourceIds.includes(id))
+                .map((message) => ({
+                  id: message.id,
+                  title: name(message.authorId),
+                  text: message.text,
+                }))}
+            />
+          </TraceStep>
+        </ol>
+        <p className="trace-recording">
+          {trace.groupId} · {trace.recording.model}
         </p>
       </div>
     </details>
