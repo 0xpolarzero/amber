@@ -103,18 +103,9 @@ it('turns a pulled batch into a new post, an updated post and one question for t
       ])
       expect(store.sources.get('batch-1:0')).toEqual(responses.posts.alex.output.postEdit?.sources)
 
-      // Research uses the real tool allowlist and returned evidence, not an empty stub.
+      // Existing targets retain scoped search; new synthetic work receives no fake web result.
       expect(observations).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({
-            task: 'alex',
-            tool: 'read_url_content',
-            result: expect.objectContaining({
-              provenance: 'antigravity-cli-step-artifact-v1',
-              status: 'success',
-              pageContent: expect.stringContaining('https://noted.example'),
-            }),
-          }),
           {
             task: 'bea',
             tool: 'searchPosts',
@@ -125,6 +116,7 @@ it('turns a pulled batch into a new post, an updated post and one question for t
           },
         ]),
       )
+      expect(observations.some(({ task }) => task === 'alex')).toBe(false)
       const writers = requests
         .filter((request) => request.task === 'post')
         .map((request) => request.input as typeof S.ProjectContext.Type)

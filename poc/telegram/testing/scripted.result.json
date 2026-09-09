@@ -37,8 +37,7 @@
       "text": "1 post edited · 1 question asked",
       "sourceIds": [
         "102",
-        "104",
-        "https://noted.example"
+        "104"
       ]
     },
     {
@@ -91,10 +90,6 @@
       {
         "kind": "telegram",
         "messageId": "104"
-      },
-      {
-        "kind": "web",
-        "url": "https://noted.example"
       }
     ],
     "tab-tidy": [
