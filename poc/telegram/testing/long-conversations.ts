@@ -33,7 +33,12 @@ const northOne = [
     'zoe',
     'Loomlight now records theatre lighting cues from a USB MIDI controller.',
   ),
-  telegram('n1-4', 'liam', 'Maya, which desktop operating systems does the tracker build support?', 'n1-1'),
+  telegram(
+    'n1-4',
+    'liam',
+    'Maya, which desktop operating systems does the tracker build support?',
+    'n1-1',
+  ),
   telegram('n1-5', 'rana', 'Iris, does the other Orbit store microphone recordings?', 'n1-2'),
   telegram('n1-6', 'paz', 'Can Loomlight export both QLC+ and CSV?', 'n1-3'),
   telegram('n1-7', 'maya', 'The first build imports GitHub issues and keeps edits offline.'),
@@ -137,7 +142,11 @@ const northTwoFresh = [
   telegram('n2-20', 'zoe', 'Not yet. Version 0.7 preserves values but drops free-text notes.'),
   telegram('n2-21', 'liam', 'Does patch export include attachments now?'),
   telegram('n2-22', 'maya', 'No. Attachments remain excluded in 0.4.'),
-  telegram('n2-23', 'maya', 'The desktop build supports macOS 14 and Windows 11; Linux is untested.'),
+  telegram(
+    'n2-23',
+    'maya',
+    'The desktop build supports macOS 14 and Windows 11; Linux is untested.',
+  ),
 ] as const
 
 const southOne = [
@@ -501,7 +510,11 @@ const stressBatch = (group: (typeof stressGroups)[number], index: number) => {
   return batch(`stress-${index + 1}`, group.id, interleaved)
 }
 
-export const stressBatches = stressGroups.map(stressBatch)
+export const stressBatches = stressGroups.flatMap((group, groupIndex) =>
+  [group.projects.slice(0, 2), group.projects.slice(2)].map((projects, halfIndex) =>
+    stressBatch({ id: group.id, projects }, groupIndex * 2 + halfIndex),
+  ),
+)
 
 export const heldOutBatch = batch('held-out-1', 'makers-north', [
   telegram(
