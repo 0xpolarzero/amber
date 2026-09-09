@@ -119,7 +119,7 @@ export const Source = Schema.Union([
   Schema.Struct({ kind: Schema.Literal('web'), url: text(2000) }),
 ])
 export const PostEdit = Schema.Struct({
-  // null creates; an existing owned ID updates that project instead of duplicating it.
+  // null creates or publishes the supplied candidate; an owned post ID updates that post.
   existingPostId: Schema.NullOr(Id),
   expectedVersion: Schema.NullOr(Version),
   ...PostFields,

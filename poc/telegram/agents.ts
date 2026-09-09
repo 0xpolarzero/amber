@@ -46,23 +46,10 @@ export function telegramLayers(ports: Ports) {
         groupId: input.work.groupId,
         batchId: input.work.batchId,
       }
-      const hasFetchableUrl = input.messages
-        .flatMap(({ text }) => text.match(/https?:\/\/[^\s)]+/g) ?? [])
-        .some((url) => URL.canParse(url) && !new URL(url).hostname.endsWith('.example'))
-      const allowedProjectTools =
-        input.work.candidate.target.kind === 'existing' ? projectTools : []
       return track(
         'post',
         scope,
-        generate(
-          S.Proposal,
-          'post',
-          postPrompt,
-          input,
-          scope,
-          allowedProjectTools,
-          hasFetchableUrl ? nativeWebTools : [],
-        ).pipe(
+        generate(S.Proposal, 'post', postPrompt, input, scope, projectTools, nativeWebTools).pipe(
           Effect.flatMap(({ value: proposal, evidence }) =>
             checked('project-evidence', () => {
               const draft = { proposal, evidence }

@@ -26,6 +26,7 @@
         "poc/telegram/testing/scripted.result.json",
         "poc/amber-lifecycle-*.json",
         "poc/amber-lifecycle-runs/*.json",
+        "poc/amber-acceptance-results.json",
         "poc/preview-result.json",
         "src/preview/generated/amber-real-preview.ts",
         "src/preview/generated/amber-question-preview.ts"

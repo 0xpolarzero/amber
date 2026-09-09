@@ -98,6 +98,77 @@ it('keeps a reviewable 300+ message corpus with collisions and held-out edge cas
     )
 })
 
+it('keeps scoped history and native research available to a new-project writer', async () => {
+  const newBatch: typeof S.BatchContext.Type = {
+    batchId: 'new-writer-tools',
+    groupId: 'makers-north',
+    messages: [
+      message('old-context', 'alex', 'Needle exports stitch plans as SVG.'),
+      message('fresh-maker', 'alex', 'I built Needle for planning embroidery patterns.'),
+    ],
+    newMessageIds: ['fresh-maker'],
+    associations: [],
+  }
+  const store = telegramStore(newBatch, [])
+  const seen: { tools: readonly string[]; native: readonly string[]; older: unknown }[] = []
+  const model: Ports['model'] = (request) => {
+    if (request.task === 'selection')
+      return Effect.succeed({
+        candidates: [
+          {
+            authorId: 'alex',
+            project: 'Needle',
+            messageIds: ['fresh-maker'],
+            target: { kind: 'new', ownerId: 'alex' },
+          },
+        ],
+        ignored: [],
+        unresolved: [],
+      })
+    return Effect.gen(function* () {
+      const older = yield* request.callTool('searchMessages', { query: 'SVG' })
+      seen.push({
+        tools: request.tools.map(({ name }) => name),
+        native: request.nativeTools,
+        older,
+      })
+      return {
+        postEdit: {
+          existingPostId: null,
+          expectedVersion: null,
+          title: 'Needle',
+          summary: 'Embroidery pattern planning with SVG export.',
+          detail: 'Needle plans embroidery patterns and exports stitch plans as SVG.',
+          sources: [
+            { kind: 'telegram', messageId: 'fresh-maker' },
+            { kind: 'telegram', messageId: 'old-context' },
+          ],
+        },
+        resolutions: [],
+        question: null,
+        reason: 'The maker message and older group context establish the project.',
+      }
+    })
+  }
+  const writerHost = telegramLayers({ ...store.ports, model }).pipe(
+    Layer.provideMerge(Action.layerImplementations),
+    Layer.provideMerge(testEngine),
+  )
+  await Effect.runPromise(
+    TelegramBatch.execute(newBatch, { executionId: newBatch.batchId }).pipe(
+      Effect.provide(writerHost),
+      Effect.timeout('3 seconds'),
+    ),
+  )
+  expect(seen).toEqual([
+    {
+      tools: ['searchMessages', 'readMessages', 'searchPosts'],
+      native: ['search_web', 'read_url_content'],
+      older: [expect.objectContaining({ id: 'old-context' })],
+    },
+  ])
+})
+
 it('publishes an existing pending candidate with its saved owner and original maker evidence', async () => {
   const candidateBatch: typeof S.BatchContext.Type = {
     batchId: 'pending-publication',

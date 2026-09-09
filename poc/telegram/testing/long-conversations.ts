@@ -516,6 +516,12 @@ export const stressBatches = stressGroups.flatMap((group, groupIndex) =>
   ),
 )
 
+export const stressProjectExpectations = Object.fromEntries(
+  stressGroups.flatMap(({ id: groupId, projects }) =>
+    projects.map((project) => [project.owner, { groupId, ...project }]),
+  ),
+) as Readonly<Record<string, StressProject & { groupId: string }>>
+
 export const heldOutBatch = batch('held-out-1', 'makers-north', [
   telegram(
     'h1-1',
