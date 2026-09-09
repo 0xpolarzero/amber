@@ -34,11 +34,11 @@ test('replays recorded output progressively and preserves publication boundaries
   await expect(send).toBeDisabled()
   await expect(trace).toHaveAttribute('open', '')
   await expect(stages.nth(0)).toHaveAttribute('open', '')
-  await expect(stages.nth(0)).toContainText('Loading recorded query plan')
+  await expect(stages.nth(0)).toContainText('Planning queries')
 
   const play = replay.getByRole('button', { name: 'Play', exact: true })
   await play.click()
-  await expect(stages.nth(0)).toContainText('Terms: Atlas')
+  await expect(stages.nth(0)).toContainText('Atlas')
   await replay.getByRole('button', { name: 'Pause', exact: true }).click()
   const pausedQueries = await stages.nth(0).locator('.trace-record').count()
   expect(pausedQueries).toBeGreaterThan(0)
@@ -50,7 +50,7 @@ test('replays recorded output progressively and preserves publication boundaries
 
   await replay.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(stages.nth(1)).toHaveAttribute('open', '', { timeout: 5_000 })
-  await expect(stages.nth(1)).toContainText('Noted · v3')
+  await expect(stages.nth(1)).toContainText('Noted')
   await expect(stages.nth(1)).toContainText(
     'Offline voice transcription for macOS.',
   )
@@ -71,7 +71,9 @@ test('replays recorded output progressively and preserves publication boundaries
 
   await replay.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(stages.nth(3)).toHaveAttribute('open', '', { timeout: 4_000 })
-  await expect(stages.nth(3)).toContainText('Preparing one atomic publication')
+  await expect(stages.nth(3)).toContainText(
+    'Publishing answer and edits together',
+  )
   await expect(slot.locator(':scope > .chat-bubble')).toHaveCount(0)
   await expect(send).toBeDisabled()
 
@@ -94,7 +96,7 @@ test('replays recorded output progressively and preserves publication boundaries
 
   await replay.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(stages.nth(4)).toContainText('Prefer concise posts.')
-  await expect(stages.nth(5)).toContainText('No resolution recorded')
+  await expect(stages.nth(5)).toContainText('Still pending')
   await expect(stages.nth(5)).toContainText(preview.requests.after[0].text)
   await replay.getByRole('button', { name: 'Pause', exact: true }).click()
   await expect(send).toBeDisabled()
@@ -158,8 +160,8 @@ test('keeps active evidence open and completed stages inspectable', async ({
   ).toBeVisible()
   await expect(trace).toHaveAttribute('open', '')
   await expect(stages.nth(0)).toHaveAttribute('open', '')
-  await expect(stages.nth(0)).toContainText('Terms: Atlas')
-  await expect(stages.nth(0)).toContainText('Terms: Aurora')
+  await expect(stages.nth(0)).toContainText('Atlas')
+  await expect(stages.nth(0)).toContainText('Aurora')
 })
 
 test('keeps failure controls secondary and preserves published output on retry', async ({

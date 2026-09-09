@@ -2883,6 +2883,28 @@ dialog::backdrop {
 .trace-record + .trace-record {
   margin-top: 7px;
 }
+.trace-record.trace-query {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-left: 0;
+  border-left: 0;
+}
+.trace-query .trace-query-source {
+  flex: 0 0 78px;
+  color: var(--quiet);
+}
+.trace-query .trace-query-terms {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 11px;
+}
+.trace-query .trace-query-limit {
+  flex: 0 0 auto;
+  color: var(--quiet);
+  font-variant-numeric: tabular-nums;
+}
 .trace-record > span,
 .trace-post > span,
 .trace-tools > span {

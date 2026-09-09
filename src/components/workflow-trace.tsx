@@ -78,7 +78,7 @@ export function TraceCollection({
       {items.length ? (
         items.map((item) => (
           <div className="trace-record" key={item.id}>
-            <span>{item.title}</span>
+            {item.title ? <span>{item.title}</span> : null}
             <p>{item.text}</p>
           </div>
         ))
