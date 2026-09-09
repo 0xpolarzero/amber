@@ -1,0 +1,14 @@
+{
+  "runId": "20260909T172000Z-gemini-complete",
+  "runFile": "poc/amber-lifecycle-runs/20260909T172000Z-gemini-complete.json",
+  "model": "gemini-3.8-flash-medium",
+  "meaningfulTelegramMessages": 208,
+  "stressBatches": 8,
+  "modelCalls": 21,
+  "failedModelCalls": 0,
+  "workflowFailures": 0,
+  "limitations": [
+    "Shared synchronized in-memory PoC only; production database and queue durability are not implemented.",
+    "Synthetic Telegram and private messages; native web evidence is accepted only from actual tool observations."
+  ]
+}

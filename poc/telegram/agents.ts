@@ -47,8 +47,7 @@ export function telegramLayers(ports: Ports) {
         batchId: input.work.batchId,
       }
       const hasFetchableUrl = input.messages
-        .map(({ text }) => text.match(/https?:\/\/[^\s)]+/g) ?? [])
-        .flat()
+        .flatMap(({ text }) => text.match(/https?:\/\/[^\s)]+/g) ?? [])
         .some((url) => URL.canParse(url) && !new URL(url).hostname.endsWith('.example'))
       const allowedProjectTools =
         input.work.candidate.target.kind === 'existing' ? projectTools : []
