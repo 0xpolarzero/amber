@@ -112,7 +112,10 @@ export function AgentGuide() {
             <button
               type="button"
               disabled={!run}
-              onClick={() => inspectStage(index)}
+              onClick={() => {
+                dispatch({ type: 'setRunPlaying', playing: false })
+                inspectStage(index)
+              }}
               aria-label={`Inspect stage ${index + 1}: ${label}`}
             >
               <span>{index + 1}</span>

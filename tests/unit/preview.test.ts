@@ -227,4 +227,29 @@ describe('deterministic replay state', () => {
       )?.replyRun,
     ).toEqual(previousRun)
   })
+
+  it('does not complete or apply a failed memory job when retrying requests', () => {
+    let state = scenario('failure-addressing')
+    const agent = state.agentByUser.alex
+    if (!agent.run) throw new Error('Expected a recorded run')
+    state = {
+      ...state,
+      agentByUser: {
+        ...state.agentByUser,
+        alex: { ...agent, run: { ...agent.run, memory: 'failed' } },
+      },
+    }
+    const memories = state.agentByUser.alex.memories
+    state = previewReducer(state, {
+      type: 'retryBackground',
+      task: 'addressing',
+    })
+    state = tick(tick(state))
+    expect(state.agentByUser.alex.run).toMatchObject({
+      memory: 'failed',
+      addressing: 'done',
+      status: 'failed',
+    })
+    expect(state.agentByUser.alex.memories).toBe(memories)
+  })
 })

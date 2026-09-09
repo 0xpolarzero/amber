@@ -3293,8 +3293,8 @@ main.guide-active ~ .toast {
     max-width: 164px;
   }
   .guide-active .agent-chat {
-    height: calc(100dvh - 286px);
-    min-height: 320px;
+    height: calc(100dvh - 318px);
+    min-height: 240px;
   }
   .agent-chat .conversation-history {
     padding-bottom: 4px;

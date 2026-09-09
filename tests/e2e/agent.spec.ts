@@ -126,6 +126,12 @@ test('replays recorded output progressively and preserves publication boundaries
   ).toBe(true)
   await expect(composer).toBeInViewport()
   await expect(replay).toBeInViewport()
+  const sendBounds = await send.boundingBox()
+  const replayBounds = await replay.boundingBox()
+  expect(sendBounds).not.toBeNull()
+  expect(replayBounds).not.toBeNull()
+  if (sendBounds && replayBounds)
+    expect(sendBounds.y + sendBounds.height).toBeLessThan(replayBounds.y)
   await page.screenshot({
     path: isMobile
       ? '/private/tmp/amber-recorded-replay-mobile.png'
@@ -144,10 +150,12 @@ test('keeps active evidence open and completed stages inspectable', async ({
   const trace = page.locator('details.reply-workflow-trace')
   const stages = trace.locator('details.workflow-trace-step')
   await expect(stages.nth(1)).toHaveAttribute('open', '', { timeout: 5_000 })
-  await replay.getByRole('button', { name: 'Pause', exact: true }).click()
   await replay
     .getByRole('button', { name: 'Inspect stage 1: Plan queries' })
     .click()
+  await expect(
+    replay.getByRole('button', { name: 'Play', exact: true }),
+  ).toBeVisible()
   await expect(trace).toHaveAttribute('open', '')
   await expect(stages.nth(0)).toHaveAttribute('open', '')
   await expect(stages.nth(0)).toContainText('Terms: Atlas')

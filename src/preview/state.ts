@@ -453,22 +453,27 @@ function advanceRun(state: PreviewState, userId: string): PreviewState {
     }
   } else if (run.stage === 'background') {
     const outcome = run.outcome
-    nextConversation = applyMemoryEvents(
-      nextConversation,
-      outcome?.memoryEvents ?? [],
-    )
-    nextConversation = finishAddressing(
-      nextConversation,
-      outcome?.addressIds ?? [],
-    )
+    if (run.memory === 'running')
+      nextConversation = applyMemoryEvents(
+        nextConversation,
+        outcome?.memoryEvents ?? [],
+      )
+    if (run.addressing === 'running')
+      nextConversation = finishAddressing(
+        nextConversation,
+        outcome?.addressIds ?? [],
+      )
+    const memory = run.memory === 'running' ? 'done' : run.memory
+    const addressing = run.addressing === 'running' ? 'done' : run.addressing
+    const complete = memory === 'done' && addressing === 'done'
     nextRun = {
       ...run,
-      stage: 'complete',
+      stage: complete ? 'complete' : 'background',
       frame: 0,
-      status: 'complete',
+      status: complete ? 'complete' : 'failed',
       autoPlay: false,
-      memory: 'done',
-      addressing: 'done',
+      memory,
+      addressing,
     }
   }
   nextConversation = { ...nextConversation, run: nextRun }
