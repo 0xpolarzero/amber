@@ -1,0 +1,54 @@
+{
+  "runId": "20260909T181500Z-gemini-acceptance",
+  "runFile": "poc/amber-lifecycle-runs/20260909T181500Z-gemini-acceptance.json",
+  "model": "gemini-3.8-flash-medium",
+  "calls": {
+    "total": 32,
+    "selectionReused": 9,
+    "selectionFresh": 0,
+    "telegramWriting": 20,
+    "private": 12,
+    "failed": 0
+  },
+  "coverage": {
+    "stressMessagesSelectionToPublication": 208,
+    "stressBatchesSelectionToPublication": 8,
+    "stressProjectsSelectionToPublication": 16,
+    "heldOutProjectsSelectionToPublication": 1,
+    "focusedSyntheticTelegramProjects": 3,
+    "privateTurns": 3,
+    "fullRecordedLifecycle": 1
+  },
+  "validation": {
+    "pnpmCheck": "passed",
+    "recordedLifecycleE2E": "8/8 passed",
+    "additionalFullE2ESweep": "37/42 passed; five unrelated feed-preview tests failed"
+  },
+  "screenshots": [
+    "poc/amber-screenshots/recorded-replay-desktop.png",
+    "poc/amber-screenshots/recorded-replay-mobile.png"
+  ],
+  "limitations": [
+    "Shared synchronized in-memory PoC only; production database and durable queue behavior remain unimplemented.",
+    "Synthetic conversations measure these fixtures, not open-world correctness.",
+    "Generated prose is inspected semantically and is not expected to be identical across runs."
+  ],
+  "retainedFailedRuns": [
+    {
+      "runFile": "poc/amber-lifecycle-runs/20260909T164800Z-gemini-lifecycle.json",
+      "failure": "Provider returned SUCCESS with an empty structured response; a later unique run resumed without discarding this attempt."
+    },
+    {
+      "runFile": "poc/amber-lifecycle-runs/20260909T165700Z-gemini-stress.json",
+      "failure": "Two provider SUCCESS responses had empty structured output; later split runs reused completed stages and retried only failed stages."
+    },
+    {
+      "runFile": "poc/amber-lifecycle-runs/20260909T174500Z-gemini-acceptance.json",
+      "failure": "The semantic checker rejected the valid spelling “call-sheet”; punctuation normalization fixed the checker."
+    },
+    {
+      "runFile": "poc/amber-lifecycle-runs/20260909T175000Z-gemini-acceptance.json",
+      "failure": "Two bounded attempts put a pending candidate ID in existingPostId and were rejected by publication guards; the prompt now requires existingPostId null."
+    }
+  ]
+}

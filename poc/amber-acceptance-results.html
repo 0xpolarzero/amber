@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Amber acceptance results</title>
+  <style>
+  body {
+    font: 16px / 1.5 system-ui;
+    max-width: 880px;
+    margin: 3rem auto;
+    padding: 0 1rem;
+    color: #18212b;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th,
+  td {
+    border: 1px solid #cad3dc;
+    padding: 0.55rem;
+    text-align: left;
+  }
+  code {
+    background: #eef2f5;
+    padding: 0.1rem 0.25rem;
+  }
+  a {
+    color: #0759b0;
+  }
+  </style>
+  <h1>Amber focused acceptance results</h1>
+  <p>
+    Real <code>gemini-3.8-flash-medium</code> run
+    <a href="amber-lifecycle-runs/20260909T181500Z-gemini-acceptance.json"
+      >20260909T181500Z-gemini-acceptance</a
+    >, reusing preserved selector outputs from
+    <a href="amber-lifecycle-runs/20260909T172000Z-gemini-complete.json"
+      >20260909T172000Z-gemini-complete</a
+    >.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Stage</th>
+        <th>Measured coverage</th>
+        <th>Contributing real model calls</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Selection</td>
+        <td>8 stress batches / 208 messages / 16 projects, plus 1 held-out project</td>
+        <td>9 preserved real calls</td>
+      </tr>
+      <tr>
+        <td>Writing + publication</td>
+        <td>16 stress projects + 1 held-out + 3 focused synthetic projects</td>
+        <td>20</td>
+      </tr>
+      <tr>
+        <td>Private</td>
+        <td>3 turns; planner, responder, memory, addressing each turn</td>
+        <td>12</td>
+      </tr>
+      <tr>
+        <td>Full recorded lifecycle</td>
+        <td>1 coherent Telegram-to-private UI lifecycle preserved</td>
+        <td>See prior run</td>
+      </tr>
+    </tbody>
+  </table>
+  <h2>Evidence</h2>
+  <ul>
+    <li><a href="amber-acceptance-results.json">Latest focused result</a></li>
+    <li><a href="amber-acceptance-coverage.json">Machine-readable coverage</a></li>
+    <li>
+      <a href="telegram/agents.ts">Writer tool wiring</a>
+      and <a href="telegram/prompts/post.mdx">bounded research prompt</a>
+    </li>
+    <li><a href="messaging/acceptance.live.test.ts">Live semantic assertions</a></li>
+    <li><a href="telegram/native-web-result.json">Preserved real IANA search/fetch result</a></li>
+    <li>
+      <a href="amber-screenshots/recorded-replay-desktop.png">Desktop screenshot</a>
+      and <a href="amber-screenshots/recorded-replay-mobile.png">mobile screenshot</a>
+    </li>
+  </ul>
+  <h2>Current contributing calls</h2>
+  <ul>
+    <li>All 32 contributing writer and private calls succeeded.</li>
+  </ul>
+  <h2>Retained failed runs</h2>
+  <ul>
+    <li>
+      <a href="amber-lifecycle-runs/20260909T164800Z-gemini-lifecycle.json"
+        >20260909T164800Z-gemini-lifecycle.json</a
+      >: Provider returned SUCCESS with an empty structured response; a later unique run resumed
+      without discarding this attempt.
+    </li>
+    <li>
+      <a href="amber-lifecycle-runs/20260909T165700Z-gemini-stress.json"
+        >20260909T165700Z-gemini-stress.json</a
+      >: Two provider SUCCESS responses had empty structured output; later split runs reused
+      completed stages and retried only failed stages.
+    </li>
+    <li>
+      <a href="amber-lifecycle-runs/20260909T174500Z-gemini-acceptance.json"
+        >20260909T174500Z-gemini-acceptance.json</a
+      >: The semantic checker rejected the valid spelling “call-sheet”; punctuation normalization
+      fixed the checker.
+    </li>
+    <li>
+      <a href="amber-lifecycle-runs/20260909T175000Z-gemini-acceptance.json"
+        >20260909T175000Z-gemini-acceptance.json</a
+      >: Two bounded attempts put a pending candidate ID in existingPostId and were rejected by
+      publication guards; the prompt now requires existingPostId null.
+    </li>
+  </ul>
+  <h2>Validation</h2>
+  <p>
+    <code>pnpm check</code>
+    passed. The focused recorded lifecycle E2E suite passed 8/8. An additional full 42-test sweep
+    passed 37 and exposed five unrelated feed-preview failures; the implementation did not change
+    the existing UI.
+  </p>
+  <h2>Residual limitations</h2>
+  <ul>
+    <li>
+      Shared synchronized in-memory PoC only; production database and durable queue behavior remain
+      unimplemented.
+    </li>
+    <li>Synthetic conversations measure these fixtures, not open-world correctness.</li>
+    <li>
+      Generated prose is inspected semantically and is not expected to be identical across runs.
+    </li>
+  </ul>
+</html>
