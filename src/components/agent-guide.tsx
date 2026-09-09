@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { usePreview } from '../preview/provider'
 import type { AgentRun, AgentRunStage } from '../preview/state'
 import { isAgentBusy } from '../preview/state'
+import { revealReplyStage } from './agent-progress'
 
 const stages = [
   ['planning', 'Plan queries'],
@@ -35,19 +36,6 @@ function stageState(run: AgentRun | undefined, index: number) {
   if (index < active) return 'complete'
   if (index === active) return run.status === 'failed' ? 'failed' : 'active'
   return 'queued'
-}
-
-function inspectStage(index: number) {
-  const outer = document.querySelector<HTMLDetailsElement>(
-    'details.reply-workflow-trace',
-  )
-  const stage = document.getElementById(
-    `reply-stage-${index + 1}`,
-  ) as HTMLDetailsElement | null
-  if (!outer || !stage) return
-  outer.open = true
-  stage.open = true
-  stage.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
 }
 
 export function AgentGuide() {
@@ -114,7 +102,7 @@ export function AgentGuide() {
               disabled={!run}
               onClick={() => {
                 dispatch({ type: 'setRunPlaying', playing: false })
-                inspectStage(index)
+                if (run) revealReplyStage(run, index + 1)
               }}
               aria-label={`Inspect stage ${index + 1}: ${label}`}
             >

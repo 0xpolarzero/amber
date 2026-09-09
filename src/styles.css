@@ -2883,6 +2883,58 @@ dialog::backdrop {
 .trace-record + .trace-record {
   margin-top: 7px;
 }
+.trace-post-preview > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  color: var(--ink);
+}
+.trace-post-preview + .trace-post-preview {
+  border-top: 1px solid var(--line);
+}
+.trace-post-preview > summary > svg {
+  width: 13px;
+  height: 13px;
+  color: var(--quiet);
+}
+.trace-post-preview[open] > summary > svg {
+  transform: rotate(180deg);
+}
+.trace-post-preview > div {
+  padding: 0 0 10px;
+  color: var(--secondary);
+  line-height: 1.5;
+}
+.trace-post-preview p + p {
+  margin-top: 6px;
+}
+.trace-post-diffs .post-update {
+  margin-top: 6px;
+}
+.trace-preference-diffs .field-diff {
+  margin: 0;
+}
+.reply-change-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 5px;
+}
+.reply-change-links button {
+  min-height: 32px;
+  padding: 2px 0;
+  color: var(--quiet);
+  font-size: 11px;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+}
+.reply-change-links button:hover {
+  color: var(--ink);
+  text-decoration-color: currentColor;
+}
 .trace-record.trace-query {
   display: flex;
   align-items: baseline;

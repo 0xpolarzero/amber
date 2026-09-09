@@ -5,6 +5,7 @@ import type {
   ReplyWorkflowTrace,
 } from '../preview/state'
 import { Icon } from './icon'
+import { PostChangeDiff } from './post-change-diff'
 import {
   TraceCollection,
   TraceStep,
@@ -105,7 +106,7 @@ export function AgentProgress({ run }: { run: AgentRun }) {
       <div className="workflow-trace-content">
         <ol className="workflow-trace-steps" aria-label="Task progress">
           <TraceStep
-            id="reply-stage-1"
+            id={replyStageId(run, 1)}
             number={1}
             title="Plan queries"
             status={statuses[0]}
@@ -120,7 +121,7 @@ export function AgentProgress({ run }: { run: AgentRun }) {
             ) : null}
           </TraceStep>
           <TraceStep
-            id="reply-stage-2"
+            id={replyStageId(run, 2)}
             number={2}
             title="Retrieve context"
             status={statuses[1]}
@@ -135,22 +136,15 @@ export function AgentProgress({ run }: { run: AgentRun }) {
             ) : null}
           </TraceStep>
           <TraceStep
-            id="reply-stage-3"
+            id={replyStageId(run, 3)}
             number={3}
             title="Generate answer"
             status={statuses[2]}
             open={statuses[2] === 'running'}
             summary={generationSummary(trace, statuses[2], run.frame)}
-          >
-            {statuses[2] === 'complete' || statuses[2] === 'running' ? (
-              <GeneratedEvidence
-                trace={trace}
-                visible={visibleFrame(run, statuses[2])}
-              />
-            ) : null}
-          </TraceStep>
+          ></TraceStep>
           <TraceStep
-            id="reply-stage-4"
+            id={replyStageId(run, 4)}
             number={4}
             title="Publish answer and changes"
             status={statuses[3]}
@@ -159,13 +153,13 @@ export function AgentProgress({ run }: { run: AgentRun }) {
           >
             {statuses[3] === 'complete' || statuses[3] === 'running' ? (
               <PublicationEvidence
-                trace={trace}
+                run={run}
                 visible={visibleFrame(run, statuses[3])}
               />
             ) : null}
           </TraceStep>
           <TraceStep
-            id="reply-stage-5"
+            id={replyStageId(run, 5)}
             number={5}
             title="Update memory"
             status={memoryStatus}
@@ -180,7 +174,7 @@ export function AgentProgress({ run }: { run: AgentRun }) {
             ) : null}
           </TraceStep>
           <TraceStep
-            id="reply-stage-6"
+            id={replyStageId(run, 6)}
             number={6}
             title="Resolve requests"
             status={addressingStatus}
@@ -408,15 +402,22 @@ function ContextEvidence({
   if (!visible) return <LoadingEvidence label="Searching…" />
   return (
     <>
-      <TraceCollection
-        title="Posts"
-        empty="No post results revealed yet."
-        items={posts.map((post) => ({
-          id: post.id,
-          title: post.title,
-          text: `${post.summary}\n${post.detail}`,
-        }))}
-      />
+      {posts.length ? (
+        <section className="trace-post-list" aria-label="Retrieved posts">
+          {posts.map((post) => (
+            <details className="trace-post-preview" key={post.id}>
+              <summary>
+                {post.title}
+                <Icon name="chevronDown" />
+              </summary>
+              <div>
+                <p>{post.summary}</p>
+                <p>{post.detail}</p>
+              </div>
+            </details>
+          ))}
+        </section>
+      ) : null}
       {userMessages.length ? (
         <TraceCollection
           title="Earlier messages"
@@ -477,49 +478,30 @@ function partialWords(text: string, frame: number) {
     .join(' ')
 }
 
-function GeneratedEvidence({
-  trace,
-  visible,
-}: {
-  trace: ReplyWorkflowTrace
-  visible: number
-}) {
-  if (!visible) return <LoadingEvidence label="Writing…" />
-  return (
-    <>
-      <div className="trace-record">
-        <strong>Answer</strong>
-        <p>{partialWords(trace.response.text, visible)}</p>
-      </div>
-      <TraceCollection
-        title="Post edits"
-        empty="No post changes revealed yet."
-        items={trace.response.postChanges.slice(0, visible).map((change) => ({
-          id: change.postId,
-          title: change.title,
-          text: `${change.summary}\n${change.detail}`,
-        }))}
-      />
-    </>
-  )
+export function answerPreview(run: AgentRun) {
+  if (run.published || run.stage === 'publishing')
+    return run.trace.response.text
+  return run.stage === 'generating' && run.frame > 0
+    ? partialWords(run.trace.response.text, run.frame)
+    : ''
 }
 
 function PublicationEvidence({
-  trace,
+  run,
   visible,
 }: {
-  trace: ReplyWorkflowTrace
+  run: AgentRun
   visible: number
 }) {
-  if (!visible)
+  if (!run.published)
     return <LoadingEvidence label="Publishing answer and edits together…" />
+  if (!visible || !run.outcome?.changes.length) return null
   return (
-    <div className="trace-record">
-      <strong>
-        Answer + {count(trace.response.postChanges.length, 'post edit')}
-      </strong>
-      <p>{trace.response.postChanges.map(({ title }) => title).join(' · ')}</p>
-    </div>
+    <section className="trace-post-diffs" aria-label="Applied post changes">
+      {run.outcome.changes.map((change) => (
+        <PostChangeDiff key={change.postId} change={change} expanded={false} />
+      ))}
+    </section>
   )
 }
 
@@ -531,21 +513,33 @@ function MemoryEvidence({
   visible: number
 }) {
   if (!visible) return <LoadingEvidence label="Checking preferences…" />
+  if (!trace.memory.operations.length) return <p>No changes needed.</p>
   return (
-    <TraceCollection
-      title="Preferences"
-      empty="No changes needed."
-      items={trace.memory.operations.map((operation, index) => ({
-        id: `${operation.id}-${index}`,
-        title:
-          operation.kind === 'delete'
-            ? 'Removed'
-            : operation.kind === 'update'
-              ? 'Updated'
-              : 'Added',
-        text: operation.text ?? 'Preference removed.',
-      }))}
-    />
+    <section className="trace-preference-diffs" aria-label="Preference changes">
+      {trace.memory.operations.map((operation) => {
+        const before = trace.memory.existing.find(
+          ({ id }) => id === operation.id,
+        )?.text
+        return (
+          <div className="field-diff" key={operation.id}>
+            {before ? (
+              <div className="diff-line removed">
+                <span aria-hidden="true">−</span>
+                <span className="visually-hidden">Removed: </span>
+                <del>{before}</del>
+              </div>
+            ) : null}
+            {operation.text ? (
+              <div className="diff-line added">
+                <span aria-hidden="true">+</span>
+                <span className="visually-hidden">Added: </span>
+                <ins>{operation.text}</ins>
+              </div>
+            ) : null}
+          </div>
+        )
+      })}
+    </section>
   )
 }
 
@@ -582,6 +576,49 @@ function AddressingEvidence({
           </div>
         )
       })}
+    </div>
+  )
+}
+
+export const replyStageId = (run: AgentRun, stage: number) =>
+  `reply-${run.messageId}-stage-${stage}`
+
+export function revealReplyStage(run: AgentRun, stage: number) {
+  const item = document.getElementById(
+    replyStageId(run, stage),
+  ) as HTMLDetailsElement | null
+  if (!item) return
+  const trace = item.closest<HTMLDetailsElement>('details.reply-workflow-trace')
+  if (trace) trace.open = true
+  item.open = true
+  const summary = item.querySelector<HTMLElement>('summary')
+  summary?.focus({ preventScroll: true })
+  summary?.scrollIntoView({ block: 'start', behavior: 'instant' })
+}
+
+export function ChangeLinks({ run }: { run: AgentRun }) {
+  const { dispatch } = usePreview()
+  if (!run.published) return null
+  const posts = run.outcome?.changes.length ?? 0
+  const preferences =
+    run.memory === 'done' ? (run.outcome?.memoryEvents.length ?? 0) : 0
+  if (!posts && !preferences) return null
+  const reveal = (stage: number) => {
+    dispatch({ type: 'setRunPlaying', playing: false })
+    revealReplyStage(run, stage)
+  }
+  return (
+    <div className="reply-change-links">
+      {posts ? (
+        <button type="button" onClick={() => reveal(4)}>
+          {count(posts, 'post')} edited
+        </button>
+      ) : null}
+      {preferences ? (
+        <button type="button" onClick={() => reveal(5)}>
+          {count(preferences, 'preference')} updated
+        </button>
+      ) : null}
     </div>
   )
 }

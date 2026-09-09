@@ -51,6 +51,13 @@ test('replays recorded output progressively and preserves publication boundaries
   await replay.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(stages.nth(1)).toHaveAttribute('open', '', { timeout: 5_000 })
   await expect(stages.nth(1)).toContainText('Noted')
+  const retrievedPost = stages
+    .nth(1)
+    .locator('details.trace-post-preview')
+    .filter({ hasText: 'Noted' })
+  await expect(retrievedPost).not.toHaveAttribute('open', '')
+  await retrievedPost.locator('summary').click()
+  await expect(retrievedPost).toHaveAttribute('open', '')
   await expect(stages.nth(1)).toContainText(
     'Offline voice transcription for macOS.',
   )
@@ -59,12 +66,21 @@ test('replays recorded output progressively and preserves publication boundaries
 
   await replay.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(stages.nth(2)).toHaveAttribute('open', '', { timeout: 6_000 })
-  await expect(stages.nth(2)).toContainText('Atlas has been updated')
+  await expect(slot.locator(':scope > .chat-bubble')).toContainText(
+    'Atlas has been updated',
+  )
   await replay.getByRole('button', { name: 'Pause', exact: true }).click()
-  await expect(stages.nth(2)).not.toContainText(preview.assistant.text, {
-    timeout: 100,
-  })
-  await expect(slot.locator(':scope > .chat-bubble')).toHaveCount(0)
+  await expect(slot.locator(':scope > .chat-bubble')).not.toContainText(
+    preview.assistant.text,
+    {
+      timeout: 100,
+    },
+  )
+  await expect(slot.locator(':scope > .chat-bubble')).toHaveAttribute(
+    'aria-busy',
+    'true',
+  )
+  await expect(stages.nth(2)).not.toContainText('Atlas has been updated')
   await expect(
     slot.getByRole('region', { name: 'Applied post changes' }),
   ).toHaveCount(0)
@@ -74,16 +90,27 @@ test('replays recorded output progressively and preserves publication boundaries
   await expect(stages.nth(3)).toContainText(
     'Publishing answer and edits together',
   )
-  await expect(slot.locator(':scope > .chat-bubble')).toHaveCount(0)
+  await expect(slot.locator(':scope > .chat-bubble')).toHaveAttribute(
+    'aria-busy',
+    'true',
+  )
   await expect(send).toBeDisabled()
 
-  await expect(slot.locator(':scope > .chat-bubble')).toHaveText(
-    preview.assistant.text,
+  await expect(slot.locator(':scope > .chat-bubble')).toHaveAttribute(
+    'aria-busy',
+    'false',
     { timeout: 3_000 },
   )
   await replay.getByRole('button', { name: 'Pause', exact: true }).click()
   const applied = slot.getByRole('region', { name: 'Applied post changes' })
+  await slot
+    .getByRole('button', { name: '3 posts edited', exact: true })
+    .click()
+  await expect(stages.nth(3)).toHaveAttribute('open', '')
   await expect(applied).toBeVisible()
+  await applied.locator('summary').filter({ hasText: 'Updated Atlas' }).click()
+  await expect(applied.locator('del').first()).toBeVisible()
+  await expect(applied.locator('ins').first()).toBeVisible()
   await expect(applied.getByText(/^Updated /)).toHaveCount(3)
   await expect(replay).toContainText('Update memory + Resolve requests')
   await expect(stages.nth(4)).toHaveAttribute('open', '')
@@ -109,6 +136,22 @@ test('replays recorded output progressively and preserves publication boundaries
   await expect(page.getByText('Unanswered', { exact: true })).toBeVisible()
   await expect(send).toBeEnabled()
   await expect(composer).toHaveValue('Draft stays local while the replay runs.')
+  await slot
+    .getByRole('button', { name: '1 preference updated', exact: true })
+    .click()
+  await expect(stages.nth(4)).toHaveAttribute('open', '')
+  await expect(stages.nth(4).locator('del')).toHaveText(
+    'Prefer detailed factual posts.',
+  )
+  await expect(stages.nth(4).locator('ins')).toHaveText('Prefer concise posts.')
+  await expect(stages.nth(4).locator('ins')).toBeInViewport()
+  await expect(slot.locator(':scope > .applied-changes')).toHaveCount(0)
+  await expect(slot.locator(':scope > .memory-saved')).toHaveCount(0)
+  await page.screenshot({
+    path: isMobile
+      ? '/private/tmp/amber-trace-diffs-mobile.png'
+      : '/private/tmp/amber-trace-diffs-desktop.png',
+  })
 
   await replay.getByRole('button', { name: 'Restart', exact: true }).click()
   await expect(slot.locator(':scope > .chat-bubble')).toHaveCount(0)
@@ -177,6 +220,9 @@ test('keeps failure controls secondary and preserves published output on retry',
   )
   await page.getByRole('button', { name: 'Retry request resolution' }).click()
   await expect(slot.locator(':scope > .chat-bubble')).toHaveCount(1)
+  await slot
+    .getByRole('button', { name: '3 posts edited', exact: true })
+    .click()
   await expect(
     slot.getByRole('region', { name: 'Applied post changes' }),
   ).toHaveCount(1)

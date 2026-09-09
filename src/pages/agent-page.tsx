@@ -1,20 +1,21 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AgentMemoryPanel } from '../components/agent-memory'
-import { AgentProgress } from '../components/agent-progress'
+import {
+  AgentProgress,
+  answerPreview,
+  ChangeLinks,
+} from '../components/agent-progress'
 import { Icon } from '../components/icon'
 import { ReplyComposer } from '../components/reply-composer'
 import { TraceCollection, TraceStep } from '../components/workflow-trace'
 import { usePreview } from '../preview/provider'
 import {
   type AgentConversation,
-  type AgentMemoryEvent,
   type AgentMessage,
   type AgentRun,
   isAgentBusy,
   isUnaddressed,
-  type PostChange,
-  type PostFieldChange,
   type TelegramSource,
   type WorkflowTrace,
 } from '../preview/state'
@@ -195,34 +196,11 @@ function AgentChat({
                   open={false}
                 />
               ) : null}
-              {message.changes?.length ? (
-                <AppliedChanges changes={message.changes} />
-              ) : null}
-              {reit(message.memoryEvents) ? (
-                <MemoryReceipt
-                  events={message.memoryEvents ?? []}
-                  onOpen={() => setActivePanel('memory')}
-                />
-              ) : null}
-              {message.usedMemories?.length || message.usedHistory?.length ? (
-                <details className="context-used">
-                  <summary>Context used</summary>
-                  {message.usedMemories?.map((memory) => (
-                    <p key={memory.id}>
-                      <strong>Preference</strong>
-                      {memory.text}
-                    </p>
-                  ))}
-                  {message.usedHistory?.map((text) => (
-                    <p key={text}>
-                      <strong>Earlier message</strong>
-                      {text}
-                    </p>
-                  ))}
-                </details>
-              ) : null}
               {message.replyRun ? (
-                <AgentProgress run={message.replyRun} />
+                <>
+                  <ChangeLinks run={message.replyRun} />
+                  <AgentProgress run={message.replyRun} />
+                </>
               ) : null}
             </article>
             {agent.run?.messageId === message.id ? (
@@ -230,7 +208,6 @@ function AgentChat({
                 key={`reply-${agent.run.messageId}`}
                 run={agent.run}
                 response={publishedResponse}
-                onOpenMemory={() => setActivePanel('memory')}
               />
             ) : null}
           </Fragment>
@@ -368,11 +345,9 @@ function AgentChat({
 function ReplySlot({
   run,
   response,
-  onOpenMemory,
 }: {
   run: AgentRun
   response?: AgentMessage
-  onOpenMemory: () => void
 }) {
   return (
     <article
@@ -382,34 +357,13 @@ function ReplySlot({
       tabIndex={-1}
     >
       <span className="chat-sender">Amber</span>
-      {response ? <p className="chat-bubble">{response.text}</p> : null}
+      {response || answerPreview(run) ? (
+        <p className="chat-bubble" aria-busy={!run.published}>
+          {response?.text ?? answerPreview(run)}
+        </p>
+      ) : null}
+      <ChangeLinks run={run} />
       <AgentProgress run={run} />
-      {response?.changes?.length ? (
-        <AppliedChanges changes={response.changes} />
-      ) : null}
-      {reit(response?.memoryEvents) ? (
-        <MemoryReceipt
-          events={response?.memoryEvents ?? []}
-          onOpen={onOpenMemory}
-        />
-      ) : null}
-      {response?.usedMemories?.length || response?.usedHistory?.length ? (
-        <details className="context-used">
-          <summary>Context used</summary>
-          {response.usedMemories?.map((memory) => (
-            <p key={memory.id}>
-              <strong>Preference</strong>
-              {memory.text}
-            </p>
-          ))}
-          {response.usedHistory?.map((text) => (
-            <p key={text}>
-              <strong>Earlier message</strong>
-              {text}
-            </p>
-          ))}
-        </details>
-      ) : null}
     </article>
   )
 }
@@ -596,10 +550,6 @@ const personName = (id: string | null) =>
 const countLabel = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? '' : 's'}`
 
-function reit<T>(items: readonly T[] | undefined) {
-  return Boolean(items?.length)
-}
-
 function MessageState({
   message,
 }: {
@@ -620,37 +570,6 @@ function MessageState({
   return null
 }
 
-function MemoryReceipt({
-  events,
-  onOpen,
-}: {
-  events: readonly AgentMemoryEvent[]
-  onOpen: () => void
-}) {
-  return (
-    <button type="button" className="memory-saved" onClick={onOpen}>
-      <Icon name="check" />
-      <span>
-        <strong>
-          {events.length === 1
-            ? memoryEventLabel(events[0])
-            : `${events.length} memory changes saved`}
-        </strong>
-        <span>{events.map(memoryEventText).join(' · ')}</span>
-      </span>
-    </button>
-  )
-}
-
-const memoryEventLabel = (event: AgentMemoryEvent) =>
-  event.kind === 'created'
-    ? 'Preference created'
-    : event.kind === 'replaced'
-      ? 'Preference replaced'
-      : 'Preference deleted'
-const memoryEventText = (event: AgentMemoryEvent) =>
-  event.after ?? event.before ?? ''
-
 function PostReference({ postId }: { postId: string }) {
   const { state } = usePreview()
   const post = [...state.posts, ...state.agentPosts].find(
@@ -669,114 +588,5 @@ function PostReference({ postId }: { postId: string }) {
       {post.project}
       <Icon name="chevron" />
     </Link>
-  )
-}
-
-function AppliedChanges({
-  changes,
-  expandedPostId,
-}: {
-  changes: readonly PostChange[]
-  expandedPostId?: string
-}) {
-  return (
-    <section className="applied-changes" aria-label="Applied post changes">
-      <p className="applied-summary">
-        <Icon name="check" />
-        {changes.length === 1
-          ? changes[0].kind === 'created'
-            ? '1 post created'
-            : '1 post updated'
-          : `${changes.length} posts changed`}
-      </p>
-      {changes.map((change) => (
-        <PostChangeDiff
-          key={change.postId}
-          change={change}
-          expanded={change.postId === expandedPostId}
-        />
-      ))}
-    </section>
-  )
-}
-
-function PostChangeDiff({
-  change,
-  expanded,
-}: {
-  change: PostChange
-  expanded: boolean
-}) {
-  const { state } = usePreview()
-  const post = [...state.posts, ...state.agentPosts].find(
-    (item) => item.id === change.postId,
-  )
-  return (
-    <details className="post-update" open={expanded}>
-      <summary>
-        <span>
-          {change.kind === 'created' ? 'Created' : 'Updated'} {change.project}
-        </span>
-        <span className="post-version">v{change.toVersion}</span>
-        <Icon name="chevronDown" />
-      </summary>
-      <section aria-label={`Changes to ${change.project}`}>
-        <div className="post-update-header">
-          <span>
-            {change.fields.length}{' '}
-            {change.fields.length === 1 ? 'field' : 'fields'}
-          </span>
-          {post ? (
-            <Link
-              to="/posts/$postId"
-              params={{ postId: post.id }}
-              aria-label={`View ${change.project} post`}
-            >
-              View post
-              <Icon name="chevron" />
-            </Link>
-          ) : null}
-        </div>
-        {change.fields.map((field) => (
-          <FieldDiff
-            key={field.field}
-            field={field}
-            created={change.kind === 'created'}
-          />
-        ))}
-      </section>
-    </details>
-  )
-}
-
-function FieldDiff({
-  field,
-  created,
-}: {
-  field: PostFieldChange
-  created: boolean
-}) {
-  const label =
-    field.field === 'detail'
-      ? 'Details'
-      : field.field === 'summary'
-        ? 'Summary'
-        : 'Title'
-  return (
-    <div className="field-diff">
-      <h2>{label}</h2>
-      {!created ? (
-        <div className="diff-line removed">
-          <span aria-hidden="true">−</span>
-          <span className="visually-hidden">Removed: </span>
-          <del>{field.before}</del>
-        </div>
-      ) : null}
-      <div className="diff-line added">
-        <span aria-hidden="true">+</span>
-        <span className="visually-hidden">Added: </span>
-        <ins>{field.after}</ins>
-      </div>
-    </div>
   )
 }
