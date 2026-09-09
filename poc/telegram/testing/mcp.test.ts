@@ -54,7 +54,7 @@ it('supplies valid provider schemas and rejects tools outside the task allowlist
     Effect.gen(function* () {
       expect(request.outputSchema).toMatchObject({
         type: 'object',
-        required: ['candidates', 'ignored'],
+        required: ['candidates', 'ignored', 'unresolved'],
       })
       expect(request.outputSchema).not.toHaveProperty('schema')
       return yield* request.callTool('readPage', { url: 'https://example.com' })
@@ -68,7 +68,7 @@ it('supplies valid provider schemas and rejects tools outside the task allowlist
     progress: () => Effect.void,
   })
   await expect(
-    Effect.runPromise(tasks.generate(S.Selection, 'selection', '', {}, {})),
+    Effect.runPromise(tasks.generate(S.ModelSelection, 'selection', '', {}, {})),
   ).rejects.toThrow('Tool is unavailable')
   expect(invoked).toBe(false)
 })

@@ -20,13 +20,17 @@ it.each(['irrelevant', 'failed-project'] as const)('handles an %s batch', async 
   const store = telegramStore(batch, initialPosts)
   const model: Ports['model'] = (request) =>
     Effect.gen(function* () {
-      if (request.task === 'selection')
+      if (request.task === 'selection') {
+        if (scenario === 'failed-project')
+          yield* request.callTool('searchPosts', { queries: ['Tab tidy'] })
         return scenario === 'irrelevant'
           ? {
               candidates: [],
               ignored: batch.newMessageIds.map((messageId) => ({ messageId, reason: 'Chatter' })),
+              unresolved: [],
             }
           : responses.selection
+      }
       const context = request.input as typeof S.ProjectContext.Type
       if (context.work.candidate.authorId === 'alex')
         return yield* Effect.fail(new S.Failure({ operation: 'post', message: 'Provider down' }))
@@ -59,11 +63,27 @@ it.each(['irrelevant', 'failed-project'] as const)('handles an %s batch', async 
 })
 
 it('rejects missing messages, wrong ownership, invented evidence and stale updates', () => {
-  expect(() => validateSelection(batch, responses.selection)).not.toThrow()
-  expect(() => validateSelection(batch, { candidates: [], ignored: [] })).toThrow()
+  const selection = {
+    ...responses.selection,
+    lookedUpProjects: [
+      {
+        targetId: 'tab-tidy',
+        targetKind: 'post' as const,
+        ownerId: 'bea',
+        ownerName: 'Bea',
+        project: 'Tab tidy',
+        knownLinks: [],
+        version: 2,
+      },
+    ],
+  }
+  expect(() => validateSelection(batch, selection)).not.toThrow()
+  expect(() =>
+    validateSelection(batch, { candidates: [], ignored: [], unresolved: [], lookedUpProjects: [] }),
+  ).toThrow()
   expect(() =>
     validateSelection(batch, {
-      ...responses.selection,
+      ...selection,
       candidates: [{ ...responses.selection.candidates[0], authorId: 'bea' }],
     }),
   ).toThrow()
@@ -73,26 +93,43 @@ it('rejects missing messages, wrong ownership, invented evidence and stale updat
       groupId: batch.groupId,
       candidateId: 'batch-1:1',
       revision: 0,
+      ownerId: 'bea',
       candidate: responses.selection.candidates[1],
     },
     messages: batch.messages,
-    posts: initialPosts,
+    selectedPost: initialPosts[0],
+    selectedCandidate: null,
     memories: [],
     clarifications: [],
-    unaddressed: [],
+    pendingRequests: [],
   }
   const draft = {
     proposal: responses.posts.bea.output,
-    evidence: { messages: [], posts: [], pages: [] },
+    evidence: { messages: [], projects: [], pages: [] },
   }
   expect(() => validateDraft(context, draft)).not.toThrow()
   expect(() =>
     validateDraft(context, {
       ...draft,
-      proposal: { ...draft.proposal, sources: [{ kind: 'web', url: 'https://invented.invalid' }] },
+      proposal: {
+        ...draft.proposal,
+        postEdit: {
+          ...(draft.proposal.postEdit as NonNullable<typeof draft.proposal.postEdit>),
+          sources: [{ kind: 'web', url: 'https://invented.invalid' }],
+        },
+      },
     }),
   ).toThrow()
   expect(() =>
-    validateDraft(context, { ...draft, proposal: { ...draft.proposal, expectedVersion: 0 } }),
+    validateDraft(context, {
+      ...draft,
+      proposal: {
+        ...draft.proposal,
+        postEdit: {
+          ...(draft.proposal.postEdit as NonNullable<typeof draft.proposal.postEdit>),
+          expectedVersion: 0,
+        },
+      },
+    }),
   ).toThrow()
 })

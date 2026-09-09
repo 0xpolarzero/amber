@@ -8,6 +8,7 @@ import * as S from './schemas'
 import type { Ports } from './tools'
 import * as T from './workflow'
 
+const selectorTools = ['searchPosts'] as const
 const projectTools = ['searchMessages', 'readMessages', 'searchPosts'] as const
 const nativeWebTools = ['search_web', 'read_url_content'] as const
 
@@ -19,11 +20,19 @@ export function telegramLayers(ports: Ports) {
       track(
         'selection',
         { batchId: input.batchId, groupId: input.groupId },
-        generate(S.Selection, 'selection', selectionPrompt, input, {}, [], []).pipe(
-          Effect.flatMap(({ value }) =>
+        generate(
+          S.ModelSelection,
+          'selection',
+          selectionPrompt,
+          input,
+          { batchId: input.batchId, groupId: input.groupId },
+          selectorTools,
+        ).pipe(
+          Effect.flatMap(({ value, evidence }) =>
             checked('selection-evidence', () => {
-              validateSelection(input, value)
-              return value
+              const selection = { ...value, lookedUpProjects: evidence.projects }
+              validateSelection(input, selection)
+              return selection
             }),
           ),
         ),
@@ -33,7 +42,7 @@ export function telegramLayers(ports: Ports) {
     T.LoadProject.toLayer(ports.loadProject),
     T.WritePost.toLayer((input) => {
       const scope = {
-        userId: input.work.candidate.authorId,
+        userId: input.work.ownerId,
         groupId: input.work.groupId,
         batchId: input.work.batchId,
       }

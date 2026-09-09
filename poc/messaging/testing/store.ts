@@ -1,4 +1,6 @@
 import { Effect, Schema } from 'effect'
+import { conditionalResolutions, type SavedResolution } from '../../shared/addressing'
+import { OwnerCoordinator } from '../../shared/owner-coordinator'
 import * as S from '../schemas'
 import type { Ports } from '../tools'
 
@@ -25,7 +27,11 @@ type TurnRecord = {
 const actionable = (intent: typeof S.Intent.Type) => intent !== 'informational'
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
-export function messagingStore(fixture: Fixture = {}) {
+export function messagingStore(
+  fixture: Fixture = {},
+  options: { coordinator?: OwnerCoordinator } = {},
+) {
+  const coordinator = options.coordinator ?? new OwnerCoordinator()
   const posts = new Map((fixture.posts ?? []).map((item) => [item.id, structuredClone(item)]))
   const memories = new Map((fixture.memories ?? []).map((item) => [item.id, structuredClone(item)]))
   const messages = new Map((fixture.messages ?? []).map((item) => [item.id, structuredClone(item)]))
@@ -34,7 +40,7 @@ export function messagingStore(fixture: Fixture = {}) {
   )
   const turns = new Map<string, TurnRecord>()
   const active = new Map<string, string>()
-  const addressingReasons = new Map<string, { outcome: 'answered' | 'ignored'; reason: string }>()
+  const addressingReasons = new Map<string, SavedResolution>()
   const progress: (Parameters<Ports['progress']>[0] & { at: number })[] = []
   const observations: { task: string; observation: Parameters<Ports['observe']>[1] }[] = []
   const matches = (haystack: string, terms: readonly string[]) =>
@@ -185,6 +191,14 @@ export function messagingStore(fixture: Fixture = {}) {
               kind: 'rejected' as const,
               receipt: failedReceipt(input),
               reason: `User already has active turn ${current}.`,
+            },
+          }
+        if (!coordinator.beginPrivateTurn(input.userId))
+          return {
+            result: {
+              kind: 'rejected' as const,
+              receipt: failedReceipt(input),
+              reason: 'Owner has an active Telegram write.',
             },
           }
         const userMessage: typeof S.Message.Type = {
@@ -417,6 +431,7 @@ export function messagingStore(fixture: Fixture = {}) {
         ) {
           record.status = 'failed'
           active.delete(turn.userId)
+          coordinator.endPrivateTurn(turn.userId)
         }
         return record
           ? { ...savedReceipt(turn.turnId, record), status: 'failed' as const }
@@ -488,27 +503,20 @@ export function messagingStore(fixture: Fixture = {}) {
         const record = turns.get(published.turn.turnId)
         const saved = record?.jobs.get('addressing')
         if (saved?.status === 'done') return saved
-        const allowed = new Map(published.requestSnapshot.map((request) => [request.id, request]))
-        const ids = new Set<string>()
-        for (const resolution of plan.resolutions) {
-          const request = allowed.get(resolution.requestMessageId)
-          if (
-            !request ||
-            request.userId !== published.turn.userId ||
-            request.addressed ||
-            ids.has(request.id)
-          )
-            throw new Error('Address only one unresolved request from the supplied snapshot.')
-          ids.add(request.id)
-        }
-        for (const resolution of plan.resolutions) {
+        const accepted = conditionalResolutions(
+          published.requestSnapshot,
+          messages,
+          addressingReasons,
+          plan.resolutions,
+          published.userMessage.id,
+        )
+        for (const resolution of accepted) {
           const request = messages.get(resolution.requestMessageId)
           if (!request) throw new Error('Request disappeared.')
+          if (request.userId !== published.turn.userId)
+            throw new Error('Request belongs to another owner.')
           messages.set(request.id, { ...request, addressed: true })
-          addressingReasons.set(request.id, {
-            outcome: resolution.outcome,
-            reason: resolution.reason,
-          })
+          addressingReasons.set(request.id, resolution)
         }
         const receipt = { task: 'addressing' as const, status: 'done' as const, reason: null }
         record?.jobs.set('addressing', receipt)
@@ -542,6 +550,7 @@ export function messagingStore(fixture: Fixture = {}) {
           record.status = status
           if (active.get(published.turn.userId) === published.turn.turnId)
             active.delete(published.turn.userId)
+          coordinator.endPrivateTurn(published.turn.userId)
           return {
             turnId: published.turn.turnId,
             userId: published.turn.userId,
@@ -573,6 +582,8 @@ export function messagingStore(fixture: Fixture = {}) {
         )
         if (newerTurn) throw new Error('Background retry is stale after a newer admitted turn.')
         if (active.has(input.userId)) throw new Error('User already has an active turn.')
+        if (!coordinator.beginPrivateTurn(input.userId))
+          throw new Error('Owner has an active private turn or Telegram write.')
         active.set(input.userId, input.turnId)
         record.status = 'published'
         return record.published

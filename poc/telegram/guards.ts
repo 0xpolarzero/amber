@@ -6,6 +6,8 @@ export function validateSelection(
 ) {
   const messages = new Map(batch.messages.map((message) => [message.id, message]))
   const fresh = new Set(batch.newMessageIds)
+  const associations = new Map(batch.associations.map((item) => [item.messageId, item]))
+  const lookedUp = new Map(selection.lookedUpProjects.map((item) => [item.targetId, item]))
   const covered = new Set<string>()
   for (const candidate of selection.candidates) {
     if (
@@ -14,24 +16,49 @@ export function validateSelection(
         (id) => fresh.has(id) && messages.get(id)?.authorId === candidate.authorId,
       )
     )
-      throw new Error('Candidate needs supplied evidence and a new message from its author.')
+      throw new Error('Candidate needs supplied evidence and a fresh message from its actor.')
+    if (candidate.target.kind === 'new') {
+      if (candidate.target.ownerId !== candidate.authorId)
+        throw new Error('New work needs firsthand maker evidence from its proposed owner.')
+    } else {
+      const targetId = candidate.target.targetId
+      const known = lookedUp.get(targetId)
+      const associated = candidate.messageIds
+        .map((id) => associations.get(id))
+        .find((association) => association?.targetId === targetId)
+      if (!known && !associated)
+        throw new Error(
+          'Existing target IDs must come from supplied associations or search results.',
+        )
+    }
     for (const id of candidate.messageIds) if (fresh.has(id)) covered.add(id)
   }
-  const ignored = new Set<string>()
-  for (const item of selection.ignored) {
-    if (!fresh.has(item.messageId) || covered.has(item.messageId) || ignored.has(item.messageId))
-      throw new Error('Ignore only distinct, new, unselected messages.')
-    ignored.add(item.messageId)
+  const disposed = new Set<string>()
+  for (const [kind, items] of [
+    ['ignored', selection.ignored],
+    ['unresolved', selection.unresolved],
+  ] as const) {
+    for (const item of items) {
+      if (!fresh.has(item.messageId) || covered.has(item.messageId) || disposed.has(item.messageId))
+        throw new Error(`${kind} must contain distinct, fresh, unselected messages.`)
+      if (kind === 'ignored' && /capacity|limit|budget|ambiguous|unsure|unclear/i.test(item.reason))
+        throw new Error('Capacity or ambiguity is unresolved work, not irrelevant chatter.')
+      disposed.add(item.messageId)
+    }
   }
-  if ([...fresh].some((id) => !covered.has(id) && !ignored.has(id)))
+  if ([...fresh].some((id) => !covered.has(id) && !disposed.has(id)))
     throw new Error('Every new message needs an explicit disposition.')
 }
 
 export function validateDraft(context: typeof S.ProjectContext.Type, draft: typeof S.Draft.Type) {
   const { proposal, evidence } = draft
-  if (proposal.kind === 'skip') return
   const messages = [...context.messages, ...evidence.messages]
-  for (const source of proposal.sources) {
+  const allSources = [
+    ...(proposal.postEdit?.sources ?? []),
+    ...(proposal.question?.sources ?? []),
+    ...proposal.resolutions.flatMap(({ sources }) => sources),
+  ]
+  for (const source of allSources) {
     if (
       source.kind === 'telegram'
         ? !messages.some((message) => message.id === source.messageId)
@@ -41,29 +68,37 @@ export function validateDraft(context: typeof S.ProjectContext.Type, draft: type
     )
       throw new Error('Cite only supplied messages or actual web tool results.')
   }
-  if (proposal.kind !== 'post') return
-  if (
-    !proposal.sources.some(
-      (source) =>
-        source.kind === 'telegram' &&
-        messages.some(
-          (message) =>
-            message.id === source.messageId && message.authorId === context.work.candidate.authorId,
-        ),
+  const resolutionIds = new Set<string>()
+  for (const resolution of proposal.resolutions) {
+    const request = context.pendingRequests.find(({ id }) => id === resolution.requestMessageId)
+    if (!request || request.addressed || resolutionIds.has(request.id))
+      throw new Error('Resolve each supplied unresolved request at most once.')
+    resolutionIds.add(request.id)
+  }
+  const edit = proposal.postEdit
+  if (!edit) return
+  if (edit.existingPostId === null) {
+    if (context.work.candidate.target.kind !== 'new' || edit.expectedVersion !== null)
+      throw new Error('Only a selected new target can create a post without a version.')
+    if (
+      !edit.sources.some(
+        (source) =>
+          source.kind === 'telegram' &&
+          messages.some(
+            (message) =>
+              message.id === source.messageId && message.authorId === context.work.ownerId,
+          ),
+      )
     )
-  )
-    throw new Error('A post needs cited evidence from its author.')
-  if (proposal.existingPostId === null) {
-    if (proposal.expectedVersion !== null) throw new Error('A new post has no existing version.')
+      throw new Error('New work needs cited firsthand maker evidence.')
     return
   }
-  const post = [...context.posts, ...evidence.posts].find(
-    (post) => post.id === proposal.existingPostId,
-  )
+  const post = context.selectedPost
   if (
     !post ||
-    post.authorId !== context.work.candidate.authorId ||
-    post.version !== proposal.expectedVersion
+    edit.existingPostId !== post.id ||
+    post.authorId !== context.work.ownerId ||
+    post.version !== edit.expectedVersion
   )
-    throw new Error('Update only a retrieved, owned post at its expected version.')
+    throw new Error('Update only the exact selected owned post at its expected version.')
 }

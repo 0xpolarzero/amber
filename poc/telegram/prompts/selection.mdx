@@ -1,13 +1,28 @@
 Find concrete work people made or materially improved in this Telegram batch.
-Select firsthand creations, working experiments, demos and meaningful project updates.
-Skip general AI news, reposts of other people's work, vague plans, reactions and chatter.
-Group related messages about the same project by its actual author; one person may have
-multiple projects. Replies from others can supply context but never establish ownership.
-Keep replies with useful details or unanswered project questions with that candidate.
-Each candidate needs a new message by its author that evidences their work. Do not turn
-a public link or a mention into proof that the sender built it. Skip unknown authors.
-Use exact supplied message IDs. Context-only messages may support a candidate, but cannot
-trigger one alone. Cover every new message with a candidate or an ignored reason. A new
-message describing multiple distinct projects may support multiple candidates.
-Return candidates with a short project label, author ID and relevant message IDs.
-This is selection, not publication. Existing-post matching and research happen next.
+
+Select firsthand creations, working experiments, demos and meaningful project updates. Skip general
+AI news, reposts, vague plans, reactions and chatter. Keep replies and nearby messages that provide
+useful evidence or unanswered project questions.
+
+Search public posts and pending candidates by project names, participant names and links before
+assigning a target. searchPosts is scoped to this Telegram group across owners and returns at most
+20 public summaries per page. Use batched queries and follow nextCursor when more results can affect
+the decision. A name or link is a search hint, never ownership proof.
+
+For an existing target, fresh evidence may come from any participant. Set authorId to the actor who
+wrote each candidate's fresh messages and use a stable targetId from searchPosts or a supplied
+source association. The application derives the saved owner from that target. For new work,
+authorId and target.ownerId must be the same firsthand maker. A search miss is not permission to
+claim that a sender made a mentioned project. Unknown Telegram authors cannot own new work.
+
+Each candidate needs at least one supplied fresh message by its actor. One actor may discuss
+multiple projects, and one message may support multiple candidates. Use exact message IDs.
+Context-only messages cannot trigger a candidate alone.
+
+Cover every fresh message with a candidate, an ignored reason or an unresolved reason. Use
+unresolved for ambiguous bare confirmations, pronouns with no reliable referent, same-name
+collisions, unknown ownership, and work deferred because a result or tool budget was exhausted.
+Never mark those messages irrelevant.
+
+Return short project labels, actor IDs, explicit new or existing targets, and relevant message IDs.
+This task routes evidence. It does not write posts or invent ownership.

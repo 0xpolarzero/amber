@@ -45,7 +45,7 @@ export function createModelTasks(ports: ModelPorts) {
     Effect.gen(function* () {
       let calls = 0
       const messages: (typeof S.TelegramMessage.Type)[] = []
-      const posts: (typeof S.Post.Type)[] = []
+      const projects: (typeof S.PublicProject.Type)[] = []
       const pages: (typeof S.WebPage.Type)[] = []
       const value = yield* ports.model({
         task,
@@ -75,7 +75,7 @@ export function createModelTasks(ports: ModelPorts) {
                 definition.output as Schema.Codec<unknown, unknown>,
               )(rawResult)
               if (key === 'searchPosts')
-                posts.push(...Schema.decodeUnknownSync(Schema.Array(S.Post))(result))
+                projects.push(...Schema.decodeUnknownSync(S.ProjectSearchPage)(result).items)
               if (key === 'readMessages' || key === 'searchMessages')
                 messages.push(...Schema.decodeUnknownSync(Schema.Array(S.TelegramMessage))(result))
               return result
@@ -93,7 +93,7 @@ export function createModelTasks(ports: ModelPorts) {
       })
       return yield* checked('structured-output', () => ({
         value: Schema.decodeUnknownSync(schema)(value),
-        evidence: { messages, posts, pages },
+        evidence: { messages, projects, pages },
       }))
     })
 

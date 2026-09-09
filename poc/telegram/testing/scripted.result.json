@@ -20,12 +20,33 @@
   ],
   "questions": [
     {
+      "id": "batch-1:0@0:question",
       "authorId": "alex",
       "postId": "batch-1:0",
+      "pendingCandidateId": null,
       "text": "Does Noted support Mandarin transcription?",
       "needsReply": true
     }
   ],
+  "notifications": [
+    {
+      "id": "batch-1:0@0:notification",
+      "authorId": "alex",
+      "role": "assistant",
+      "intent": "informational",
+      "text": "1 post edited · 1 question asked",
+      "sourceIds": ["102", "104", "https://noted.example"]
+    },
+    {
+      "id": "batch-1:1@0:notification",
+      "authorId": "bea",
+      "role": "assistant",
+      "intent": "informational",
+      "text": "1 post edited",
+      "sourceIds": ["103"]
+    }
+  ],
+  "resolutions": {},
   "diffs": [
     {
       "postId": "tab-tidy",
@@ -53,6 +74,7 @@
       "reason": "Reaction to AI news, not work the sender made."
     }
   ],
+  "unresolved": [],
   "sources": {
     "batch-1:0": [
       {
@@ -74,5 +96,10 @@
         "messageId": "103"
       }
     ]
+  },
+  "associations": {
+    "102": ["batch-1:0"],
+    "103": ["tab-tidy"],
+    "104": ["batch-1:0"]
   }
 }

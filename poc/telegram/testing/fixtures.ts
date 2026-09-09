@@ -11,6 +11,7 @@ const message = (id: string, authorId: string, text: string, replyToId: string |
 export const batch: typeof S.BatchContext.Type = {
   batchId: 'batch-1',
   groupId: 'ai-builders',
+  associations: [],
   newMessageIds: ['101', '102', '103', '104', '105'],
   messages: [
     message('90', 'dana', 'I released Clipbook last month. It saves copied links.'), // Old context.

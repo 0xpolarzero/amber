@@ -100,7 +100,10 @@ it('uses Gemini to create Alex’s post, update Bea’s post and ignore unrelate
   expect(store.diffs).toHaveLength(1)
   expect(store.ignored.map((item) => item.messageId)).toContain('101')
   expect(research.some((call) => call.tool === 'searchPosts')).toBe(true)
-  expect(configurations.find(({ task }) => task === 'selection')?.declaredTools).toEqual(['finish'])
+  expect(configurations.find(({ task }) => task === 'selection')?.declaredTools).toEqual([
+    'finish',
+    'amber/searchPosts',
+  ])
   expect(configurations.filter(({ task }) => task === 'post')).toHaveLength(2)
   expect(configurations.find(({ task }) => task === 'post')?.declaredTools).toEqual([
     'finish',

@@ -167,7 +167,7 @@ it('captures the guided preview from one real extraction batch and one real mess
       groupId: batch.groupId,
       messages: batch.messages,
       posts: extraction.posts,
-      questions: extraction.questions.map((question, index) => ({
+      questions: extraction.questions.map(({ id: _id, ...question }, index) => ({
         id: `preview-extracted-question-${index + 1}`,
         ...question,
       })),

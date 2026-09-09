@@ -7,6 +7,10 @@ import type * as T from './workflow'
 const Query = Schema.Struct({
   query: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(240)),
 })
+const ProjectQuery = Schema.Struct({
+  queries: Schema.Array(Query.fields.query).check(Schema.isMinLength(1), Schema.isMaxLength(10)),
+  cursor: Schema.optionalKey(Schema.Int.check(Schema.isGreaterThanOrEqualTo(0))),
+})
 export const tools = {
   searchMessages: {
     description:
@@ -20,9 +24,10 @@ export const tools = {
     output: Schema.Array(S.TelegramMessage).check(Schema.isMaxLength(20)),
   },
   searchPosts: {
-    description: 'Search existing posts owned by the candidate author to avoid duplicate projects.',
-    input: Query,
-    output: Schema.Array(S.Post).check(Schema.isMaxLength(10)),
+    description:
+      'Search public posts and pending candidates in this Telegram group across owners. Pass up to ten project/name/link hints. Results are stable public summaries, not ownership proof. Follow nextCursor until null when a query can match more than 20 records.',
+    input: ProjectQuery,
+    output: S.ProjectSearchPage,
   },
 } as const
 export type ToolName = keyof typeof tools
@@ -42,7 +47,8 @@ export type Ports = {
   // the CLI process when its Effect scope ends. Provider/model ID is configuration.
   model: (request: ModelRequest) => Run<unknown>
   // Enforce scope here, outside model control. Parameterized database reads; bounded results.
-  // Preserve actual source IDs/final URLs and journal tool observations for audit.
+  // Preserve actual source IDs/final URLs and journal tool observations for audit. searchPosts
+  // is group-scoped across owners and returns only PublicProject fields with pagination.
   // A successful search is not proof of ownership.
   readTool: (scope: Scope, name: ToolName, input: unknown) => Run<unknown>
   // Durable status projection keyed by execution + task + attempt; sanitized errors only.
@@ -60,8 +66,8 @@ export type Ports = {
   // Persist selection + ignored reasons. Assign stable candidate IDs once (batchId + ordinal).
   // Retries return the saved list. Never let the model assign job IDs or authenticated owners.
   queueProjects: Handler<typeof T.QueueProjects>
-  // Load candidate evidence, replied-to/album messages, current author's posts, all their
-  // memories, outstanding requests and linked user clarifications. Re-read on a failed candidate's next attempt.
+  // Load only the exact selected post/candidate, that owner's target-linked pending requests,
+  // memories, relevant source associations and linked user clarifications. Re-read after failure.
   loadProject: Handler<typeof T.LoadProject>
   // Transaction under the author's write lock, shared with chat publication. Wait behind an
   // active chat turn. Check existing post version; on conflict re-read and regenerate.

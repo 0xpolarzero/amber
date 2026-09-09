@@ -128,12 +128,16 @@
   ],
   "addressing": {
     "request-language": {
+      "requestMessageId": "request-language",
       "outcome": "answered",
-      "reason": "User confirmed Mandarin support."
+      "reason": "User confirmed Mandarin support.",
+      "sourceId": "turn-main:user"
     },
     "request-price": {
+      "requestMessageId": "request-price",
       "outcome": "ignored",
-      "reason": "User explicitly said to skip pricing."
+      "reason": "User explicitly said to skip pricing.",
+      "sourceId": "turn-main:user"
     }
   }
 }

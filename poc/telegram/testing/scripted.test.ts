@@ -28,7 +28,9 @@ it('turns a pulled batch into a new post, an updated post and one question for t
       if (request.task === 'selection') {
         expect(request.instruction).toContain(selectionPrompt)
         expect(request.input).toEqual(batch)
-        expect(request.tools).toEqual([])
+        expect(request.tools.map(({ name }) => name)).toEqual(['searchPosts'])
+        const result = yield* request.callTool('searchPosts', { queries: ['Noted', 'Tab tidy'] })
+        observations.push({ task: 'selection', tool: 'searchPosts', result })
         return responses.selection
       }
       expect(request.task).toBe('post')
@@ -85,12 +87,12 @@ it('turns a pulled batch into a new post, an updated post and one question for t
       ])
       expect(store.ignored.map((item) => item.messageId)).toEqual(['101'])
       expect(store.questions).toEqual([
-        {
+        expect.objectContaining({
           authorId: 'alex',
           postId: 'batch-1:0',
           needsReply: true,
           text: 'Does Noted support Mandarin transcription?',
-        },
+        }),
       ])
       expect(store.diffs).toEqual([
         {
@@ -99,7 +101,7 @@ it('turns a pulled batch into a new post, an updated post and one question for t
           after: store.posts[1],
         },
       ])
-      expect(store.sources.get('batch-1:0')).toEqual(responses.posts.alex.output.sources)
+      expect(store.sources.get('batch-1:0')).toEqual(responses.posts.alex.output.postEdit?.sources)
 
       // Research uses the real tool allowlist and returned evidence, not an empty stub.
       expect(observations).toEqual(
@@ -113,7 +115,14 @@ it('turns a pulled batch into a new post, an updated post and one question for t
               pageContent: expect.stringContaining('https://noted.example'),
             }),
           }),
-          { task: 'bea', tool: 'searchPosts', result: initialPosts },
+          {
+            task: 'bea',
+            tool: 'searchPosts',
+            result: expect.objectContaining({
+              items: [expect.objectContaining({ targetId: 'tab-tidy', ownerId: 'bea' })],
+              nextCursor: null,
+            }),
+          },
         ]),
       )
       const writers = requests
