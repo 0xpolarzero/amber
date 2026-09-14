@@ -1,7 +1,7 @@
 import type { AgentMessage } from '../preview/state'
 import { Icon } from './icon'
 import { PostChangeDiff } from './post-change-diff'
-import { TraceStep } from './workflow-trace'
+import { TraceCollection, TraceStep } from './workflow-trace'
 
 export function RecordedWorkflowTrace({
   trace,
@@ -32,6 +32,13 @@ export function RecordedWorkflowTrace({
               summary={stage.summary}
               status={stage.status}
             >
+              {stage.sections?.map((section, sectionIndex) => (
+                <TraceCollection
+                  // biome-ignore lint/suspicious/noArrayIndexKey: Immutable recorded sections can repeat tool names.
+                  key={`${sectionIndex}-${section.title}`}
+                  {...section}
+                />
+              ))}
               {stage.changes?.length ? (
                 <section
                   className="trace-post-diffs"
@@ -47,7 +54,7 @@ export function RecordedWorkflowTrace({
                 </section>
               ) : null}
               <details className="trace-nested">
-                <summary>Recorded evidence</summary>
+                <summary>Raw data</summary>
                 <pre>{stage.detail}</pre>
               </details>
             </TraceStep>

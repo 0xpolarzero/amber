@@ -6,6 +6,12 @@ import type {
   AgentMessage,
   PostChange,
 } from '../preview/state'
+import { postLinks } from './post-links'
+import {
+  type Call,
+  recordedContextStage,
+  recordedStage,
+} from './recorded-stage'
 
 type Snapshot = {
   importedAt: string
@@ -26,76 +32,10 @@ type StoredPost = {
   title: string
   summary: string
   detail: string
-}
-type Call = {
-  task: string
-  input: unknown
-  output?: unknown
-  observations: unknown[]
-  status: string
-  error?: string
+  version?: number
 }
 const record = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
-const count = (value: unknown, noun: string, plural = `${noun}s`) =>
-  Array.isArray(value)
-    ? `${value.length} ${value.length === 1 ? noun : plural}`
-    : null
-
-function recordedStage(
-  call: Call,
-): NonNullable<AgentMessage['recordedTrace']>['stages'][number] {
-  const output = record(call.output)
-  const labels: Record<string, string> = {
-    selection: 'Select projects',
-    post: 'Prepare post and follow-up',
-    'query-planner': 'Plan context search',
-    responder: 'Prepare reply',
-    respond: 'Prepare reply',
-    memory: 'Review preferences',
-    addressing: 'Review pending requests',
-  }
-  const details = [
-    count(output.candidates, 'selected project'),
-    count(output.ignored, 'ignored message'),
-    count(output.unresolved, 'unresolved message'),
-    count(output.queries, 'planned query', 'planned queries'),
-    count(output.postChanges, 'proposed post change'),
-    count(output.operations, 'proposed preference change'),
-    count(output.resolutions, 'proposed request resolution'),
-  ].filter(Boolean)
-  const edit = record(output.postEdit)
-  if (typeof edit.title === 'string') details.unshift(edit.title)
-  if (output.question) details.push('Follow-up question prepared')
-  if (typeof output.reason === 'string' && !details.length)
-    details.push(output.reason)
-  return {
-    label: labels[call.task] ?? call.task,
-    status:
-      call.status === 'succeeded'
-        ? 'complete'
-        : call.status === 'failed'
-          ? 'failed'
-          : 'running',
-    summary:
-      call.status === 'failed'
-        ? 'Model call failed'
-        : call.status !== 'succeeded'
-          ? 'Model call in progress'
-          : details.join(' · ') || 'Model output recorded',
-    detail: JSON.stringify(
-      {
-        task: call.task,
-        input: call.input,
-        tools: call.observations,
-        output: call.output,
-        error: call.error,
-      },
-      null,
-      2,
-    ),
-  }
-}
 
 type RecordedMessage = {
   id: string
@@ -120,7 +60,12 @@ type Import = {
     status: string
     input: { messages: Snapshot['messages'] }
     calls: Call[]
-    result?: { questions: RecordedMessage[]; notifications: RecordedMessage[] }
+    result?: {
+      questions: RecordedMessage[]
+      notifications: RecordedMessage[]
+      posts?: StoredPost[]
+      diffs?: { postId: string; before: StoredPost; after: StoredPost }[]
+    }
   }[]
 }
 const emptyConversation = (): AgentConversation => ({
@@ -200,8 +145,14 @@ type Messaging = {
     }
   }[]
 }
-function recordedTurnStages(turn: Messaging['turns'][number]) {
-  const stages = turn.calls.map(recordedStage)
+function recordedTurnStages(
+  turn: Messaging['turns'][number],
+  people: Record<string, { name: string }>,
+) {
+  const stages = turn.calls.flatMap((call) => {
+    const context = recordedContextStage(call, people)
+    return [...(context ? [context] : []), recordedStage(call, people)]
+  })
   const diffs = turn.receipt?.diffs
   if (!diffs?.length) return stages
   const changes: PostChange[] = diffs.map(({ postId, before, after }) => ({
@@ -214,13 +165,10 @@ function recordedTurnStages(turn: Messaging['turns'][number]) {
       .filter((field) => before[field] !== after[field])
       .map((field) => ({ field, before: before[field], after: after[field] })),
   }))
-  const responderIndex = turn.calls.reduce(
-    (last, { task, status }, index) =>
-      (task === 'responder' || task === 'respond') && status === 'succeeded'
-        ? index
-        : last,
-    -1,
+  const responderIndex = stages.findIndex(
+    (stage) => stage.label === 'Prepare reply',
   )
+
   stages.splice(responderIndex < 0 ? stages.length : responderIndex + 1, 0, {
     label: 'Update posts',
     summary: `${changes.length} ${changes.length === 1 ? 'post updated' : 'posts updated'}`,
@@ -269,11 +217,70 @@ export function projectRealFeed(
       const addressed = run.state.pendingRequests.find(
         ({ id }) => id === message.id,
       )?.addressed
+      const writer = batch.calls.find((call) => {
+        const work = record(record(call.input).work)
+        return (
+          call.task === 'post' &&
+          call.status === 'succeeded' &&
+          typeof work.candidateId === 'string' &&
+          message.id.startsWith(`${work.candidateId}@${work.revision ?? 0}:`)
+        )
+      })
+      const context = record(writer?.input)
+      const edit = record(record(writer?.output).postEdit)
+      const targetId =
+        message.postId ??
+        (writer
+          ? (record(context.selectedPost).id ??
+            record(context.selectedCandidate).id ??
+            record(context.work).candidateId)
+          : undefined)
+      const postId = typeof targetId === 'string' ? targetId : undefined
+      const selectedIds = record(record(context.work).candidate).messageIds
+      const relatedMessages = Array.isArray(selectedIds)
+        ? snapshot.messages.filter((item) => selectedIds.includes(item.id))
+        : batch.input.messages
+      const after = batch.result?.posts?.find((post) => post.id === postId)
+      const diff = batch.result?.diffs?.find((diff) => diff.postId === postId)
+      const created = Boolean(after && writer && edit.existingPostId === null)
+      const changes: PostChange[] = diff
+        ? [
+            {
+              kind: 'updated',
+              postId: diff.postId,
+              project: diff.after.title,
+              fromVersion: diff.before.version,
+              toVersion: diff.after.version ?? 1,
+              fields: (['title', 'summary', 'detail'] as const)
+                .filter((field) => diff.before[field] !== diff.after[field])
+                .map((field) => ({
+                  field,
+                  before: diff.before[field],
+                  after: diff.after[field],
+                })),
+            },
+          ]
+        : created && after
+          ? [
+              {
+                kind: 'created',
+                postId: after.id,
+                project: after.title,
+                toVersion: after.version ?? 1,
+                fields: (['title', 'summary', 'detail'] as const).map(
+                  (field) => ({ field, before: '', after: after[field] }),
+                ),
+              },
+            ]
+          : []
       const recorded: AgentMessage = {
         id: message.id,
         sender: 'amber',
-        text: message.text,
-        postId: message.postId ?? undefined,
+        text:
+          !message.needsReply && changes.length
+            ? `${created ? 'Created' : 'Updated'} “${changes[0].project}”.`
+            : message.text,
+        postId,
         intent: message.needsReply ? 'question' : 'informational',
         needsReply: Boolean(message.needsReply),
         ...(addressed ? { resolution: 'answered' as const } : {}),
@@ -283,9 +290,20 @@ export function projectRealFeed(
           stages: [
             {
               label: 'Read Telegram messages',
-              summary: `${batch.input.messages.length} messages in this batch`,
+              summary: `${relatedMessages.length} related message${relatedMessages.length === 1 ? '' : 's'}`,
               status: 'complete',
-              detail: batch.input.messages
+              sections: [
+                {
+                  title: 'Telegram messages',
+                  empty: 'No messages.',
+                  items: relatedMessages.map((item) => ({
+                    id: item.id,
+                    title: people[item.authorId ?? '']?.name ?? 'Unknown',
+                    text: item.text,
+                  })),
+                },
+              ],
+              detail: relatedMessages
                 .map(
                   (item) =>
                     `${people[item.authorId ?? '']?.name ?? 'Unknown'}: ${item.text}`,
@@ -298,17 +316,26 @@ export function projectRealFeed(
                 if (!('work' in input)) return true
                 if (record(input.work).ownerId !== message.authorId)
                   return false
-                if (!message.postId) return true
+                if (!postId) return true
                 const work = record(input.work)
                 const targetId =
                   record(input.selectedPost).id ??
                   record(input.selectedCandidate).id ??
                   work.candidateId
-                return (
-                  typeof targetId !== 'string' || targetId === message.postId
-                )
+                return typeof targetId !== 'string' || targetId === postId
               })
-              .map(recordedStage),
+              .map((call) => recordedStage(call, people)),
+            ...(changes.length
+              ? [
+                  {
+                    label: created ? 'Create post' : 'Update post',
+                    summary: changes[0].project,
+                    status: 'complete' as const,
+                    changes,
+                    detail: JSON.stringify({ changes }),
+                  },
+                ]
+              : []),
           ],
         },
       }
@@ -332,10 +359,10 @@ export function projectRealFeed(
           return {
             ...original.get(message.id),
             id: message.id,
-            text: message.text,
+            text: original.get(message.id)?.text ?? message.text,
             sender: message.role === 'assistant' ? 'amber' : 'user',
             intent: message.intent,
-            postId: message.linkedPostId ?? undefined,
+            postId: message.linkedPostId ?? original.get(message.id)?.postId,
             needsReply:
               message.role === 'assistant' &&
               message.intent !== 'informational',
@@ -350,7 +377,7 @@ export function projectRealFeed(
                   recordedTrace: {
                     group: snapshot.groupName,
                     model: 'DeepSeek V4.1 Flash · OpenRouter',
-                    stages: recordedTurnStages(turn),
+                    stages: recordedTurnStages(turn, people),
                   },
                 }
               : {}),
@@ -365,6 +392,12 @@ export function projectRealFeed(
         ? snapshot.messages.filter(({ id }) => id === source.messageId)
         : [],
     )
+    const links = postLinks(
+      telegram.map(({ text }) => text),
+      sources.flatMap((source) =>
+        source.kind === 'web' && source.url ? [source.url] : [],
+      ),
+    )
     const publishedAt = telegram[0]?.date ?? snapshot.importedAt
     return {
       id: post.id,
@@ -378,7 +411,9 @@ export function projectRealFeed(
       sourceUrl:
         telegram.find((message) => message.sourceUrl)?.sourceUrl ?? undefined,
       project: post.title,
-      domain: '',
+      projectUrl: links[0],
+      projectUrls: links,
+      domain: links[0] ? new URL(links[0]).hostname : '',
       mark: post.title.slice(0, 1),
       bookmarks: 0,
       comments: [],

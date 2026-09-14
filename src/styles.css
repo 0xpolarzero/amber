@@ -3501,3 +3501,29 @@ main.guide-active ~ .toast {
   color: var(--muted);
   padding: 0 12px;
 }
+
+.post-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 12px 0;
+  font-size: 12px;
+}
+.post-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  text-decoration: none;
+}
+.post-links a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+.post-links svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}

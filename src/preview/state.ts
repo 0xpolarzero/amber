@@ -245,6 +245,17 @@ export type AgentMessage = {
       summary: string
       status: 'complete' | 'running' | 'failed'
       changes?: readonly PostChange[]
+      sections?: readonly {
+        title: string
+        empty: string
+        collapsible?: boolean
+        items: readonly {
+          id: string
+          title: string
+          text: string
+          href?: string
+        }[]
+      }[]
       detail: string
     }[]
   }

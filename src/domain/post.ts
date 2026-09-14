@@ -36,6 +36,7 @@ export const Post = Schema.Struct({
   bookmarks: Schema.Number,
   sourceUrl: Schema.optional(Schema.String),
   projectUrl: Schema.optional(Schema.String),
+  projectUrls: Schema.optional(Schema.Array(Schema.String)),
   question: Schema.optional(Schema.String),
   comments: Schema.Array(Comment),
 })

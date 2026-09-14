@@ -35,22 +35,38 @@ export function PostHeading({ post }: { post: Post }) {
 }
 export function ProjectLink({ post }: { post: Post }) {
   const { state, notify } = usePreview()
-  if (state.realDemo)
-    return post.projectUrl ? (
-      <a
-        className="project-link"
-        href={post.projectUrl}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <span className="project-symbol">{post.mark}</span>
-        <span className="project-info">
-          <strong>{post.project}</strong>
-          <span>{new URL(post.projectUrl).hostname}</span>
-        </span>
-        <Icon name="arrow" />
-      </a>
+  if (state.realDemo) {
+    const urls = post.projectUrls ?? (post.projectUrl ? [post.projectUrl] : [])
+    return urls.length || post.sourceUrl ? (
+      <nav className="post-links" aria-label={`Links for ${post.title}`}>
+        {urls.map((href) => {
+          const url = new URL(href)
+          const label =
+            url.hostname === 'github.com'
+              ? url.hostname + url.pathname.split('/').slice(0, 3).join('/')
+              : url.hostname
+          return (
+            <a
+              key={href}
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              title={href}
+            >
+              {label}
+              <Icon name="arrow" />
+            </a>
+          )
+        })}
+        {post.sourceUrl ? (
+          <a href={post.sourceUrl} target="_blank" rel="noreferrer">
+            <Icon name="telegram" />
+            Telegram
+          </a>
+        ) : null}
+      </nav>
     ) : null
+  }
   return (
     <button
       type="button"

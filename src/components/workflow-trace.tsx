@@ -67,10 +67,12 @@ export function TraceCollection({
   title,
   empty,
   items,
+  collapsible = false,
 }: {
   title: string
   empty: string
-  items: readonly { id: string; title: string; text: string }[]
+  collapsible?: boolean
+  items: readonly { id: string; title: string; text: string; href?: string }[]
 }) {
   return (
     <div className="trace-collection">
@@ -78,8 +80,30 @@ export function TraceCollection({
       {items.length ? (
         items.map((item) => (
           <div className="trace-record" key={item.id}>
-            {item.title ? <span>{item.title}</span> : null}
-            <p>{item.text}</p>
+            {collapsible ? (
+              <details className="trace-nested">
+                <summary>
+                  {item.title || item.href || 'Retrieved content'}
+                </summary>
+                {item.href && /^https?:\/\//i.test(item.href) ? (
+                  <a href={item.href} target="_blank" rel="noreferrer">
+                    Open source
+                  </a>
+                ) : null}
+                <p>{item.text}</p>
+              </details>
+            ) : (
+              <>
+                {item.href && /^https?:\/\//i.test(item.href) ? (
+                  <a href={item.href} target="_blank" rel="noreferrer">
+                    {item.title || item.href}
+                  </a>
+                ) : item.title ? (
+                  <span>{item.title}</span>
+                ) : null}
+                <p>{item.text}</p>
+              </>
+            )}
           </div>
         ))
       ) : (

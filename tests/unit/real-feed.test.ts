@@ -127,7 +127,7 @@ describe('real Telegram preview', () => {
       { label: 'Prepare post and follow-up', status: 'failed' },
       { label: 'Prepare post and follow-up', status: 'complete' },
     ])
-    expect(stages?.[1].summary).toBe('1 selected project · 0 ignored messages')
+    expect(stages?.[1].summary).toBe('1 selected project')
     expect(JSON.parse(stages?.[2].detail ?? '{}')).toMatchObject({
       input: { work: { ownerId: 'owner' } },
       tools: [],
