@@ -340,7 +340,9 @@ export function projectRealFeed(
               message.role === 'assistant' &&
               message.intent !== 'informational',
             resolution:
-              message.addressed && message.intent !== 'informational'
+              message.role === 'assistant' &&
+              message.addressed &&
+              message.intent !== 'informational'
                 ? 'answered'
                 : undefined,
             ...(turn && message.role === 'assistant'

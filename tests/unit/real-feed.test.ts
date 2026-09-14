@@ -153,6 +153,32 @@ describe('real Telegram preview', () => {
     ).toBe(false)
   })
 
+  it('does not display user requests as answered assistant questions', () => {
+    const feed = projectRealFeed(snapshot, run, {
+      snapshotHash: 'same',
+      state: {
+        posts: run.state.posts,
+        memories: [],
+        messages: [
+          {
+            id: 'user-request',
+            userId: 'owner',
+            text: 'Shorten my post.',
+            role: 'user',
+            intent: 'request',
+            linkedPostId: 'p1',
+            addressed: true,
+            turnId: 'turn',
+          },
+        ],
+      },
+      turns: [],
+    })
+    const message = feed.realDemo?.conversations.owner.messages[0]
+    expect(message?.needsReply).toBe(false)
+    expect(message?.resolution).toBeUndefined()
+  })
+
   it('does not publish outputs of a failed batch', () => {
     const feed = projectRealFeed(snapshot, {
       ...run,
