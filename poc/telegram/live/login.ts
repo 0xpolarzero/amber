@@ -50,7 +50,9 @@ export async function loginWithCode(
   }
   showDelivery()
   while (sent instanceof Api.auth.SentCode) {
-    const code = (await io.secret('Login code (or /resend): ')).trim()
+    const code = (
+      await io.prompt(sent.nextType ? 'Login code (or /resend): ' : 'Login code: ')
+    ).trim()
     if (code === '/resend') {
       if (!sent.nextType) {
         io.log('No fallback offered. Stop with Ctrl+C.')

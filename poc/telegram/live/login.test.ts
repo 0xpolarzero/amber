@@ -29,10 +29,13 @@ it('waits for Telegram timeout, resends with the current hash, then signs in wit
     client,
     { apiId: 1, apiHash: 'test' },
     {
-      prompt: async () => '+39 300 000 0000',
-      secret: async () => {
+      prompt: async (label) => {
+        if (label.startsWith('Phone')) return '+39 300 000 0000'
         if (answers.length === 2) time = 30_000
         return answers.shift() ?? ''
+      },
+      secret: async () => {
+        throw new Error('Code entry must remain visible')
       },
       log: (text) => log.push(text),
       now: () => time,
@@ -66,8 +69,11 @@ it('does not invent a fallback when Telegram offers none', async () => {
     client,
     { apiId: 1, apiHash: 'test' },
     {
-      prompt: async () => '+393000000000',
-      secret: async () => answers.shift() ?? '',
+      prompt: async (label) =>
+        label.startsWith('Phone') ? '+393000000000' : (answers.shift() ?? ''),
+      secret: async () => {
+        throw new Error('Code entry must remain visible')
+      },
       log: (text) => log.push(text),
     },
   )
