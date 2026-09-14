@@ -41,6 +41,7 @@ export function createModelTasks(ports: ModelPorts) {
     scope: Scope,
     allowed: readonly ToolName[] = [],
     nativeTools: readonly NativeToolName[] = [],
+    validate?: (value: A['Type'], evidence: (typeof S.Draft.Type)['evidence']) => void,
   ) =>
     Effect.gen(function* () {
       let calls = 0
@@ -53,6 +54,12 @@ export function createModelTasks(ports: ModelPorts) {
         input,
         outputSchema: jsonSchema(schema),
         nativeTools,
+        validateResult: validate
+          ? (raw) =>
+              checked('result-evidence', () =>
+                validate(Schema.decodeUnknownSync(schema)(raw), { messages, projects, pages }),
+              )
+          : undefined,
         tools: allowed.map((name) => ({
           name,
           description: tools[name].description,

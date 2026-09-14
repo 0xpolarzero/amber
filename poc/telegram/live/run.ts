@@ -10,6 +10,7 @@ const snapshot = JSON.parse(
 ) as Snapshot
 const result = await runImport(snapshot, {
   model: piOpenRouter,
+  batchSize: 25,
   directory: resolve(root, '.amber/telegram/import'),
   onProgress: ({ completedMessages, state }) => {
     console.log(

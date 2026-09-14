@@ -81,9 +81,12 @@ it('preserves pending candidates, questions and evidence across batches without 
     'I built Noted, an offline note transcriber.',
     'Noted is for macOS 14 and later.',
   ])
+  let selections = 0
+  let failWriter = true
   const model: Model = (request) =>
     Effect.gen(function* () {
       if (request.task === 'selection') {
+        selections++
         const batch = request.input as typeof S.BatchContext.Type
         const existing = batch.newMessageIds[0] === '2'
         const found = existing
@@ -106,10 +109,16 @@ it('preserves pending candidates, questions and evidence across batches without 
           unresolved: [],
         }
       }
+      if (failWriter) {
+        failWriter = false
+        return yield* Effect.fail(
+          new Failure({ operation: 'provider', message: 'Transient writer failure' }),
+        )
+      }
       const context = request.input as typeof S.ProjectContext.Type
       expect(context.memories).toEqual([])
-      if (!context.selectedCandidate)
-        return {
+      if (!context.selectedCandidate) {
+        const proposal = {
           postEdit: null,
           resolutions: [],
           question: {
@@ -118,6 +127,20 @@ it('preserves pending candidates, questions and evidence across batches without 
           },
           reason: 'Missing platform.',
         }
+        expect(request.validateResult).toBeTypeOf('function')
+        const rejected = yield* Effect.result(
+          request.validateResult?.({
+            ...proposal,
+            question: {
+              text: proposal.question.text,
+              sources: [{ kind: 'telegram', messageId: 'missing' }],
+            },
+          }) as Effect.Effect<void, Failure>,
+        )
+        expect(rejected._tag).toBe('Failure')
+        yield* request.validateResult?.(proposal) as Effect.Effect<void, Failure>
+        return proposal
+      }
       expect(context.messages.map(({ id }) => id)).toEqual(['1', '2'])
       return {
         postEdit: {
@@ -143,13 +166,18 @@ it('preserves pending candidates, questions and evidence across batches without 
         reason: 'Enough detail to publish.',
       }
     })
+  await expect(runImport(input, { directory: path, batchSize: 1, model })).rejects.toThrow(
+    'Batch needs review',
+  )
   const result = await runImport(input, { directory: path, batchSize: 1, model })
+  expect(selections).toBe(2)
+  expect(result.batches[1]?.calls[0]?.reusedFromBatch).toBe(0)
   expect(result.state.posts).toHaveLength(1)
   expect(result.state.candidates).toHaveLength(0)
   expect(result.state.pendingRequests[0]?.addressed).toBe(true)
   expect(Object.keys(result.state.associations)).toEqual(['1', '2'])
-  expect(result.batches[0]?.result?.questions).toHaveLength(1)
-  expect(result.batches[1]?.result?.notifications).toHaveLength(1)
+  expect(result.batches[1]?.result?.questions).toHaveLength(1)
+  expect(result.batches[2]?.result?.notifications).toHaveLength(1)
 })
 it('reports unsupported inputs explicitly and leaves the raw snapshot intact', async () => {
   const input = snapshot(['', 'x'.repeat(8001), 'hello'])

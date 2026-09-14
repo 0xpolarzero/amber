@@ -29,6 +29,7 @@ export type ModelRequest = {
   tools: readonly { name: string; description: string; inputSchema: unknown }[]
   nativeTools: readonly NativeToolName[]
   callTool: (name: string, input: unknown) => Run<unknown>
+  validateResult?: (value: unknown) => Run<void>
   observe: (observation: ModelObservation) => Run<void>
 }
 

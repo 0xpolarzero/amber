@@ -49,7 +49,16 @@ export function telegramLayers(ports: Ports) {
       return track(
         'post',
         scope,
-        generate(S.Proposal, 'post', postPrompt, input, scope, projectTools, nativeWebTools).pipe(
+        generate(
+          S.Proposal,
+          'post',
+          postPrompt,
+          input,
+          scope,
+          projectTools,
+          nativeWebTools,
+          (proposal, evidence) => validateDraft(input, { proposal, evidence }),
+        ).pipe(
           Effect.flatMap(({ value: proposal, evidence }) =>
             checked('project-evidence', () => {
               const draft = { proposal, evidence }

@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto'
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { isDeepStrictEqual } from 'node:util'
 import * as Action from '@smthrs/flow/Action'
 import { Effect, Layer, Schema } from 'effect'
-import type { Model } from '../../shared/runtime'
+import type { Model, ModelObservation } from '../../shared/runtime'
 import { testEngine } from '../../shared/test-engine'
 import { telegramLayers } from '../agents'
 import * as S from '../schemas'
@@ -24,6 +25,7 @@ export type ImportCall = {
   status: 'running' | 'succeeded' | 'failed'
   output?: unknown
   error?: string
+  reusedFromBatch?: number
 }
 export type ImportBatch = {
   input: typeof S.BatchContext.Type
@@ -133,7 +135,12 @@ export async function runImport(
       const history = messages.slice(0, offset + fresh.length)
       const replyIds = new Set(fresh.flatMap(({ replyToId }) => (replyToId ? [replyToId] : [])))
       const freshIds = new Set(fresh.map(({ id }) => id))
-      const context = history.filter(({ id }) => freshIds.has(id) || replyIds.has(id))
+      const nearbyIds = new Set(
+        messages.slice(Math.max(0, offset - 15), offset).map(({ id }) => id),
+      )
+      const context = history.filter(
+        ({ id }) => freshIds.has(id) || replyIds.has(id) || nearbyIds.has(id),
+      )
       const targets = new Map<string, { targetKind: 'post' | 'candidate'; ownerId: string }>([
         ...run.state.posts.map(
           (post) => [post.id, { targetKind: 'post' as const, ownerId: post.authorId }] as const,
@@ -189,6 +196,46 @@ export async function runImport(
             attempt.calls.push(call)
             await save(run)
             try {
+              const previousIndex =
+                request.task === 'selection'
+                  ? run.batches.findIndex(
+                      (prior) =>
+                        prior !== attempt &&
+                        isDeepStrictEqual(prior.input, batch) &&
+                        prior.calls.some(
+                          (old) =>
+                            old.task === call.task &&
+                            old.status === 'succeeded' &&
+                            old.instruction === call.instruction &&
+                            isDeepStrictEqual(old.outputSchema, call.outputSchema) &&
+                            isDeepStrictEqual(old.tools, call.tools),
+                        ),
+                    )
+                  : -1
+              const previous =
+                previousIndex < 0
+                  ? undefined
+                  : run.batches[previousIndex]?.calls.find(
+                      (old) => old.task === 'selection' && old.status === 'succeeded',
+                    )
+              if (previous) {
+                for (const raw of previous.observations) {
+                  const observation = raw as Record<string, unknown>
+                  if (observation.kind === 'tool') {
+                    const current = await Effect.runPromise(
+                      request.callTool(String(observation.name), observation.input),
+                    )
+                    if (!isDeepStrictEqual(current, observation.output))
+                      throw new Error('Saved selection lookup changed; cannot reuse it.')
+                  } else await Effect.runPromise(request.observe(raw as ModelObservation))
+                }
+                call.output = previous.output
+                call.observations = previous.observations
+                call.reusedFromBatch = previousIndex
+                call.status = 'succeeded'
+                await save(run)
+                return call.output
+              }
               call.output = await Effect.runPromise(
                 options.model({
                   ...request,

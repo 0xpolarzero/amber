@@ -68,7 +68,12 @@ export function validateDraft(context: typeof S.ProjectContext.Type, draft: type
           ? !context.clarifications.some((message) => message.id === source.messageId)
           : !evidence.pages.some((page) => page.url === source.url)
     )
-      throw new Error('Cite only supplied messages or actual web tool results.')
+      throw new Error(
+        'Cite only supplied messages or actual web tool results. Rejected source: ' +
+          JSON.stringify(source) +
+          '. Available web URLs: ' +
+          evidence.pages.map((page) => page.url).join(', '),
+      )
   }
   const resolutionIds = new Set<string>()
   for (const resolution of proposal.resolutions) {
