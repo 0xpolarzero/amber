@@ -9,7 +9,7 @@ import * as S from './schemas'
 
 const text = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(600))
 export const Facts = Schema.Struct({
-  subject: text,
+  subject: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(180)),
   purpose: Schema.NullOr(
     Schema.Struct({
       claim: text,
@@ -56,6 +56,14 @@ export function reviewedPost(ports: ModelPorts, context: typeof S.ProjectContext
     groupId: context.work.groupId,
     batchId: context.work.batchId,
   }
+  const makerIds = new Set([
+    ...context.work.candidate.messageIds,
+    ...(context.selectedCandidate?.makerEvidence ?? []),
+  ])
+  const suppliedLink = [
+    ...context.messages.filter((m) => makerIds.has(m.id) && m.authorId === context.work.ownerId),
+    ...context.clarifications,
+  ].some((m) => /https?:\/\/\S+/i.test(m.text))
   return Effect.gen(function* () {
     const research = yield* track(
       'evidence',
@@ -69,6 +77,15 @@ export function reviewedPost(ports: ModelPorts, context: typeof S.ProjectContext
         projectTools,
         webTools,
         (facts, evidence) => {
+          if (
+            !context.selectedPost &&
+            facts.purpose &&
+            !suppliedLink &&
+            facts.purpose.sources.every((source) => source.kind === 'web')
+          )
+            throw new Error(
+              'A same-name web result cannot establish this project’s purpose without a supplied link. Return purpose: null unless the messages themselves establish what the work does; do not cite frontend/build chatter as its end-user purpose.',
+            )
           validateSources(context, evidence, [
             ...(facts.purpose?.sources ?? []),
             ...facts.facts.flatMap((f) => f.sources),

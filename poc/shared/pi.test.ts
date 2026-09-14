@@ -3,11 +3,22 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, expect, test } from 'vitest'
 import { pagesFromNativeTool } from './native-web'
-import { checkedResult, isolatedResources } from './pi'
+import { checkedResult, isolatedResources, researchBudget } from './pi'
 import { pageText, publicHttps, publicIpv4, readablePage, readableSourceUrl } from './pi-web'
 import { renderPage } from './pi-web-render'
 
 const folders: string[] = []
+test('database and web calls share a budget without preventing a structured finish', () => {
+  const spend = researchBudget('verification')
+  spend('searchMessages')
+  spend('readMessages')
+  expect(() => spend('search_web')).toThrow('research budget exhausted')
+  expect(() => spend('finish')).not.toThrow()
+  const research = researchBudget('evidence')
+  for (let i = 0; i < 8; i++) research(i % 2 ? 'searchMessages' : 'read_url_content')
+  expect(() => research('readFetchedPage')).toThrow('research budget exhausted')
+  expect(() => research('finish')).not.toThrow()
+})
 test('reads linked GitHub source files directly without rewriting repository or issue pages', () => {
   expect(
     readableSourceUrl(

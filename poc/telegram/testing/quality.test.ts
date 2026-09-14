@@ -161,3 +161,57 @@ it('rejects a proposed new post when research cannot establish its end-user purp
   await expect(Effect.runPromise(reviewedPost(host, unknown))).rejects.toThrow(/purpose/i)
   expect(calls).toContain('post')
 })
+
+it.each([false, true])(
+  'accepts a web-only purpose only when the maker supplied the artifact link (linked: %s)',
+  async (linked) => {
+    const url = 'https://nuconstruct.example'
+    const input = {
+      ...context,
+      messages: [
+        {
+          ...context.messages[0],
+          text: `I built Nuconstruct's frontend.${linked ? ` ${url}` : ''}`,
+        },
+      ],
+    }
+    const calls: string[] = []
+    const host = ports((request) =>
+      Effect.gen(function* () {
+        calls.push(request.task)
+        if (request.task === 'evidence') {
+          yield* request.observe({
+            kind: 'native-tool',
+            name: 'read_url_content',
+            input: { Url: url },
+            output: {
+              provenance: 'pi-web-v1',
+              status: 'success',
+              pages: [{ url, title: 'Nuconstruct', text: 'A cryptocurrency portfolio service.' }],
+            },
+          })
+          return {
+            subject: 'Nuconstruct frontend',
+            purpose: {
+              claim: 'Manage cryptocurrency portfolios.',
+              sources: [{ kind: 'web', url }],
+            },
+            facts: [],
+            links: [{ url, description: 'Nuconstruct website' }],
+            uncertainties: [],
+          }
+        }
+        if (request.task === 'verification') return { issues: [] }
+        return proposal('A cryptocurrency portfolio service.')
+      }),
+    )
+    const result = Effect.runPromise(reviewedPost(host, input))
+    if (linked) {
+      expect((await result).proposal.postEdit).not.toBeNull()
+      expect(calls).toEqual(['evidence', 'post', 'verification'])
+    } else {
+      await expect(result).rejects.toThrow(/purpose|identity|shared|link/i)
+      expect(calls).toEqual(['evidence'])
+    }
+  },
+)

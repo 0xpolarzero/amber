@@ -20,6 +20,32 @@ const message = (id: string, authorId: string, text: string) => ({
 // Invented conversations and page excerpts. Expectations concern meaning, not exact wording.
 export const qualityCases: readonly QualityCase[] = [
   {
+    id: 'name-match-only',
+    project: 'Nuconstruct frontend',
+    title: 'A matching website name does not establish artifact identity',
+    messages: [
+      message(
+        '601',
+        'maker',
+        'I built the frontend for Nuconstruct with React and an AI assistant.',
+      ),
+      message('602', 'reader', 'What does the site do? Got a link?'),
+    ],
+    pages: [
+      {
+        url: 'https://nuconstruct.example',
+        title: 'Nuconstruct',
+        text: 'Nuconstruct is a cryptocurrency portfolio service for tracking token positions and rebalancing holdings.',
+      },
+    ],
+    expected: [
+      'Do not assume the same-named page is the maker’s artifact; no shared URL or purpose connects them.',
+      'Return no post until the artifact’s end-user purpose is established.',
+      'Ask the maker for the site link and what visitors can do there, or to confirm the discovered identity.',
+      'Do not attribute cryptocurrency functionality, public availability or the discovered URL to the maker’s work.',
+    ],
+  },
+  {
     id: 'unknown-site-purpose',
     project: 'Nuconstruct',
     title: 'Knowing who built a frontend does not establish what its website does',

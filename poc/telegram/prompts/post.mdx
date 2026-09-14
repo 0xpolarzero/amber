@@ -36,6 +36,7 @@ Writing contract:
   Preserve the scope of numbers: "a few hundred in one day" is not sustained daily throughput.
 - Distinguish a design concept or illustrative results from a working system or measured results.
   Check the shared website itself before claiming what visitors can use or compare there.
+- Preserve progress precisely: "moving to Linux next" is planned, not underway or completed.
 - Describe instructions as guidance, not guarantees of agent behavior or proven improvements.
 - Research verifies the introduction; it does not supply a checklist of facts to include.
   Before finishing, remove every sentence that doesn't help someone understand or try the work.
@@ -56,8 +57,8 @@ not search for or fetch them. Make at most one searchMessages call and one readM
 when a specific missing fact can be recovered from older group history. Stop after an empty result.
 A missing supplied URL does not disable web research: search for a specific public fact or primary
 page when it would materially complete the post, then fetch and read the best result. Stop after an
-empty or irrelevant result and finish once the evidence is sufficient. Reserve the shared eight-call
-budget for genuinely missing evidence.
+empty or irrelevant result and finish once the evidence is sufficient. At most two tool calls total:
+the research stage already supplied the evidence; look up only a specific missing fact.
 
 Return three independent decisions: an optional post edit, zero or more supported request
 resolutions, and an optional factual question. Any combination is valid, including resolution

@@ -26,6 +26,15 @@ const objectSchema = (properties: Record<string, unknown>, required: string[]) =
 })
 const string = { type: 'string', minLength: 1, maxLength: 2000 }
 
+export function researchBudget(task: string) {
+  const limit = ['selection', 'post', 'verification'].includes(task) ? 2 : 8
+  let used = 0
+  return (tool: string) => {
+    if (tool !== 'finish' && ++used > limit)
+      throw new Error('Task research budget exhausted. Finish using the available evidence.')
+  }
+}
+
 export function checkedResult(schema: unknown, value: unknown) {
   const validate = ajv.compile(schema as object)
   if (!validate(value))
@@ -121,7 +130,7 @@ export const piOpenRouter: Model = (request) =>
         let finished = false
         let result: unknown
         let calls = 0
-        let researchCalls = 0
+        const spendResearch = researchBudget(request.task)
         const successful: string[] = []
         const failed: string[] = []
         const pages = new Map<string, WebPage>()
@@ -175,8 +184,7 @@ export const piOpenRouter: Model = (request) =>
                   void session?.abort()
                   throw new Error('Task tool budget exhausted.')
                 }
-                if (['search_web', 'read_url_content'].includes(name) && ++researchCalls > 8)
-                  throw new Error('Task web research budget exhausted.')
+                spendResearch(name)
                 checkedResult(inputSchema, input)
                 let output: unknown
                 const args = input as Record<string, unknown>

@@ -2,6 +2,9 @@ Build a compact evidence ledger for this selected project before anyone writes i
 Keep only facts a stranger needs to understand the shared artifact: purpose, actual behavior,
 current status and material caveats. Do not inventory every message or source-file detail.
 Self-deprecating quotes, insults and tools used to build the artifact never belong in this ledger.
+Missing information is not an access status. "No public link shared" means the link is unknown,
+never "private", "not yet public", "unavailable" or "nothing to try". Record that uncertainty
+without inventing a status. Keep unknowns out of subject and facts.
 Separate what exists from what is intended, claimed, illustrative, measured, incomplete or unknown.
 Use the supplied messages, exact target and owner context; retrieve missing relevant messages with
 searchMessages/readMessages. Direct replies and owner follow-ups comparing this work with a simpler
@@ -17,12 +20,16 @@ read, record that uncertainty instead of inferring functionality. Do not fetch .
 Avoid rereading supplied messages or pages. At most eight tool calls; stop when evidence is sufficient.
 
 Return:
-- subject: exactly what the selected maker shared (for example, a website demo, reusable
-  instructions, or an automation workflow). Distinguish the artifact from the tools used to build it.
+- subject: a short neutral artifact label (for example, a website demo, reusable instructions,
+  or an automation workflow). No access/status claims or parenthetical assumptions. Distinguish
+  the artifact from the tools used to build it.
 - purpose: the supported end-user purpose, with its sources, or null when unknown. What can a
   visitor/user actually do or learn with this artifact? "A website", "nice design", "built in
   React" and "the maker rebuilt the frontend" do not answer that question. Do not infer a personal
   portfolio, company site or product from its name or the fact someone built it in their free time.
+  If no maker-supplied link connects the artifact to a searched website, that website's purpose
+  is not this artifact's purpose. A name match is only a lead. Keep purpose null unless the
+  messages themselves describe what the work does; frontend/build chatter is not that evidence.
 - facts: short atomic claims, each classified as purpose, status, owner_claim, limitation or
   owner_followup, with exact supporting Telegram/clarification IDs or fetched web URLs. Cite only
   substantive messages, not nearby complaints, reactions or introductions. Separate owner reports
