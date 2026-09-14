@@ -4,7 +4,8 @@ import { join } from 'node:path'
 import { afterEach, expect, test } from 'vitest'
 import { pagesFromNativeTool } from './native-web'
 import { checkedResult, isolatedResources } from './pi'
-import { pageText, publicHttps, publicIpv4 } from './pi-web'
+import { pageText, publicHttps, publicIpv4, readablePage } from './pi-web'
+import { renderPage } from './pi-web-render'
 
 const folders: string[] = []
 test('preserves raw source code while removing executable HTML from page text', () => {
@@ -110,3 +111,65 @@ test('provider citations enter evidence; generated search prose does not', () =>
     ),
   ).toEqual([])
 })
+
+test('renders thin HTML but never promotes an unreadable shell to evidence', async () => {
+  const shell = {
+    url: 'https://amber.dev/',
+    status: 200,
+    contentType: 'text/html',
+    body: '<title>Demo</title><div id="root"></div>',
+  }
+  const signal = AbortSignal.timeout(1000)
+  const text = 'The public leaderboard uses illustrative sample data. '.repeat(5)
+  await expect(
+    readablePage(shell, signal, async () => ({ url: shell.url, title: 'Demo', text })),
+  ).resolves.toMatchObject({ text })
+  await expect(
+    readablePage(shell, signal, async () => ({ url: shell.url, title: 'Demo', text: 'Demo' })),
+  ).rejects.toThrow('without enough readable content')
+  await expect(
+    readablePage(shell, signal, async () => {
+      throw new Error('Rendering failed')
+    }),
+  ).rejects.toThrow('Rendering failed')
+  await expect(
+    readablePage(
+      { ...shell, contentType: 'text/plain', body: 'Small source file' },
+      signal,
+      async () => {
+        throw new Error('Must not render plain text')
+      },
+    ),
+  ).resolves.toMatchObject({ text: 'Small source file' })
+})
+
+test('renders scripts through the supplied transport and blocks POST and private browser requests', async () => {
+  const urls: string[] = []
+  const text = 'This leaderboard is illustrative; the harness has real test results. '.repeat(5)
+  const page = await renderPage(
+    {
+      url: 'https://amber.dev/',
+      status: 200,
+      contentType: 'text/html',
+      body: '<title>Client rendered</title><div id="root"></div><script src="/app.js"></script>',
+    },
+    AbortSignal.timeout(15000),
+    async (url) => {
+      urls.push(url)
+      return {
+        url,
+        status: 200,
+        contentType: 'application/javascript',
+        body: `
+      Promise.allSettled([
+        fetch('https://127.0.0.1/private'),
+        fetch('/mutation', { method: 'POST' }),
+        fetch('/data')
+      ]).then(() => { document.getElementById('root').textContent = ${JSON.stringify(text)} })
+    `,
+      }
+    },
+  )
+  expect(page.text).toBe(text.trim())
+  expect(urls.sort()).toEqual(['https://amber.dev/app.js', 'https://amber.dev/data'])
+}, 20000)

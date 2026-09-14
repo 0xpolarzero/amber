@@ -44,7 +44,13 @@ export function publicIpv4(address: string) {
   )
 }
 
-export async function fetchPage(raw: string, signal: AbortSignal, redirects = 0): Promise<WebPage> {
+export type PageResponse = { url: string; status: number; body: string; contentType?: string }
+
+export async function fetchPublicResource(
+  raw: string,
+  signal: AbortSignal,
+  redirects = 0,
+): Promise<PageResponse> {
   if (redirects > 4) throw new Error('Too many page redirects.')
   const url = publicHttps(raw)
   const addresses = await lookup(url.hostname, { all: true, family: 4 })
@@ -73,7 +79,9 @@ export async function fetchPage(raw: string, signal: AbortSignal, redirects = 0)
         }
         if (
           status !== 200 ||
-          !/^(text\/|application\/json)/i.test(res.headers['content-type'] ?? '')
+          !/^(text\/|application\/(json|javascript|x-javascript))/i.test(
+            res.headers['content-type'] ?? '',
+          )
         ) {
           res.resume()
           reject(new Error(`Page unavailable or unsupported content (${status}).`))
@@ -100,12 +108,39 @@ export async function fetchPage(raw: string, signal: AbortSignal, redirects = 0)
     req.end()
   })
   if (response.location)
-    return fetchPage(new URL(response.location, url).href, signal, redirects + 1)
+    return fetchPublicResource(new URL(response.location, url).href, signal, redirects + 1)
   if (response.status !== 200) throw new Error(`Page failed (${response.status}).`)
+  return { ...response, url: url.href }
+}
+
+export async function fetchPage(raw: string, signal: AbortSignal): Promise<WebPage> {
+  const response = await fetchPublicResource(raw, signal)
+  return readablePage(response, signal)
+}
+
+export async function readablePage(
+  response: PageResponse,
+  signal: AbortSignal,
+  render = async (page: PageResponse, signal: AbortSignal) => {
+    const { renderPage } = await import('./pi-web-render')
+    return renderPage(page, signal, fetchPublicResource)
+  },
+): Promise<WebPage> {
+  const url = new URL(response.url)
   const html = /^text\/html/i.test(response.contentType ?? '')
   const title =
     (html ? /<title[^>]*>([\s\S]*?)<\/title>/i.exec(response.body)?.[1] : undefined) ?? url.hostname
   const text = pageText(response.body, html).slice(0, 24_000)
+  if (html && text.length < 200) {
+    const rendered = await render(response, signal)
+    if (rendered.text.trim().length < 200)
+      throw new Error('Page rendered without enough readable content to verify.')
+    return {
+      ...rendered,
+      text: rendered.text.slice(0, 24_000),
+      title: rendered.title.slice(0, 300),
+    }
+  }
   if (!text) throw new Error('Page returned no readable text.')
   return { url: url.href, title: title.slice(0, 300), text }
 }
