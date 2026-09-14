@@ -161,56 +161,113 @@ describe('real Telegram preview', () => {
     expect(feed.realDemo?.conversations.owner.messages).toEqual([])
   })
 
-  it('replaces posts and conversations with persisted real private-turn results', () => {
-    const feed = projectRealFeed(snapshot, run, {
-      snapshotHash: 'same',
-      state: {
-        posts: [
-          { ...run.state.posts[0], detail: 'Updated by the real reply.' },
-        ],
-        memories: [
-          {
-            id: 'memory',
-            userId: 'owner',
-            text: 'Use short descriptions.',
-            version: 1,
-          },
-        ],
-        messages: [
-          {
-            id: 'reply',
-            userId: 'owner',
-            text: 'Updated.',
-            role: 'assistant',
-            intent: 'informational',
-            linkedPostId: 'p1',
-            addressed: false,
-            turnId: 'turn',
-          },
-        ],
-      },
-      turns: [
-        {
-          input: { turnId: 'turn' },
-          calls: [
+  it.each([false, true])(
+    'projects committed diffs only when a receipt exists (%s)',
+    (hasReceipt) => {
+      const feed = projectRealFeed(snapshot, run, {
+        snapshotHash: 'same',
+        state: {
+          posts: [
+            { ...run.state.posts[0], detail: 'Updated by the real reply.' },
+          ],
+          memories: [
             {
-              task: 'respond',
-              input: {},
-              output: { answer: 'Updated.' },
-              observations: [],
-              status: 'succeeded',
+              id: 'memory',
+              userId: 'owner',
+              text: 'Use short descriptions.',
+              version: 1,
+            },
+          ],
+          messages: [
+            {
+              id: 'reply',
+              userId: 'owner',
+              text: 'Updated.',
+              role: 'assistant',
+              intent: 'informational',
+              linkedPostId: 'p1',
+              addressed: false,
+              turnId: 'turn',
             },
           ],
         },
-      ],
-    })
-    expect(feed.posts[0].detail).toBe('Updated by the real reply.')
-    expect(feed.realDemo?.conversations.owner.memories[0].text).toBe(
-      'Use short descriptions.',
-    )
-    expect(
-      feed.realDemo?.conversations.owner.messages[0].recordedTrace?.stages[0]
-        .label,
-    ).toBe('Prepare reply')
-  })
+        turns: [
+          {
+            input: { turnId: 'turn' },
+            ...(hasReceipt
+              ? {
+                  receipt: {
+                    diffs: [
+                      {
+                        postId: 'p1',
+                        before: {
+                          title: 'Project',
+                          summary: 'A useful project.',
+                          detail: 'Details.',
+                          version: 1,
+                        },
+                        after: {
+                          title: 'Project',
+                          summary: 'A useful project.',
+                          detail: 'Updated by the real reply.',
+                          version: 2,
+                        },
+                      },
+                    ],
+                  },
+                }
+              : {}),
+            calls: [
+              {
+                task: 'respond',
+                input: {},
+                output: {
+                  answer: 'Updated.',
+                  postChanges: [
+                    { postId: 'p1', detail: 'Uncommitted model proposal.' },
+                  ],
+                },
+                observations: [],
+                status: 'succeeded',
+              },
+            ],
+          },
+        ],
+      })
+      expect(feed.posts[0].detail).toBe('Updated by the real reply.')
+      expect(feed.realDemo?.conversations.owner.memories[0].text).toBe(
+        'Use short descriptions.',
+      )
+      expect(
+        feed.realDemo?.conversations.owner.messages[0].recordedTrace?.stages[0]
+          .label,
+      ).toBe('Prepare reply')
+      const committed =
+        feed.realDemo?.conversations.owner.messages[0].recordedTrace?.stages.find(
+          ({ label }) => label === 'Update posts',
+        )
+      if (hasReceipt) {
+        expect(committed).toMatchObject({
+          status: 'complete',
+          summary: '1 post updated',
+          changes: [
+            {
+              postId: 'p1',
+              kind: 'updated',
+              project: 'Project',
+              fromVersion: 1,
+              toVersion: 2,
+              fields: [
+                {
+                  field: 'detail',
+                  before: 'Details.',
+                  after: 'Updated by the real reply.',
+                },
+              ],
+            },
+          ],
+        })
+      } else expect(committed).toBeUndefined()
+    },
+  )
 })

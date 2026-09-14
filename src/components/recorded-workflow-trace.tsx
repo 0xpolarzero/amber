@@ -1,5 +1,6 @@
 import type { AgentMessage } from '../preview/state'
 import { Icon } from './icon'
+import { PostChangeDiff } from './post-change-diff'
 import { TraceStep } from './workflow-trace'
 
 export function RecordedWorkflowTrace({
@@ -31,6 +32,20 @@ export function RecordedWorkflowTrace({
               summary={stage.summary}
               status={stage.status}
             >
+              {stage.changes?.length ? (
+                <section
+                  className="trace-post-diffs"
+                  aria-label="Applied post changes"
+                >
+                  {stage.changes.map((change) => (
+                    <PostChangeDiff
+                      key={change.postId}
+                      change={change}
+                      expanded
+                    />
+                  ))}
+                </section>
+              ) : null}
               <details className="trace-nested">
                 <summary>Recorded evidence</summary>
                 <pre>{stage.detail}</pre>

@@ -1,7 +1,11 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import type { Feed } from '../domain/post'
-import type { AgentConversation, AgentMessage } from '../preview/state'
+import type {
+  AgentConversation,
+  AgentMessage,
+  PostChange,
+} from '../preview/state'
 
 type Snapshot = {
   importedAt: string
@@ -174,8 +178,59 @@ type Messaging = {
       turnId: string | null
     }[]
   }
-  turns: { input: { turnId: string }; calls: Call[] }[]
+  turns: {
+    input: { turnId: string }
+    calls: Call[]
+    receipt?: {
+      diffs: {
+        postId: string
+        before: {
+          title: string
+          summary: string
+          detail: string
+          version: number
+        }
+        after: {
+          title: string
+          summary: string
+          detail: string
+          version: number
+        }
+      }[]
+    }
+  }[]
 }
+function recordedTurnStages(turn: Messaging['turns'][number]) {
+  const stages = turn.calls.map(recordedStage)
+  const diffs = turn.receipt?.diffs
+  if (!diffs?.length) return stages
+  const changes: PostChange[] = diffs.map(({ postId, before, after }) => ({
+    kind: 'updated',
+    postId,
+    project: after.title,
+    fromVersion: before.version,
+    toVersion: after.version,
+    fields: (['title', 'summary', 'detail'] as const)
+      .filter((field) => before[field] !== after[field])
+      .map((field) => ({ field, before: before[field], after: after[field] })),
+  }))
+  const responderIndex = turn.calls.reduce(
+    (last, { task, status }, index) =>
+      (task === 'responder' || task === 'respond') && status === 'succeeded'
+        ? index
+        : last,
+    -1,
+  )
+  stages.splice(responderIndex < 0 ? stages.length : responderIndex + 1, 0, {
+    label: 'Update posts',
+    summary: `${changes.length} ${changes.length === 1 ? 'post updated' : 'posts updated'}`,
+    status: 'complete',
+    changes,
+    detail: JSON.stringify({ diffs }, null, 2),
+  })
+  return stages
+}
+
 export function projectRealFeed(
   snapshot: Snapshot,
   run: Import,
@@ -293,7 +348,7 @@ export function projectRealFeed(
                   recordedTrace: {
                     group: snapshot.groupName,
                     model: 'DeepSeek V4.1 Flash · OpenRouter',
-                    stages: turn.calls.map(recordedStage),
+                    stages: recordedTurnStages(turn),
                   },
                 }
               : {}),

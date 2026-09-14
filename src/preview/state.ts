@@ -244,6 +244,7 @@ export type AgentMessage = {
       label: string
       summary: string
       status: 'complete' | 'running' | 'failed'
+      changes?: readonly PostChange[]
       detail: string
     }[]
   }
