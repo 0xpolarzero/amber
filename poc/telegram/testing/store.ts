@@ -75,6 +75,7 @@ export function telegramStore(
     role: 'assistant'
     intent: 'informational'
     text: string
+    postId: string | null
     sourceIds: readonly string[]
   }[] = []
   const diffs: { postId: string; before: typeof S.Post.Type; after: typeof S.Post.Type }[] = []
@@ -412,7 +413,7 @@ export function telegramStore(
               !notifications.some(({ id }) => id === notificationMessageId)
             ) {
               const labels = [
-                edit ? '1 post edited' : null,
+                edit ? `${outcome === 'created' ? 'Created' : 'Updated'} “${edit.title}”.` : null,
                 accepted.length
                   ? `${accepted.length} question${accepted.length === 1 ? '' : 's'} answered`
                   : null,
@@ -424,6 +425,7 @@ export function telegramStore(
                 role: 'assistant',
                 intent: 'informational',
                 text: labels.join(' · '),
+                postId,
                 sourceIds: uniqueSources([
                   ...(edit?.sources ?? []),
                   ...proposal.resolutions.flatMap(({ sources }) => sources),

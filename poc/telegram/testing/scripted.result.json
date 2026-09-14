@@ -34,7 +34,8 @@
       "authorId": "alex",
       "role": "assistant",
       "intent": "informational",
-      "text": "1 post edited · 1 question asked",
+      "text": "Created “Noted”. · 1 question asked",
+      "postId": "batch-1:0",
       "sourceIds": [
         "102",
         "104"
@@ -45,7 +46,8 @@
       "authorId": "bea",
       "role": "assistant",
       "intent": "informational",
-      "text": "1 post edited",
+      "text": "Updated “Tab tidy”.",
+      "postId": "tab-tidy",
       "sourceIds": [
         "103"
       ]
