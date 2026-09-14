@@ -27,6 +27,9 @@ export function telegramLayers(ports: Ports) {
           input,
           { batchId: input.batchId, groupId: input.groupId },
           selectorTools,
+          [],
+          (value, evidence) =>
+            validateSelection(input, { ...value, lookedUpProjects: evidence.projects }),
         ).pipe(
           Effect.flatMap(({ value, evidence }) =>
             checked('selection-evidence', () => {

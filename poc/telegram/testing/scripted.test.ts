@@ -124,7 +124,7 @@ it('turns a pulled batch into a new post, an updated post and one question for t
         writers
           .find((input) => input.work.candidate.authorId === 'alex')
           ?.messages.map((m) => m.id),
-      ).toEqual(['102', '104', '105'])
+      ).toEqual(['90', '101', '102', '103', '104', '105'])
       expect(writers.find((input) => input.work.candidate.authorId === 'alex')?.memories).toEqual(
         memories.alex,
       )

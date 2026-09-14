@@ -188,6 +188,12 @@ export function telegramStore(
           )
           .map(({ messageId }) => messageId)
         const selected = new Set([...item.candidate.messageIds, ...sourceMessageIds])
+        // Preserve nearby antecedents even when people do not use Telegram replies.
+        const anchors = new Set(selected)
+        for (const [index, message] of history.entries())
+          if (anchors.has(message.id))
+            for (const neighbor of history.slice(Math.max(0, index - 3), index + 4))
+              selected.add(neighbor.id)
         for (const message of history)
           if (selected.has(message.id) && message.replyToId) selected.add(message.replyToId)
         return {

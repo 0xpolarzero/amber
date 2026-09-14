@@ -627,3 +627,33 @@ it('waits for an active owner private turn before committing a Telegram write', 
   await expect(publishing).resolves.toMatchObject({ outcome: 'updated' })
   expect(store.posts[0].version).toBe(5)
 })
+
+it('keeps the nearby antecedent of an unthreaded reply in writer context', async () => {
+  const input = {
+    ...existingBatch,
+    messages: [
+      message('1', 'maya', 'I built an eval dashboard.'),
+      message('2', 'liam', 'Can you paste screenshots into your terminal agent?'),
+      message('3', 'maya', 'Yes, even over SSH from mobile.'),
+    ],
+    newMessageIds: ['1', '2', '3'],
+    associations: [],
+  }
+  const store = telegramStore(input, [])
+  const context = await Effect.runPromise(
+    store.ports.loadProject({
+      batchId: input.batchId,
+      groupId: input.groupId,
+      candidateId: 'dashboard',
+      revision: 0,
+      ownerId: 'maya',
+      candidate: {
+        authorId: 'maya',
+        project: 'Eval dashboard',
+        messageIds: ['1', '3'],
+        target: { kind: 'new', ownerId: 'maya' },
+      },
+    }),
+  )
+  expect(context.messages.find(({ id }) => id === '2')?.text).toContain('paste screenshots')
+})
