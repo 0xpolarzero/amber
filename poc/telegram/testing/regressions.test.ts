@@ -9,6 +9,7 @@ import * as S from '../schemas'
 import type { Ports } from '../tools'
 import { TelegramBatch } from '../workflow'
 import { batch, initialPosts } from './fixtures'
+import { withQuality } from './quality-model'
 import { responses } from './responses'
 import { telegramStore } from './store'
 
@@ -42,7 +43,7 @@ it.each(['irrelevant', 'failed-project'] as const)('handles an %s batch', async 
       for (const call of response.tools) yield* request.callTool(call.name, call.input)
       return response.output
     })
-  const host = telegramLayers({ ...store.ports, model }).pipe(
+  const host = telegramLayers({ ...store.ports, model: withQuality(model) }).pipe(
     Layer.provideMerge(Action.layerImplementations),
     Layer.provideMerge(testEngine),
   )

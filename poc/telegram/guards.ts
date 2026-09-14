@@ -52,14 +52,12 @@ export function validateSelection(
     throw new Error('Every new message needs an explicit disposition.')
 }
 
-export function validateDraft(context: typeof S.ProjectContext.Type, draft: typeof S.Draft.Type) {
-  const { proposal, evidence } = draft
+export function validateSources(
+  context: typeof S.ProjectContext.Type,
+  evidence: typeof S.Evidence.Type,
+  allSources: readonly (typeof S.Source.Type)[],
+) {
   const messages = [...context.messages, ...evidence.messages]
-  const allSources = [
-    ...(proposal.postEdit?.sources ?? []),
-    ...(proposal.question?.sources ?? []),
-    ...proposal.resolutions.flatMap(({ sources }) => sources),
-  ]
   for (const source of allSources) {
     if (
       source.kind === 'telegram'
@@ -75,6 +73,16 @@ export function validateDraft(context: typeof S.ProjectContext.Type, draft: type
           evidence.pages.map((page) => page.url).join(', '),
       )
   }
+}
+
+export function validateDraft(context: typeof S.ProjectContext.Type, draft: typeof S.Draft.Type) {
+  const { proposal, evidence } = draft
+  const messages = [...context.messages, ...evidence.messages]
+  validateSources(context, evidence, [
+    ...(proposal.postEdit?.sources ?? []),
+    ...(proposal.question?.sources ?? []),
+    ...proposal.resolutions.flatMap(({ sources }) => sources),
+  ])
   const resolutionIds = new Set<string>()
   for (const resolution of proposal.resolutions) {
     const request = context.pendingRequests.find(({ id }) => id === resolution.requestMessageId)

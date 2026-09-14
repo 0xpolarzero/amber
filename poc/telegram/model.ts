@@ -98,10 +98,12 @@ export function createModelTasks(ports: ModelPorts) {
             )
           }),
       })
-      return yield* checked('structured-output', () => ({
-        value: Schema.decodeUnknownSync(schema)(value),
-        evidence: { messages, projects, pages },
-      }))
+      return yield* checked('structured-output', () => {
+        const decoded = Schema.decodeUnknownSync(schema)(value)
+        const evidence = { messages, projects, pages }
+        validate?.(decoded, evidence)
+        return { value: decoded, evidence }
+      })
     })
 
   return { track, generate }

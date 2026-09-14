@@ -19,6 +19,7 @@ import {
   meaningfulStressMessageCount,
   syntheticMessageCount,
 } from './long-conversations'
+import { withQuality } from './quality-model'
 import { telegramStore } from './store'
 
 const message = (id: string, authorId: string, text: string) => ({
@@ -73,7 +74,7 @@ function host(store: ReturnType<typeof telegramStore>, proposal: typeof S.Propos
       }
       return proposal
     })
-  return telegramLayers({ ...store.ports, model }).pipe(
+  return telegramLayers({ ...store.ports, model: withQuality(model) }).pipe(
     Layer.provideMerge(Action.layerImplementations),
     Layer.provideMerge(testEngine),
   )
@@ -150,7 +151,7 @@ it('keeps scoped history and native research available to a new-project writer',
       }
     })
   }
-  const writerHost = telegramLayers({ ...store.ports, model }).pipe(
+  const writerHost = telegramLayers({ ...store.ports, model: withQuality(model) }).pipe(
     Layer.provideMerge(Action.layerImplementations),
     Layer.provideMerge(testEngine),
   )
@@ -656,4 +657,42 @@ it('keeps the nearby antecedent of an unthreaded reply in writer context', async
     }),
   )
   expect(context.messages.find(({ id }) => id === '2')?.text).toContain('paste screenshots')
+})
+
+it('keeps distant direct owner feedback with the original work in available history', async () => {
+  const original = message('maker', 'maya', 'I built an image automation workflow.')
+  const feedback = {
+    ...message('feedback', 'maya', 'A simpler setup worked better in my later tests.'),
+    replyToId: 'maker',
+  }
+  const input = {
+    ...existingBatch,
+    messages: [feedback],
+    newMessageIds: ['feedback'],
+    associations: [],
+  }
+  const history = [
+    original,
+    ...Array.from({ length: 8 }, (_, index) =>
+      message(`chatter-${index}`, 'liam', 'Unrelated conversation.'),
+    ),
+    feedback,
+  ]
+  const store = telegramStore(input, [], { history })
+  const context = await Effect.runPromise(
+    store.ports.loadProject({
+      batchId: input.batchId,
+      groupId: input.groupId,
+      candidateId: 'image-automation',
+      revision: 0,
+      ownerId: 'maya',
+      candidate: {
+        authorId: 'maya',
+        project: 'Image automation',
+        messageIds: ['maker'],
+        target: { kind: 'new', ownerId: 'maya' },
+      },
+    }),
+  )
+  expect(context.messages).toEqual(expect.arrayContaining([original, feedback]))
 })

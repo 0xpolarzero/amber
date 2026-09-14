@@ -1,16 +1,14 @@
 import * as Interpreter from '@smthrs/flow/Interpreter'
 import { Effect, Layer } from 'effect'
-import { validateDraft, validateSelection } from './guards'
+import { validateSelection } from './guards'
 import { checked, createModelTasks } from './model'
-import postPrompt from './prompts/post.mdx?raw'
 import selectionPrompt from './prompts/selection.mdx?raw'
+import { reviewedPost } from './quality'
 import * as S from './schemas'
 import type { Ports } from './tools'
 import * as T from './workflow'
 
 const selectorTools = ['searchPosts'] as const
-const projectTools = ['searchMessages', 'readMessages', 'searchPosts'] as const
-const nativeWebTools = ['search_web', 'read_url_content'] as const
 
 export function telegramLayers(ports: Ports) {
   const { track, generate } = createModelTasks(ports)
@@ -43,35 +41,7 @@ export function telegramLayers(ports: Ports) {
     ),
     T.QueueProjects.toLayer(ports.queueProjects),
     T.LoadProject.toLayer(ports.loadProject),
-    T.WritePost.toLayer((input) => {
-      const scope = {
-        userId: input.work.ownerId,
-        groupId: input.work.groupId,
-        batchId: input.work.batchId,
-      }
-      return track(
-        'post',
-        scope,
-        generate(
-          S.Proposal,
-          'post',
-          postPrompt,
-          input,
-          scope,
-          projectTools,
-          nativeWebTools,
-          (proposal, evidence) => validateDraft(input, { proposal, evidence }),
-        ).pipe(
-          Effect.flatMap(({ value: proposal, evidence }) =>
-            checked('project-evidence', () => {
-              const draft = { proposal, evidence }
-              validateDraft(input, draft)
-              return draft
-            }),
-          ),
-        ),
-      )
-    }),
+    T.WritePost.toLayer((input) => reviewedPost(ports, input)),
     T.PublishProject.toLayer(ports.publishProject),
     T.QueueProjectRetry.toLayer(ports.queueProjectRetry),
     T.FinishBatch.toLayer(ports.finishBatch),

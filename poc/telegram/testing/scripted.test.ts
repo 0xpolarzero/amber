@@ -12,6 +12,7 @@ import type * as S from '../schemas'
 import type { Ports } from '../tools'
 import { TelegramBatch } from '../workflow'
 import { batch, initialPosts, memories } from './fixtures'
+import { withQuality } from './quality-model'
 import { responses } from './responses'
 import { telegramStore } from './store'
 
@@ -52,7 +53,7 @@ it('turns a pulled batch into a new post, an updated post and one question for t
       }
       return response.output
     })
-  const host = telegramLayers({ ...store.ports, model }).pipe(
+  const host = telegramLayers({ ...store.ports, model: withQuality(model) }).pipe(
     Layer.provideMerge(Action.layerImplementations),
     Layer.provideMerge(testEngine),
   )

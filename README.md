@@ -42,6 +42,17 @@ endpoint, optionally set `OPENROUTER_IGNORE_PROVIDERS` to comma-separated provid
 [provider exclusions](https://openrouter.ai/docs/guides/routing/provider-selection) and keeps
 the same model; the default excludes no providers.
 
+Telegram publication now runs [evidence → draft → verification](poc/telegram/quality.ts) inside
+its Smithers project action. Each step uses a fresh agent; prompts are separate MDX files.
+The verifier can request one repair. A second rejection queues the project for review instead
+of publishing. Sources are validated against actual supplied/read evidence, and project context
+includes direct replies to its source messages. `TELEGRAM_IMPORT_DIR` selects a separate output
+directory for a review run before replacing the local demo.
+
+Run `node --env-file=.amber/openrouter.env --import ./poc/shared/register.ts poc/telegram/testing/quality-live.ts`
+to exercise the five invented regression conversations with real model calls. It stores the
+outputs in ignored `.amber/telegram/quality-cases.json`; fixture pages are explicitly fake.
+
 The website switches to actual results when `.amber/telegram/import/import.json` exists.
 Its author selector is a local review control, not Telegram authentication. Agent replies
 run the real messaging workflow and persist in `.amber/telegram/messaging.json`.

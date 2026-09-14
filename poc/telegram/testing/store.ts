@@ -195,6 +195,9 @@ export function telegramStore(
           if (anchors.has(message.id))
             for (const neighbor of history.slice(Math.max(0, index - 3), index + 4))
               selected.add(neighbor.id)
+        // Direct feedback can arrive long after the announcement, within available history.
+        for (const message of history)
+          if (message.replyToId && anchors.has(message.replyToId)) selected.add(message.id)
         for (const message of history)
           if (selected.has(message.id) && message.replyToId) selected.add(message.replyToId)
         return {

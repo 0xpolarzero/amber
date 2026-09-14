@@ -5,6 +5,7 @@ import { Effect } from 'effect'
 import { afterEach, expect, it } from 'vitest'
 import { Failure, type Model } from '../../shared/runtime'
 import type * as S from '../schemas'
+import { withQuality } from '../testing/quality-model'
 import { type ImportRun, runImport } from './import'
 import type { Snapshot } from './snapshot'
 
@@ -62,18 +63,24 @@ it('commits bounded batches and resumes without repeating completed model calls'
       ? Effect.fail(new Failure({ operation: 'provider', message: 'Temporary failure' }))
       : ignore(request)
   }
-  await expect(runImport(input, { directory: path, batchSize: 1, model })).rejects.toThrow()
+  await expect(
+    runImport(input, { directory: path, batchSize: 1, model: withQuality(model) }),
+  ).rejects.toThrow()
   const partial: ImportRun = JSON.parse(await readFile(join(path, 'import.json'), 'utf8'))
   expect(partial.completedMessages).toBe(1)
   expect(partial.batches.map(({ status }) => status)).toEqual(['completed', 'failed'])
-  const complete = await runImport(input, { directory: path, batchSize: 1, model })
+  const complete = await runImport(input, {
+    directory: path,
+    batchSize: 1,
+    model: withQuality(model),
+  })
   expect(calls).toBe(4)
   expect(complete.completedMessages).toBe(3)
-  await runImport(input, { directory: path, batchSize: 1, model })
+  await runImport(input, { directory: path, batchSize: 1, model: withQuality(model) })
   expect(calls).toBe(4)
-  await expect(runImport(snapshot(['different']), { directory: path, model })).rejects.toThrow(
-    'another snapshot',
-  )
+  await expect(
+    runImport(snapshot(['different']), { directory: path, model: withQuality(model) }),
+  ).rejects.toThrow('another snapshot')
 })
 it('preserves pending candidates, questions and evidence across batches without fixture memories', async () => {
   const path = await directory()
@@ -166,10 +173,14 @@ it('preserves pending candidates, questions and evidence across batches without 
         reason: 'Enough detail to publish.',
       }
     })
-  await expect(runImport(input, { directory: path, batchSize: 1, model })).rejects.toThrow(
-    'Batch needs review',
-  )
-  const result = await runImport(input, { directory: path, batchSize: 1, model })
+  await expect(
+    runImport(input, { directory: path, batchSize: 1, model: withQuality(model) }),
+  ).rejects.toThrow('Batch needs review')
+  const result = await runImport(input, {
+    directory: path,
+    batchSize: 1,
+    model: withQuality(model),
+  })
   expect(selections).toBe(2)
   expect(result.batches[1]?.calls[0]?.reusedFromBatch).toBe(0)
   expect(result.state.posts).toHaveLength(1)
@@ -181,7 +192,10 @@ it('preserves pending candidates, questions and evidence across batches without 
 })
 it('reports unsupported inputs explicitly and leaves the raw snapshot intact', async () => {
   const input = snapshot(['', 'x'.repeat(8001), 'hello'])
-  const result = await runImport(input, { directory: await directory(), model: ignore })
+  const result = await runImport(input, {
+    directory: await directory(),
+    model: withQuality(ignore),
+  })
   expect(result.skipped.map(({ messageId }) => messageId)).toEqual(['1', '2'])
   expect(result.completedMessages).toBe(1)
   expect(input.messages[1]?.text.length).toBe(8001)
@@ -227,7 +241,11 @@ it('records unresolved identity while publishing independent work and continuing
       reason: 'Firsthand project announcement.',
     })
   }
-  const result = await runImport(input, { directory: await directory(), batchSize: 3, model })
+  const result = await runImport(input, {
+    directory: await directory(),
+    batchSize: 3,
+    model: withQuality(model),
+  })
   expect(result.completedMessages).toBe(4)
   expect(result.batches.map(({ status }) => status)).toEqual(['completed', 'completed'])
   expect(result.batches[0]?.result?.unresolved).toEqual([
