@@ -102,15 +102,46 @@ function fetchedPage(input: unknown, result: CapturedNativeOutput) {
 }
 
 export function fetchedPageFromNativeTool(input: unknown, output: unknown) {
+  const direct = piPages(output)
+  if (direct) return direct[0]
   const result = captured(output)
   if (result?.status !== 'success' || !result.toolOutput.trim()) return undefined
   return fetchedPage(input, result)
 }
 
 export function pagesFromNativeTool(name: NativeToolName, input: unknown, output: unknown) {
+  const direct = piPages(output)
+  if (direct)
+    return direct.map((page) => ({ ...page, text: page.text.slice(0, maximumTextLength) }))
   const result = captured(output)
   if (result?.status !== 'success' || !result.toolOutput.trim()) return []
   if (name === 'search_web') return searchPages(result)
   const page = fetchedPage(input, result)
   return page ? [{ ...page, text: page.text.slice(0, maximumTextLength) }] : []
+}
+
+function piPages(output: unknown) {
+  if (
+    !output ||
+    typeof output !== 'object' ||
+    Reflect.get(output, 'provenance') !== 'pi-web-v1' ||
+    Reflect.get(output, 'status') !== 'success'
+  )
+    return undefined
+  const pages: unknown = Reflect.get(output, 'pages')
+  if (!Array.isArray(pages)) return undefined
+  return pages
+    .flatMap((page) => {
+      if (
+        !page ||
+        typeof page.url !== 'string' ||
+        !publicUrl(page.url) ||
+        typeof page.title !== 'string' ||
+        typeof page.text !== 'string' ||
+        !page.text.trim()
+      )
+        return []
+      return [{ url: page.url, title: page.title.slice(0, 300), text: page.text }]
+    })
+    .slice(0, 5)
 }

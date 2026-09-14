@@ -20,7 +20,9 @@
     "test:telegram": "pnpm --dir poc test:telegram",
     "test:messaging": "pnpm --dir poc test:messaging",
     "preview:refresh": "pnpm --dir poc/messaging test:preview-live",
-    "preview:project": "node poc/project-lifecycle-preview.ts"
+    "preview:project": "node poc/project-lifecycle-preview.ts",
+    "telegram:connect": "node poc/telegram/live/connect.ts",
+    "telegram:import": "node --env-file=.amber/openrouter.env --import ./poc/shared/register.ts poc/telegram/live/run.ts"
   },
   "dependencies": {
     "@tanstack/react-form": "1.33.5",

@@ -16,7 +16,8 @@ export type ModelObservation =
       runtimeInventory: readonly string[]
       observedTools: readonly string[]
       failedTools: readonly string[]
-      controlProvenance: 'antigravity-stream-json-v1'
+      controlProvenance: 'antigravity-stream-json-v1' | 'pi-sdk-v1'
+      usage?: readonly unknown[]
     }
   | { kind: 'native-tool'; name: NativeToolName; input: unknown; output: unknown }
 

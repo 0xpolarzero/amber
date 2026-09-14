@@ -18,3 +18,4 @@ test-results/
 smithers.db*
 *.session
 *.session-journal
+.amber/

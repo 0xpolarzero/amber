@@ -3,9 +3,16 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@earendil-works/pi-ai": "0.85.1",
+    "@earendil-works/pi-coding-agent": "0.85.1",
     "@modelcontextprotocol/sdk": "1.30.0",
     "@smthrs/crypto": "1.0.0-rc.0",
     "@smthrs/engine": "1.0.0-rc.0",
+    "ajv": "8.20.0",
     "effect": "4.0.0-rc.112"
+  },
+  "scripts": {
+    "typecheck": "../telegram/node_modules/.bin/tsc --noEmit",
+    "test": "../telegram/node_modules/.bin/vitest run --config vitest.config.ts"
   }
 }

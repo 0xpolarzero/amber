@@ -5,12 +5,14 @@ import * as S from '../schemas'
 import { type Ports, tools } from '../tools'
 import { memories as fixtureMemories } from './fixtures'
 
-type PendingCandidate = NonNullable<(typeof S.ProjectContext.Type)['selectedCandidate']> & {
+export type PendingCandidate = NonNullable<(typeof S.ProjectContext.Type)['selectedCandidate']> & {
   groupId: string
   knownLinks?: readonly string[]
 }
 
-type StoreOptions = {
+export type StoreOptions = {
+  associations?: Readonly<Record<string, readonly string[]>>
+  history?: readonly (typeof S.TelegramMessage.Type)[]
   coordinator?: OwnerCoordinator
   candidates?: readonly NonNullable<PendingCandidate>[]
   pendingRequests?: readonly (typeof S.PendingRequest.Type & { ownerId: string })[]
@@ -31,6 +33,7 @@ export function telegramStore(
   initialPosts: readonly (typeof S.Post.Type)[],
   options: StoreOptions = {},
 ) {
+  const history = options.history ?? batch.messages
   const coordinator = options.coordinator ?? new OwnerCoordinator()
   const addressingState = options.addressingState ?? new AddressingState()
   const posts = new Map(initialPosts.map((post) => [post.id, structuredClone(post)]))
@@ -40,7 +43,9 @@ export function telegramStore(
   const sources = new Map(
     Object.entries(options.sources ?? {}).map(([id, values]) => [id, [...values]]),
   )
-  const sourceAssociations = new Map<string, Set<string>>()
+  const sourceAssociations = new Map<string, Set<string>>(
+    Object.entries(options.associations ?? {}).map(([id, targets]) => [id, new Set(targets)]),
+  )
   for (const association of batch.associations) {
     const targets = sourceAssociations.get(association.messageId) ?? new Set<string>()
     targets.add(association.targetId)
@@ -183,15 +188,19 @@ export function telegramStore(
           )
           .map(({ messageId }) => messageId)
         const selected = new Set([...item.candidate.messageIds, ...sourceMessageIds])
-        for (const message of batch.messages)
+        for (const message of history)
           if (selected.has(message.id) && message.replyToId) selected.add(message.replyToId)
         return {
           work: item,
-          messages: batch.messages.filter(({ id }) => selected.has(id)).slice(0, 100),
+          messages: history.filter(({ id }) => selected.has(id)).slice(0, 100),
           clarifications: [],
           selectedPost,
           selectedCandidate,
-          memories: [...(options.memories?.[item.ownerId] ?? fixtureMemories[item.ownerId] ?? [])],
+          memories: [
+            ...((options.memories
+              ? options.memories[item.ownerId]
+              : fixtureMemories[item.ownerId]) ?? []),
+          ],
           pendingRequests: [...pendingRequests.values()]
             .filter(
               (request) =>
@@ -210,11 +219,11 @@ export function telegramStore(
           throw new Error('Wrong Telegram application scope.')
         if (name === 'readMessages') {
           const { ids } = Schema.decodeUnknownSync(tools.readMessages.input)(input)
-          return batch.messages.filter((message) => ids.includes(message.id))
+          return history.filter((message) => ids.includes(message.id))
         }
         if (name === 'searchMessages') {
           const { query } = Schema.decodeUnknownSync(tools.searchMessages.input)(input)
-          return batch.messages.filter((message) => matches(message.text, [query])).slice(0, 20)
+          return history.filter((message) => matches(message.text, [query])).slice(0, 20)
         }
         const { queries, cursor = 0 } = Schema.decodeUnknownSync(tools.searchPosts.input)(input)
         const found = publicProjects()
@@ -329,6 +338,40 @@ export function telegramStore(
                   : item.candidateId)
               if (!pendingRequests.has(questionId)) {
                 const pendingCandidateId = posts.has(targetId) ? null : targetId
+                if (pendingCandidateId && !candidates.has(targetId)) {
+                  const makerMessages = context.messages.filter(
+                    (message) =>
+                      message.authorId === item.ownerId &&
+                      item.candidate.messageIds.includes(message.id),
+                  )
+                  candidates.set(targetId, {
+                    id: targetId,
+                    groupId: batch.groupId,
+                    authorId: item.ownerId,
+                    version: 0,
+                    title: item.candidate.project,
+                    summary:
+                      makerMessages
+                        .map(({ text }) => text)
+                        .join(' ')
+                        .slice(0, 500) || item.candidate.project,
+                    detail:
+                      makerMessages
+                        .map(({ text }) => text)
+                        .join('\n')
+                        .slice(0, 6000) || item.candidate.project,
+                    makerEvidence: makerMessages.slice(0, 20).map(({ id }) => id),
+                  })
+                  sources.set(
+                    targetId,
+                    makerMessages.map(({ id }) => ({ kind: 'telegram' as const, messageId: id })),
+                  )
+                  for (const { id } of makerMessages) {
+                    const targets = sourceAssociations.get(id) ?? new Set<string>()
+                    targets.add(targetId)
+                    sourceAssociations.set(id, targets)
+                  }
+                }
                 pendingRequests.set(questionId, {
                   id: questionId,
                   ownerId: item.ownerId,
@@ -434,6 +477,16 @@ export function telegramStore(
   })
   return {
     ports,
+    snapshot: () => ({
+      posts: result().posts,
+      candidates: [...candidates.values()],
+      pendingRequests: [...pendingRequests.values()].map((request) => ({
+        ...request,
+        addressed: addressingState.isAddressed(request.id, request.addressed),
+      })),
+      sources: result().sources,
+      associations: result().associations,
+    }),
     result,
     sources,
     questions,

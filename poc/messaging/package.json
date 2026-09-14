@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "pnpm@11.1.3",
   "scripts": {
-    "test": "vitest run testing",
+    "test": "vitest run testing live/reply.test.ts",
     "test:live": "vitest run workflow.live.test.ts --maxWorkers=1",
     "test:acceptance-live": "vitest run acceptance.live.test.ts --maxWorkers=1",
     "test:preview-live": "vitest run preview.live.test.ts --maxWorkers=1",
