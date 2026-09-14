@@ -9,6 +9,7 @@ import * as S from './schemas'
 
 const text = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(600))
 export const Facts = Schema.Struct({
+  subject: text,
   facts: Schema.Array(
     Schema.Struct({
       claim: text,

@@ -1,6 +1,7 @@
 // Real agents; invented Telegram messages and explicitly supplied fake web pages.
 // node --env-file=.amber/openrouter.env --import ./poc/shared/register.ts poc/telegram/testing/quality-live.ts
 import { mkdir, writeFile } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import { Effect } from 'effect'
 import { piOpenRouter } from '../../shared/pi'
 import { reviewedPost } from '../quality'
@@ -8,8 +9,19 @@ import type * as S from '../schemas'
 import { qualityCases } from './quality-cases'
 
 const results: unknown[] = []
-await mkdir('.amber/telegram', { recursive: true })
-for (const fixture of qualityCases) {
+const selected = process.env.QUALITY_CASES?.split(',')
+  .map((id) => id.trim())
+  .filter(Boolean)
+const unknown = selected?.filter((id) => !qualityCases.some((fixture) => fixture.id === id))
+if (unknown?.length) throw new Error(`Unknown quality cases: ${unknown.join(', ')}`)
+const fixtures = selected?.length
+  ? qualityCases.filter((fixture) => selected.includes(fixture.id))
+  : qualityCases
+const outputPath =
+  process.env.QUALITY_OUTPUT ||
+  `.amber/telegram/quality-cases${selected?.length ? '-selected' : ''}.json`
+await mkdir(dirname(outputPath), { recursive: true })
+for (const fixture of fixtures) {
   const calls: unknown[] = []
   const owner = fixture.messages[0].authorId ?? 'maker'
   const context: typeof S.ProjectContext.Type = {
@@ -21,7 +33,7 @@ for (const fixture of qualityCases) {
       ownerId: owner,
       candidate: {
         authorId: owner,
-        project: fixture.title,
+        project: fixture.project,
         messageIds: fixture.messages.map((m) => m.id),
         target: { kind: 'new', ownerId: owner },
       },
@@ -84,6 +96,6 @@ for (const fixture of qualityCases) {
     results.push({ id: fixture.id, fixture, error: String(error), calls })
     console.log(`${fixture.id}: failed`)
   }
-  await writeFile('.amber/telegram/quality-cases.json', JSON.stringify(results, null, 2))
+  await writeFile(outputPath, JSON.stringify(results, null, 2))
 }
 if (results.some((result) => 'error' in (result as object))) process.exitCode = 1

@@ -3,6 +3,7 @@ import type * as S from '../schemas'
 type QualityCase = {
   id: string
   title: string
+  project: string
   messages: readonly (typeof S.TelegramMessage.Type)[]
   pages?: readonly (typeof S.WebPage.Type)[]
   expected: readonly string[]
@@ -20,6 +21,7 @@ const message = (id: string, authorId: string, text: string) => ({
 export const qualityCases: readonly QualityCase[] = [
   {
     id: 'illustrative-leaderboard',
+    project: 'Ask Gina evals',
     title: 'A working evaluation runner does not make its demo leaderboard real',
     messages: [
       message(
@@ -55,6 +57,7 @@ export const qualityCases: readonly QualityCase[] = [
   },
   {
     id: 'instructions-not-guarantees',
+    project: 'Shared coding-agent instructions',
     title: 'Instructions express desired behavior, not enforced behavior',
     messages: [
       message(
@@ -88,6 +91,7 @@ export const qualityCases: readonly QualityCase[] = [
   },
   {
     id: 'later-owner-correction',
+    project: 'Desktop image-generation setup',
     title: 'Later owner feedback changes the status of an earlier experiment',
     messages: [
       message(
@@ -113,6 +117,7 @@ export const qualityCases: readonly QualityCase[] = [
   },
   {
     id: 'unnamed-repo-and-noise',
+    project: 'Coding-agent benchmarking repository',
     title: 'A complaint beside an unfinished project is not project evidence',
     messages: [
       message('401', 'maker', 'The safety filter is absurd today.'),
@@ -138,6 +143,7 @@ export const qualityCases: readonly QualityCase[] = [
   },
   {
     id: 'fixed-experiment-uncertainty',
+    project: 'Yacht',
     title: 'Repeated comparison does not mean testing until a positive result appears',
     messages: [
       message(

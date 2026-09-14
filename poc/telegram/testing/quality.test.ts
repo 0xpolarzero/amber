@@ -65,6 +65,7 @@ it('passes verifier corrections to a new writer and only returns the accepted dr
       calls.push(request.task)
       if (request.task === 'evidence')
         return {
+          subject: 'An evaluation interface demo',
           facts: [{ claim: 'Scores are illustrative.', kind: 'status', sources: [source] }],
           links: [],
           uncertainties: [],
@@ -88,7 +89,13 @@ it('returns failure instead of a publishable draft after two rejections', async 
   let writes = 0
   const host = ports((request) =>
     Effect.sync(() => {
-      if (request.task === 'evidence') return { facts: [], links: [], uncertainties: [] }
+      if (request.task === 'evidence')
+        return {
+          subject: 'An evaluation interface demo',
+          facts: [],
+          links: [],
+          uncertainties: [],
+        }
       if (request.task === 'verification') return { issues: [issue] }
       writes++
       return proposal('Measured model rankings.')
@@ -106,6 +113,7 @@ it('rejects invented fact citations before the writer runs', async () => {
     Effect.sync(() => {
       calls.push(request.task)
       return {
+        subject: 'An evaluation interface demo',
         facts: [
           {
             claim: 'Real leaderboard.',

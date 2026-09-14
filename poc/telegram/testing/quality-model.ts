@@ -6,7 +6,12 @@ export const withQuality =
   (model: Model): Model =>
   (request) => {
     if (request.task === 'evidence')
-      return Effect.succeed({ facts: [], uncertainties: [], links: [] })
+      return Effect.succeed({
+        subject: 'The selected project',
+        facts: [],
+        uncertainties: [],
+        links: [],
+      })
     if (request.task === 'verification') return Effect.succeed({ issues: [] })
     return model(request)
   }
