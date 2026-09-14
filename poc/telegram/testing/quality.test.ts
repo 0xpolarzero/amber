@@ -66,6 +66,7 @@ it('passes verifier corrections to a new writer and only returns the accepted dr
       if (request.task === 'evidence')
         return {
           subject: 'An evaluation interface demo',
+          purpose: { claim: 'Preview agent evaluation rankings.', sources: [source] },
           facts: [{ claim: 'Scores are illustrative.', kind: 'status', sources: [source] }],
           links: [],
           uncertainties: [],
@@ -92,6 +93,7 @@ it('returns failure instead of a publishable draft after two rejections', async 
       if (request.task === 'evidence')
         return {
           subject: 'An evaluation interface demo',
+          purpose: { claim: 'Preview agent evaluation rankings.', sources: [source] },
           facts: [],
           links: [],
           uncertainties: [],
@@ -114,6 +116,7 @@ it('rejects invented fact citations before the writer runs', async () => {
       calls.push(request.task)
       return {
         subject: 'An evaluation interface demo',
+        purpose: { claim: 'Preview agent evaluation rankings.', sources: [source] },
         facts: [
           {
             claim: 'Real leaderboard.',
@@ -128,4 +131,33 @@ it('rejects invented fact citations before the writer runs', async () => {
   )
   await expect(Effect.runPromise(reviewedPost(host, context))).rejects.toThrow('Rejected source')
   expect(calls).toEqual(['evidence'])
+})
+
+it('rejects a proposed new post when research cannot establish its end-user purpose', async () => {
+  const unknown = {
+    ...context,
+    messages: [
+      { ...context.messages[0], text: 'I built the frontend for a site called Nuconstruct.' },
+    ],
+  }
+  const calls: string[] = []
+  const host = ports((request) =>
+    Effect.sync(() => {
+      calls.push(request.task)
+      if (request.task === 'evidence')
+        return {
+          subject: 'A website frontend',
+          purpose: null,
+          facts: [
+            { claim: 'The owner built the frontend.', kind: 'owner_claim', sources: [source] },
+          ],
+          links: [],
+          uncertainties: ['What the website lets its visitors do is unknown.'],
+        }
+      if (request.task === 'verification') return { issues: [] }
+      return proposal('A website frontend built with AI.')
+    }),
+  )
+  await expect(Effect.runPromise(reviewedPost(host, unknown))).rejects.toThrow(/purpose/i)
+  expect(calls).toContain('post')
 })

@@ -20,6 +20,31 @@ const message = (id: string, authorId: string, text: string) => ({
 // Invented conversations and page excerpts. Expectations concern meaning, not exact wording.
 export const qualityCases: readonly QualityCase[] = [
   {
+    id: 'unknown-site-purpose',
+    project: 'Nuconstruct',
+    title: 'Knowing who built a frontend does not establish what its website does',
+    messages: [
+      message(
+        '601',
+        'maker',
+        'I built the frontend for a site called Nuconstruct, mostly using React and an AI coding assistant.',
+      ),
+      message('602', 'reader', 'Nice, did you redesign it with Astra yet?'),
+      message(
+        '603',
+        'maker',
+        'Not yet. That redesign is just something I want to try. I have not shared a link here.',
+      ),
+    ],
+    expected: [
+      'Record known ownership and frontend implementation without treating them as the website’s end-user purpose.',
+      'Do not publish a post until the website’s purpose is established.',
+      'Ask one concise question for what the website does and its link.',
+      'Do not guess that it is a personal website or use an unrelated similarly named website URL.',
+      'Describe the redesign as planned, not completed, if it is mentioned at all.',
+    ],
+  },
+  {
     id: 'illustrative-leaderboard',
     project: 'Ask Gina evals',
     title: 'A working evaluation runner does not make its demo leaderboard real',

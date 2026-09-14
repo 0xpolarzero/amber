@@ -135,6 +135,13 @@ export function recordedStage(call: Call, people: People = {}): Stage {
   if (input.assistantAnswer)
     sections.push(messages('Amber’s answer', [input.assistantAnswer], people))
   if (call.task === 'evidence') {
+    const purpose = record(output.purpose)
+    if (purpose.claim)
+      sections.push(
+        section('Purpose', [
+          { id: 'purpose', title: '', text: string(purpose.claim) },
+        ]),
+      )
     sections.push(
       section(
         'Supported facts',

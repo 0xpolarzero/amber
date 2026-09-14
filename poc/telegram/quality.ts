@@ -10,6 +10,12 @@ import * as S from './schemas'
 const text = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(600))
 export const Facts = Schema.Struct({
   subject: text,
+  purpose: Schema.NullOr(
+    Schema.Struct({
+      claim: text,
+      sources: Schema.Array(S.Source).check(Schema.isMinLength(1)),
+    }),
+  ),
   facts: Schema.Array(
     Schema.Struct({
       claim: text,
@@ -63,11 +69,10 @@ export function reviewedPost(ports: ModelPorts, context: typeof S.ProjectContext
         projectTools,
         webTools,
         (facts, evidence) => {
-          validateSources(
-            context,
-            evidence,
-            facts.facts.flatMap((f) => f.sources),
-          )
+          validateSources(context, evidence, [
+            ...(facts.purpose?.sources ?? []),
+            ...facts.facts.flatMap((f) => f.sources),
+          ])
           for (const link of facts.links)
             if (!evidence.pages.some((p) => p.url === link.url))
               throw new Error('Evidence links must come from actual web results.')
@@ -91,8 +96,13 @@ export function reviewedPost(ports: ModelPorts, context: typeof S.ProjectContext
             scope,
             projectTools,
             webTools,
-            (proposal, extra) =>
-              validateDraft(context, { proposal, evidence: combine(evidence, extra) }),
+            (proposal, extra) => {
+              if (proposal.postEdit?.existingPostId === null && !research.value.purpose)
+                throw new Error(
+                  'A new post needs a supported end-user purpose. Return no edit and ask what the work does, plus its link if missing.',
+                )
+              validateDraft(context, { proposal, evidence: combine(evidence, extra) })
+            },
           ),
         )
       evidence = combine(evidence, written.evidence)

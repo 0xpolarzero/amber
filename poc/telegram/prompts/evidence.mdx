@@ -19,6 +19,10 @@ Avoid rereading supplied messages or pages. At most eight tool calls; stop when 
 Return:
 - subject: exactly what the selected maker shared (for example, a website demo, reusable
   instructions, or an automation workflow). Distinguish the artifact from the tools used to build it.
+- purpose: the supported end-user purpose, with its sources, or null when unknown. What can a
+  visitor/user actually do or learn with this artifact? "A website", "nice design", "built in
+  React" and "the maker rebuilt the frontend" do not answer that question. Do not infer a personal
+  portfolio, company site or product from its name or the fact someone built it in their free time.
 - facts: short atomic claims, each classified as purpose, status, owner_claim, limitation or
   owner_followup, with exact supporting Telegram/clarification IDs or fetched web URLs. Cite only
   substantive messages, not nearby complaints, reactions or introductions. Separate owner reports
