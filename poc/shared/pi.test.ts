@@ -78,6 +78,17 @@ test('page tools reject local, credentialed and non-HTTPS targets before connect
 test('provider citations enter evidence; generated search prose does not', () => {
   expect(
     pagesFromNativeTool(
+      'read_url_content',
+      {},
+      {
+        provenance: 'pi-web-v1',
+        status: 'success',
+        pages: [{ url: 'https://example.org', title: ' ', text: 'A page without a title' }],
+      },
+    ),
+  ).toEqual([{ url: 'https://example.org', title: 'example.org', text: 'A page without a title' }])
+  expect(
+    pagesFromNativeTool(
       'search_web',
       {},
       {

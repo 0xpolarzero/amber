@@ -141,7 +141,13 @@ function piPages(output: unknown) {
         !page.text.trim()
       )
         return []
-      return [{ url: page.url, title: page.title.slice(0, 300), text: page.text }]
+      return [
+        {
+          url: page.url,
+          title: (page.title.trim() || new URL(page.url).hostname).slice(0, 300),
+          text: page.text,
+        },
+      ]
     })
     .slice(0, 5)
 }
