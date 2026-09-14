@@ -13,7 +13,7 @@ const call = (
 ): Call => ({ task, input, output, observations, status: 'succeeded' })
 
 describe('readable recorded workflow evidence', () => {
-  it('shows the original messages beside selection and exclusion decisions', () => {
+  it('keeps selection decisions without repeating the source messages', () => {
     const stage = recordedStage(
       call(
         'selection',
@@ -40,17 +40,9 @@ describe('readable recorded workflow evidence', () => {
       ),
       { a: { name: 'Ada' } },
     )
-    expect(stage.sections).toContainEqual(
-      expect.objectContaining({
-        title: 'Telegram messages',
-        items: expect.arrayContaining([
-          expect.objectContaining({
-            title: 'Ada',
-            text: 'I shipped the demo.',
-          }),
-        ]),
-      }),
-    )
+    expect(
+      stage.sections?.some((section) => section.title === 'Telegram messages'),
+    ).toBe(false)
     expect(
       stage.sections?.find((s) => s.title === 'Selected projects')?.items[0]
         ?.text,
@@ -58,7 +50,7 @@ describe('readable recorded workflow evidence', () => {
     expect(
       stage.sections?.find((s) => s.title === 'Ignored messages')?.items[0]
         ?.text,
-    ).toBe('Nice!\nReaction only.')
+    ).toBe('Reaction only.')
   })
   it('formats each query as one readable line', () => {
     const stage = recordedStage(

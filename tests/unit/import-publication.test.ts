@@ -52,8 +52,16 @@ it.each([false, true])(
             {
               task: 'post',
               status: 'succeeded',
-              observations: [],
+              observations: [
+                {
+                  kind: 'tool',
+                  name: 'readMessages',
+                  input: { messageIds: ['m1'] },
+                  output: snapshot.messages,
+                },
+              ],
               input: {
+                messages: snapshot.messages,
                 work: {
                   ownerId: 'owner',
                   candidateId: 'work',
@@ -99,6 +107,20 @@ it.each([false, true])(
     })
     const message = feed.realDemo?.conversations.owner.messages[0]
     expect(message?.postId).toBe('p1')
+    const sourceItems = message?.recordedTrace?.stages[0].sections?.[0].items
+    expect(sourceItems).toHaveLength(1)
+    const writerSections = message?.recordedTrace?.stages.find(
+      (stage) => stage.label === 'Prepare post and follow-up',
+    )?.sections
+    expect(
+      writerSections?.some((section) => section.title === 'Telegram messages'),
+    ).toBe(false)
+    expect(
+      writerSections?.find((section) =>
+        section.title.startsWith('readMessages'),
+      )?.items[0].text,
+    ).toBe('Message m1 · see Telegram messages')
+
     expect(message?.text).toBe(`${update ? 'Updated' : 'Created'} “Noted”.`)
     const changes = message?.recordedTrace?.stages.flatMap(
       (stage) => stage.changes ?? [],

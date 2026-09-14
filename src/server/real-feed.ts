@@ -237,8 +237,25 @@ export function projectRealFeed(
           : undefined)
       const postId = typeof targetId === 'string' ? targetId : undefined
       const selectedIds = record(record(context.work).candidate).messageIds
-      const relatedMessages = Array.isArray(selectedIds)
-        ? snapshot.messages.filter((item) => selectedIds.includes(item.id))
+      const contextMessages = Array.isArray(context.messages)
+        ? context.messages
+        : []
+      const fetchedMessages = (writer?.observations ?? []).flatMap((raw) => {
+        const observation = record(raw)
+        return ['searchMessages', 'readMessages'].includes(
+          String(observation.name),
+        ) && Array.isArray(observation.output)
+          ? observation.output
+          : []
+      })
+      const sourceIds = new Set([
+        ...(Array.isArray(selectedIds) ? selectedIds : []),
+        ...[...contextMessages, ...fetchedMessages].map(
+          (item) => record(item).id,
+        ),
+      ])
+      const relatedMessages = sourceIds.size
+        ? snapshot.messages.filter((item) => sourceIds.has(item.id))
         : batch.input.messages
       const after = batch.result?.posts?.find((post) => post.id === postId)
       const diff = batch.result?.diffs?.find((diff) => diff.postId === postId)

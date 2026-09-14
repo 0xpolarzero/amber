@@ -122,8 +122,6 @@ export function recordedStage(call: Call, people: People = {}): Stage {
     memory: 'Review preferences',
     addressing: 'Review pending requests',
   }
-  if (Array.isArray(input.messages))
-    sections.push(messages('Telegram messages', input.messages, people))
   const turn = record(input.turn)
   if (turn.text)
     sections.push(
@@ -161,15 +159,12 @@ export function recordedStage(call: Call, people: People = {}): Stage {
           key === 'ignored' ? 'Ignored messages' : 'Unresolved messages',
           list(output[key]).map((value, i) => {
             const m = record(value)
-            const original = list(input.messages)
-              .map(record)
-              .find((item) => item.id === m.messageId)
             return {
               id: String(i),
               title: [string(m.messageId), string(m.category)]
                 .filter(Boolean)
                 .join(' · '),
-              text: join(original?.text, m.reason),
+              text: string(m.reason),
             }
           }),
         ),
@@ -283,7 +278,9 @@ export function recordedStage(call: Call, people: People = {}): Stage {
               : undefined,
             title:
               string(r.title) || person(r.authorId, people) || string(r.id),
-            text: join(r.text, r.summary, r.detail, r.snippet) || string(item),
+            text: ['searchMessages', 'readMessages'].includes(string(tool.name))
+              ? `Message ${string(r.id)} · see Telegram messages`
+              : join(r.text, r.summary, r.detail, r.snippet) || string(item),
           }
         }),
         join(
