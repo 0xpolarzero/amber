@@ -23,6 +23,9 @@ Connect your account with `pnpm telegram:connect`. Enter your API ID/hash, phone
 login code and optional 2FA password in the local terminal. The command saves the latest
 500 messages from Agent Junkies, including source IDs, author names and timestamps.
 It reads Telegram; it does not send messages to the group.
+If a login code does not arrive, use `pnpm telegram:connect --qr` and scan the terminal
+QR from Telegram's Settings → Devices → Link Desktop Device. QR login uses Telegram's
+[login-token flow](https://core.telegram.org/api/qr-login) and refreshes expired tokens automatically.
 
 Store `OPENROUTER_API_KEY=…` in `.amber/openrouter.env`, then run `pnpm telegram:import`.
 The existing workflows use a fresh Pi session for each task with

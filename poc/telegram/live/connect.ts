@@ -2,6 +2,7 @@ import { chmod, mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { createInterface } from 'node:readline/promises'
 import { Writable } from 'node:stream'
+import qr from 'qrcode-terminal'
 import { Api, TelegramClient, utils } from 'telegram'
 import { StringSession } from 'telegram/sessions/index.js'
 import type { Snapshot } from './snapshot.ts'
@@ -64,12 +65,40 @@ const client = new TelegramClient(
 )
 client.setLogLevel('none' as never)
 try {
-  await client.start({
-    phoneNumber: () => prompt('Phone number (with country code): '),
-    phoneCode: () => secret('Login code from Telegram: '),
-    password: () => secret('Telegram 2FA password: '),
-    onError: () => console.error('Telegram could not sign in. Check your login details and retry.'),
-  })
+  const onError = async (error: Error) => {
+    const code = 'errorMessage' in error ? String(error.errorMessage) : ''
+    console.error(`Telegram login failed${/^[A-Z_0-9]+$/.test(code) ? `: ${code}` : '.'}`)
+    return true
+  }
+  const password = () => secret('Telegram 2FA password: ')
+  if (process.argv.includes('--qr')) {
+    await client.connect()
+    if (!(await client.checkAuthorization())) {
+      console.log('On your phone: Telegram → Settings → Devices → Link Desktop Device.')
+      await client.signInUserWithQrCode(
+        { apiId, apiHash },
+        {
+          password,
+          onError,
+          qrCode: async ({ token }) => {
+            console.log('\nScan this QR code with Telegram. It refreshes automatically:')
+            qr.generate(`tg://login?token=${token.toString('base64url')}`, { small: true })
+          },
+        },
+      )
+    }
+  } else
+    await client.start({
+      phoneNumber: () => prompt('Phone number (with country code): '),
+      phoneCode: (viaApp) =>
+        secret(
+          viaApp
+            ? 'Code sent to your Telegram service chat: '
+            : 'Login code (check SMS or other Telegram delivery): ',
+        ),
+      password,
+      onError,
+    })
   await save('account.session', String(client.session.save()))
   const matches = []
   for await (const dialog of client.iterDialogs({})) {
