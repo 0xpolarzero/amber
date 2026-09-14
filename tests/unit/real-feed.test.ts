@@ -153,6 +153,25 @@ describe('real Telegram preview', () => {
     ).toBe(false)
   })
 
+  it('recognizes a completed retry without discarding interrupted attempts', () => {
+    const batch = {
+      ...run.batches[0],
+      input: { ...run.batches[0].input, batchId: 'batch-1' },
+    }
+    expect(
+      projectRealFeed(snapshot, {
+        ...run,
+        batches: [{ ...batch, status: 'running' }, batch],
+      }).realDemo?.importComplete,
+    ).toBe(true)
+    expect(
+      projectRealFeed(snapshot, {
+        ...run,
+        batches: [batch, { ...batch, status: 'running' }],
+      }).realDemo?.importComplete,
+    ).toBe(false)
+  })
+
   it('does not display user requests as answered assistant questions', () => {
     const feed = projectRealFeed(snapshot, run, {
       snapshotHash: 'same',

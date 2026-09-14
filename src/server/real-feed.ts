@@ -58,7 +58,7 @@ type Import = {
   }
   batches: {
     status: string
-    input: { messages: Snapshot['messages'] }
+    input: { batchId?: string; messages: Snapshot['messages'] }
     calls: Call[]
     result?: {
       questions: RecordedMessage[]
@@ -470,7 +470,14 @@ export function projectRealFeed(
       importComplete:
         run.completedMessages + (run.skipped?.length ?? 0) ===
           snapshot.messages.length &&
-        !run.batches.some((batch) => batch.status === 'running'),
+        !Array.from(
+          new Map(
+            run.batches.map((batch, index) => [
+              batch.input.batchId ?? index,
+              batch.status,
+            ]),
+          ).values(),
+        ).includes('running'),
       importedAt: snapshot.importedAt,
       messageCount: snapshot.messages.length,
       processedCount: run.completedMessages,
