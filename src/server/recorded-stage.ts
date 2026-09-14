@@ -115,7 +115,9 @@ export function recordedStage(call: Call, people: People = {}): Stage {
   const sections: Section[] = []
   const labels: Record<string, string> = {
     selection: 'Select projects',
+    evidence: 'Check evidence',
     post: 'Prepare post and follow-up',
+    verification: 'Verify draft',
     'query-planner': 'Plan context search',
     responder: 'Prepare reply',
     respond: 'Prepare reply',
@@ -131,6 +133,47 @@ export function recordedStage(call: Call, people: People = {}): Stage {
     sections.push(messages('Your message', [input.userMessage], people))
   if (input.assistantAnswer)
     sections.push(messages('Amber’s answer', [input.assistantAnswer], people))
+  if (call.task === 'evidence') {
+    sections.push(
+      section(
+        'Supported facts',
+        list(output.facts).map((value, i) => {
+          const fact = record(value)
+          return {
+            id: String(i),
+            title: string(fact.kind).replaceAll('_', ' '),
+            text: string(fact.claim),
+          }
+        }),
+      ),
+    )
+    if (list(output.uncertainties).length)
+      sections.push(
+        section(
+          'Still unclear',
+          list(output.uncertainties).map((value, i) => ({
+            id: String(i),
+            title: '',
+            text: string(value),
+          })),
+        ),
+      )
+  }
+  if (call.task === 'verification')
+    sections.push(
+      section(
+        'Review',
+        list(output.issues).map((value, i) => {
+          const issue = record(value)
+          return {
+            id: String(i),
+            title: string(issue.field),
+            text: join(issue.problem, issue.correction),
+          }
+        }),
+        'No material issues found.',
+      ),
+    )
   if (call.task === 'selection') {
     sections.push(
       section(
@@ -341,17 +384,26 @@ export function recordedStage(call: Call, people: People = {}): Stage {
         ]
           .filter(Boolean)
           .join(' · ') || 'No projects selected'
-      : call.task === 'query-planner'
-        ? numberOf(output.queries, 'planned query').replace('querys', 'queries')
-        : call.task === 'memory'
-          ? numberOf(output.operations, 'preference change')
-          : call.task === 'addressing'
-            ? numberOf(output.resolutions, 'request resolution')
-            : call.task === 'post'
-              ? string(record(output.postEdit).title) ||
-                string(output.reason) ||
-                'No post changes'
-              : numberOf(output.postChanges, 'proposed post change')
+      : call.task === 'evidence'
+        ? numberOf(output.facts, 'supported fact')
+        : call.task === 'verification'
+          ? list(output.issues).length
+            ? numberOf(output.issues, 'correction')
+            : 'Approved'
+          : call.task === 'query-planner'
+            ? numberOf(output.queries, 'planned query').replace(
+                'querys',
+                'queries',
+              )
+            : call.task === 'memory'
+              ? numberOf(output.operations, 'preference change')
+              : call.task === 'addressing'
+                ? numberOf(output.resolutions, 'request resolution')
+                : call.task === 'post'
+                  ? string(record(output.postEdit).title) ||
+                    string(output.reason) ||
+                    'No post changes'
+                  : numberOf(output.postChanges, 'proposed post change')
   const summary =
     call.status === 'failed'
       ? 'Model call failed'

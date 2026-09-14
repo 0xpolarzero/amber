@@ -98,6 +98,17 @@ it.each([false, true])(
         },
       ],
     }
+    // A repaired run must use the final writer's citations, not the rejected first draft.
+    const writer = run.batches[0].calls[0]
+    run.batches[0].calls.unshift({
+      ...writer,
+      output: {
+        postEdit: {
+          ...writer.output.postEdit,
+          sources: [{ kind: 'telegram', messageId: 'noise' }],
+        },
+      },
+    })
     // Saved messaging previously discarded imported notification text and post references.
     const feed = projectRealFeed(snapshot, run, {
       snapshotHash: 'same',

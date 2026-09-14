@@ -217,7 +217,7 @@ export function projectRealFeed(
       const addressed = run.state.pendingRequests.find(
         ({ id }) => id === message.id,
       )?.addressed
-      const writer = batch.calls.find((call) => {
+      const writer = [...batch.calls].reverse().find((call) => {
         const work = record(record(call.input).work)
         return (
           call.task === 'post' &&
