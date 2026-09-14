@@ -115,6 +115,7 @@ export function recordedStage(call: Call, people: People = {}): Stage {
   const sections: Section[] = []
   const labels: Record<string, string> = {
     selection: 'Select projects',
+    grouping: 'Group related work',
     evidence: 'Check evidence',
     post: 'Prepare post and follow-up',
     verification: 'Verify draft',
@@ -159,6 +160,20 @@ export function recordedStage(call: Call, people: People = {}): Stage {
         ),
       )
   }
+  if (call.task === 'grouping')
+    sections.push(
+      section(
+        'Projects',
+        list(output.groups).map((value, i) => {
+          const group = record(value)
+          return {
+            id: String(i),
+            title: string(group.project),
+            text: string(group.reason),
+          }
+        }),
+      ),
+    )
   if (call.task === 'verification')
     sections.push(
       section(
@@ -384,26 +399,28 @@ export function recordedStage(call: Call, people: People = {}): Stage {
         ]
           .filter(Boolean)
           .join(' · ') || 'No projects selected'
-      : call.task === 'evidence'
-        ? numberOf(output.facts, 'supported fact')
-        : call.task === 'verification'
-          ? list(output.issues).length
-            ? numberOf(output.issues, 'correction')
-            : 'Approved'
-          : call.task === 'query-planner'
-            ? numberOf(output.queries, 'planned query').replace(
-                'querys',
-                'queries',
-              )
-            : call.task === 'memory'
-              ? numberOf(output.operations, 'preference change')
-              : call.task === 'addressing'
-                ? numberOf(output.resolutions, 'request resolution')
-                : call.task === 'post'
-                  ? string(record(output.postEdit).title) ||
-                    string(output.reason) ||
-                    'No post changes'
-                  : numberOf(output.postChanges, 'proposed post change')
+      : call.task === 'grouping'
+        ? numberOf(output.groups, 'project')
+        : call.task === 'evidence'
+          ? numberOf(output.facts, 'supported fact')
+          : call.task === 'verification'
+            ? list(output.issues).length
+              ? numberOf(output.issues, 'correction')
+              : 'Approved'
+            : call.task === 'query-planner'
+              ? numberOf(output.queries, 'planned query').replace(
+                  'querys',
+                  'queries',
+                )
+              : call.task === 'memory'
+                ? numberOf(output.operations, 'preference change')
+                : call.task === 'addressing'
+                  ? numberOf(output.resolutions, 'request resolution')
+                  : call.task === 'post'
+                    ? string(record(output.postEdit).title) ||
+                      string(output.reason) ||
+                      'No post changes'
+                    : numberOf(output.postChanges, 'proposed post change')
   const summary =
     call.status === 'failed'
       ? 'Model call failed'

@@ -12,6 +12,16 @@ export const withQuality =
         uncertainties: [],
         links: [],
       })
+    if (request.task === 'grouping') {
+      const { selection } = request.input as { selection: { candidates: { project: string }[] } }
+      return Effect.succeed({
+        groups: selection.candidates.map((candidate, index) => ({
+          indexes: [index],
+          project: candidate.project,
+          reason: 'Independent scripted candidate.',
+        })),
+      })
+    }
     if (request.task === 'verification') return Effect.succeed({ issues: [] })
     return model(request)
   }

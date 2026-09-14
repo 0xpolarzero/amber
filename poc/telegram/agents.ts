@@ -1,5 +1,6 @@
 import * as Interpreter from '@smthrs/flow/Interpreter'
 import { Effect, Layer } from 'effect'
+import { groupSelection } from './grouping'
 import { validateSelection } from './guards'
 import { checked, createModelTasks } from './model'
 import selectionPrompt from './prompts/selection.mdx?raw'
@@ -36,6 +37,7 @@ export function telegramLayers(ports: Ports) {
               return selection
             }),
           ),
+          Effect.flatMap((selection) => groupSelection(ports, input, selection)),
         ),
       ),
     ),
