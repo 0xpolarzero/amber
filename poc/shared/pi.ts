@@ -61,7 +61,8 @@ export const piOpenRouter: Model = (request) =>
     try: async (parentSignal) => {
       const apiKey = process.env.OPENROUTER_API_KEY
       if (!apiKey) throw new Error('Set OPENROUTER_API_KEY locally before running Amber.')
-      const signal = AbortSignal.any([parentSignal, AbortSignal.timeout(180_000)])
+      // The deadline covers the whole task, including every model/tool round trip.
+      const signal = AbortSignal.any([parentSignal, AbortSignal.timeout(600_000)])
       const cwd = await mkdtemp(join(tmpdir(), 'amber-pi-'))
       let session: Awaited<ReturnType<typeof createAgentSession>>['session'] | undefined
       try {
