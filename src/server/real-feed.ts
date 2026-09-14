@@ -40,6 +40,7 @@ type RecordedMessage = {
 type Import = {
   snapshotHash: string
   completedMessages: number
+  skipped?: { messageId: string; reason: string }[]
   state: {
     posts: StoredPost[]
     pendingRequests: { id: string; addressed: boolean }[]
@@ -289,6 +290,7 @@ export function projectRealFeed(
       importedAt: snapshot.importedAt,
       messageCount: snapshot.messages.length,
       processedCount: run.completedMessages,
+      skippedCount: run.skipped?.length ?? 0,
       model: 'DeepSeek V4.1 Flash · OpenRouter',
       conversations,
     },

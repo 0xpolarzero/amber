@@ -32,6 +32,16 @@ export function AgentPage({ postId }: { postId?: string }) {
         postId={postId}
       />
     )
+  if (state.realDemo)
+    return (
+      <div className="empty">
+        <h1>No project conversations yet.</h1>
+        <p>
+          Conversations appear here when Amber identifies work in the imported
+          messages.
+        </p>
+      </div>
+    )
   return (
     <div className="empty">
       <div className="empty-icon">

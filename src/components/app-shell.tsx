@@ -101,8 +101,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         {state.realDemo && (
           <div className="real-import-note">
             Local preview · {state.realDemo.processedCount} /{' '}
-            {state.realDemo.messageCount} Telegram messages processed ·{' '}
-            {new Date(state.realDemo.importedAt).toISOString().slice(0, 10)}
+            {state.realDemo.messageCount - state.realDemo.skippedCount} text
+            messages processed
+            {state.realDemo.skippedCount > 0 &&
+              ` · ${state.realDemo.skippedCount} without supported text`}{' '}
+            · {new Date(state.realDemo.importedAt).toISOString().slice(0, 10)}
             <span>{state.realDemo.model}</span>
           </div>
         )}
