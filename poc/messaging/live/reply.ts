@@ -85,7 +85,13 @@ export async function runReply(
     const run: ImportRun = JSON.parse(
       await readFile(resolve(options.directory, 'import/import.json'), 'utf8'),
     )
-    if (run.batches.some((batch) => batch.status === 'running'))
+    const snapshot = JSON.parse(
+      await readFile(resolve(options.directory, 'snapshot.json'), 'utf8'),
+    ) as { messages: unknown[] }
+    if (
+      run.completedMessages !== snapshot.messages.length - run.skipped.length ||
+      run.batches.some((batch) => batch.status === 'running')
+    )
       throw new Error('Finish the import first.')
     const saved = await readFile(path, 'utf8').catch((error: NodeJS.ErrnoException) => {
       if (error.code === 'ENOENT') return null

@@ -53,6 +53,11 @@ it('persists actual turns across process boundaries and supplies the previous ex
   try {
     await mkdir(join(directory, 'import'))
     await writeFile(join(directory, 'import/import.json'), JSON.stringify(run))
+    await writeFile(join(directory, 'snapshot.json'), JSON.stringify({ messages: [{}, {}] }))
+    await expect(
+      runReply({ authorId: 'owner', text: 'Hello.' }, { directory, model }),
+    ).rejects.toThrow('Finish the import first.')
+    await writeFile(join(directory, 'snapshot.json'), JSON.stringify({ messages: [{}] }))
     const first = await runReply({ authorId: 'owner', text: 'Hello.' }, { directory, model })
     expect(first.turns[0]?.receipt.status).toBe('completed')
     expect(recent).toBe(0)
