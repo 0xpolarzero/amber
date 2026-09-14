@@ -123,6 +123,8 @@ export const PostEdit = Schema.Struct({
   existingPostId: Schema.NullOr(Id),
   expectedVersion: Schema.NullOr(Version),
   ...PostFields,
+  summary: text(220),
+  detail: text(700),
   sources: Schema.Array(Source).check(Schema.isMinLength(1)),
 })
 export const RequestResolution = Schema.Struct({
