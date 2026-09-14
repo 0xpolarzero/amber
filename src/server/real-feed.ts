@@ -237,26 +237,33 @@ export function projectRealFeed(
           : undefined)
       const postId = typeof targetId === 'string' ? targetId : undefined
       const selectedIds = record(record(context.work).candidate).messageIds
-      const contextMessages = Array.isArray(context.messages)
-        ? context.messages
-        : []
-      const fetchedMessages = (writer?.observations ?? []).flatMap((raw) => {
-        const observation = record(raw)
-        return ['searchMessages', 'readMessages'].includes(
-          String(observation.name),
-        ) && Array.isArray(observation.output)
-          ? observation.output
-          : []
-      })
-      const sourceIds = new Set([
-        ...(Array.isArray(selectedIds) ? selectedIds : []),
-        ...[...contextMessages, ...fetchedMessages].map(
-          (item) => record(item).id,
+      const output = record(writer?.output)
+      const citations = [
+        ...[edit.sources, record(output.question).sources].flatMap((value) =>
+          Array.isArray(value) ? value : [],
         ),
-      ])
-      const relatedMessages = sourceIds.size
-        ? snapshot.messages.filter((item) => sourceIds.has(item.id))
-        : batch.input.messages
+        ...(Array.isArray(output.resolutions)
+          ? output.resolutions
+          : []
+        ).flatMap((value) => {
+          const sources = record(value).sources
+          return Array.isArray(sources) ? sources : []
+        }),
+      ]
+      const citedIds = citations
+        .map(record)
+        .filter((source) => source.kind === 'telegram')
+        .map((source) => source.messageId)
+      const sourceIds = new Set(
+        citedIds.length
+          ? citedIds
+          : Array.isArray(selectedIds)
+            ? selectedIds
+            : [],
+      )
+      const relatedMessages = snapshot.messages.filter((item) =>
+        sourceIds.has(item.id),
+      )
       const after = batch.result?.posts?.find((post) => post.id === postId)
       const diff = batch.result?.diffs?.find((diff) => diff.postId === postId)
       const created = Boolean(after && writer && edit.existingPostId === null)
@@ -427,6 +434,17 @@ export function projectRealFeed(
       detail: post.detail,
       sourceUrl:
         telegram.find((message) => message.sourceUrl)?.sourceUrl ?? undefined,
+      telegramSources: telegram.flatMap((message) =>
+        message.sourceUrl
+          ? [
+              {
+                id: message.id,
+                text: message.text,
+                url: message.sourceUrl,
+              },
+            ]
+          : [],
+      ),
       project: post.title,
       projectUrl: links[0],
       projectUrls: links,

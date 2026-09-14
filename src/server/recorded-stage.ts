@@ -153,22 +153,21 @@ export function recordedStage(call: Call, people: People = {}): Stage {
         'No projects selected.',
       ),
     )
-    for (const key of ['ignored', 'unresolved'])
-      sections.push(
-        section(
-          key === 'ignored' ? 'Ignored messages' : 'Unresolved messages',
-          list(output[key]).map((value, i) => {
-            const m = record(value)
-            return {
-              id: String(i),
-              title: [string(m.messageId), string(m.category)]
-                .filter(Boolean)
-                .join(' · '),
-              text: string(m.reason),
-            }
-          }),
-        ),
-      )
+    sections.push(
+      section(
+        'Unresolved messages',
+        list(output.unresolved).map((value, i) => {
+          const m = record(value)
+          return {
+            id: String(i),
+            title: [string(m.messageId), string(m.category)]
+              .filter(Boolean)
+              .join(' · '),
+            text: string(m.reason),
+          }
+        }),
+      ),
+    )
   }
   if (call.task === 'query-planner')
     sections.push(
@@ -190,17 +189,24 @@ export function recordedStage(call: Call, people: People = {}): Stage {
       sections.push(posts('Selected post', [input.selectedPost]))
     if (input.selectedCandidate)
       sections.push(
-        posts('Selected pending project', [input.selectedCandidate]),
+        section('Selected pending project', [
+          {
+            id: string(record(input.selectedCandidate).id),
+            title: string(record(input.selectedCandidate).title),
+            text: '',
+          },
+        ]),
       )
     sections.push(
       messages('Owner preferences', input.memories, people),
       messages('Pending requests', input.pendingRequests, people),
     )
   }
-  if (output.postEdit) sections.push(posts('Proposed post', [output.postEdit]))
+  if (output.postEdit && call.task !== 'post')
+    sections.push(posts('Proposed post', [output.postEdit]))
   if (output.postChanges)
     sections.push(posts('Proposed post changes', output.postChanges))
-  if (output.question)
+  if (output.question && call.task !== 'post')
     sections.push(
       section('Follow-up question', [
         {
@@ -280,7 +286,9 @@ export function recordedStage(call: Call, people: People = {}): Stage {
               string(r.title) || person(r.authorId, people) || string(r.id),
             text: ['searchMessages', 'readMessages'].includes(string(tool.name))
               ? `Message ${string(r.id)} · see Telegram messages`
-              : join(r.text, r.summary, r.detail, r.snippet) || string(item),
+              : r.targetKind === 'candidate'
+                ? ''
+                : join(r.text, r.summary, r.detail, r.snippet) || string(item),
           }
         }),
         join(
@@ -327,9 +335,6 @@ export function recordedStage(call: Call, people: People = {}): Stage {
           list(output.candidates).length
             ? numberOf(output.candidates, 'selected project')
             : null,
-          list(output.ignored).length
-            ? numberOf(output.ignored, 'ignored message')
-            : null,
           list(output.unresolved).length
             ? numberOf(output.unresolved, 'unresolved message')
             : null,
@@ -363,12 +368,23 @@ export function recordedStage(call: Call, people: People = {}): Stage {
         : call.status === 'failed'
           ? 'failed'
           : 'running',
-    sections: sections.map((s) => ({
-      ...s,
-      collapsible:
-        s.title === 'Retrieved posts' ||
-        s.items.some((item) => Boolean(item.href)),
-    })),
+    sections: sections
+      .filter(
+        (s) =>
+          call.task !== 'post' ||
+          s.items.length ||
+          ![
+            'Owner preferences',
+            'Pending requests',
+            'Proposed request resolutions',
+          ].includes(s.title),
+      )
+      .map((s) => ({
+        ...s,
+        collapsible:
+          s.title === 'Retrieved posts' ||
+          s.items.some((item) => Boolean(item.href)),
+      })),
     detail: JSON.stringify(
       {
         task: call.task,

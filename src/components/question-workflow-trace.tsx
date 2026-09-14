@@ -53,23 +53,6 @@ export function QuestionWorkflowTrace({
                 </div>
               ))}
             </div>
-            {source.outcomes.ignored.length ? (
-              <details className="trace-nested">
-                <summary>{source.outcomes.ignored.length} skipped</summary>
-                {source.outcomes.ignored.map((ignored) => (
-                  <div className="trace-record" key={ignored.messageId}>
-                    <p>
-                      {
-                        source.messages.find(
-                          ({ id }) => id === ignored.messageId,
-                        )?.text
-                      }
-                    </p>
-                    <span>{ignored.reason}</span>
-                  </div>
-                ))}
-              </details>
-            ) : null}
           </TraceStep>
           <TraceStep
             id={stageId(2)}

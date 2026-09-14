@@ -3527,3 +3527,44 @@ main.guide-active ~ .toast {
   height: 13px;
   flex-shrink: 0;
 }
+
+.post-telegram-sources {
+  max-width: 100%;
+}
+.post-telegram-sources[open] {
+  flex-basis: 100%;
+}
+.post-telegram-sources summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+.post-telegram-sources summary::-webkit-details-marker {
+  display: none;
+}
+.post-telegram-sources[open] summary svg:last-child {
+  transform: rotate(180deg);
+}
+.post-telegram-sources ol {
+  margin: 10px 0 0;
+  padding: 0 0 0 12px;
+  border-left: 1px solid var(--line);
+  list-style: none;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.post-telegram-sources li + li {
+  margin-top: 10px;
+}
+.post-telegram-sources li a {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  line-height: 1.5;
+}
+.post-telegram-sources li a span {
+  white-space: pre-wrap;
+}

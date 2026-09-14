@@ -48,9 +48,9 @@ describe('readable recorded workflow evidence', () => {
         ?.text,
     ).toContain('Owner: Ada')
     expect(
-      stage.sections?.find((s) => s.title === 'Ignored messages')?.items[0]
-        ?.text,
-    ).toBe('Reaction only.')
+      stage.sections?.find((s) => s.title === 'Ignored messages'),
+    ).toBeUndefined()
+    expect(stage.summary).toBe('1 selected project')
   })
   it('formats each query as one readable line', () => {
     const stage = recordedStage(

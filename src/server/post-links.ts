@@ -6,7 +6,7 @@ export function postLinks(
   const links = texts.flatMap(
     (text) => text.match(/https?:\/\/[^\s<>"`]+/g) ?? [],
   )
-  return [
+  const unique = [
     ...new Set(
       [...links, ...webUrls].flatMap((raw) => {
         try {
@@ -25,4 +25,11 @@ export function postLinks(
       }),
     ),
   ]
+  return unique.filter((href) => {
+    const url = new URL(href)
+    if (url.hostname !== 'raw.githubusercontent.com') return true
+    const [owner, repo, ref, ...path] = url.pathname.slice(1).split('/')
+    const readable = `https://github.com/${owner}/${repo}/blob/${ref}/${path.join('/')}`
+    return !unique.includes(readable)
+  })
 }

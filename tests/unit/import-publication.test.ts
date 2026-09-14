@@ -24,6 +24,13 @@ const snapshot = {
       date: '2026-09-14',
       sourceUrl: 'https://t.me/c/1/1',
     },
+    {
+      id: 'noise',
+      authorId: 'owner',
+      text: 'Unrelated chatter.',
+      date: '2026-09-14',
+      sourceUrl: 'https://t.me/c/1/2',
+    },
   ],
 }
 
@@ -61,17 +68,24 @@ it.each([false, true])(
                 },
               ],
               input: {
-                messages: snapshot.messages,
+                messages: [
+                  ...snapshot.messages,
+                  { id: 'noise', text: 'Unrelated chatter.' },
+                ],
                 work: {
                   ownerId: 'owner',
                   candidateId: 'work',
-                  candidate: { messageIds: ['m1'] },
+                  candidate: { messageIds: ['m1', 'noise'] },
                 },
                 selectedPost: update ? before : null,
                 selectedCandidate: update ? null : { id: 'p1' },
               },
               output: {
-                postEdit: { ...post, existingPostId: update ? 'p1' : null },
+                postEdit: {
+                  ...post,
+                  existingPostId: update ? 'p1' : null,
+                  sources: [{ kind: 'telegram', messageId: 'm1' }],
+                },
               },
             },
           ],
@@ -108,7 +122,12 @@ it.each([false, true])(
     const message = feed.realDemo?.conversations.owner.messages[0]
     expect(message?.postId).toBe('p1')
     const sourceItems = message?.recordedTrace?.stages[0].sections?.[0].items
-    expect(sourceItems).toHaveLength(1)
+    expect(sourceItems?.map((item) => item.id)).toEqual(['m1'])
+    expect(
+      message?.recordedTrace?.stages
+        .flatMap((stage) => stage.sections ?? [])
+        .some((section) => section.title === 'Proposed post'),
+    ).toBe(false)
     const writerSections = message?.recordedTrace?.stages.find(
       (stage) => stage.label === 'Prepare post and follow-up',
     )?.sections
@@ -152,4 +171,42 @@ it('keeps cited links, deduplicates them and rejects credential-bearing or non-w
       ],
     ),
   ).toEqual(['https://noted.example/'])
+})
+
+it('preserves every cited Telegram message instead of choosing only the first', () => {
+  const messages = [
+    'An introductory remark.',
+    'I built a benchmark repo.',
+    'It isolates each agent.',
+  ].map((text, index) => ({
+    ...snapshot.messages[0],
+    id: `source-${index}`,
+    text,
+    sourceUrl: `https://t.me/c/1/${index + 1}`,
+  }))
+  const feed = projectRealFeed(
+    { ...snapshot, messages },
+    {
+      snapshotHash: 'sources',
+      completedMessages: 3,
+      state: {
+        posts: [before],
+        pendingRequests: [],
+        sources: {
+          p1: messages.map(({ id }) => ({ kind: 'telegram', messageId: id })),
+        },
+      },
+      batches: [],
+    },
+  )
+  expect(feed.posts[0].telegramSources).toEqual(
+    messages.map(({ id, text, sourceUrl }) => ({ id, text, url: sourceUrl })),
+  )
+})
+
+it('hides a raw GitHub duplicate only when the same file has a cited readable link', () => {
+  const raw = 'https://raw.githubusercontent.com/owner/repo/main/src/example.ts'
+  const readable = 'https://github.com/owner/repo/blob/main/src/example.ts'
+  expect(postLinks([readable], [raw])).toEqual([readable])
+  expect(postLinks([], [raw])).toEqual([raw])
 })

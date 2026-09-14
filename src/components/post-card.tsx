@@ -43,7 +43,11 @@ export function ProjectLink({ post }: { post: Post }) {
           const url = new URL(href)
           const label =
             url.hostname === 'github.com'
-              ? url.hostname + url.pathname.split('/').slice(0, 3).join('/')
+              ? url.pathname.includes('/docs/tutorials/')
+                ? 'Walkthrough'
+                : url.pathname.includes('/blob/')
+                  ? url.pathname.split('/').at(-1)
+                  : url.hostname + url.pathname.split('/').slice(0, 3).join('/')
               : url.hostname
           return (
             <a
@@ -58,7 +62,25 @@ export function ProjectLink({ post }: { post: Post }) {
             </a>
           )
         })}
-        {post.sourceUrl ? (
+        {(post.telegramSources?.length ?? 0) > 1 ? (
+          <details className="post-telegram-sources">
+            <summary>
+              <Icon name="telegram" />
+              Telegram · {post.telegramSources?.length}
+              <Icon name="chevronDown" />
+            </summary>
+            <ol aria-label="Source Telegram messages">
+              {post.telegramSources?.map((source) => (
+                <li key={source.id}>
+                  <a href={source.url} target="_blank" rel="noreferrer">
+                    <span>{source.text}</span>
+                    <Icon name="arrow" />
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </details>
+        ) : post.sourceUrl ? (
           <a href={post.sourceUrl} target="_blank" rel="noreferrer">
             <Icon name="telegram" />
             Telegram
