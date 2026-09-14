@@ -5,6 +5,7 @@ import { Writable } from 'node:stream'
 import qr from 'qrcode-terminal'
 import { Api, TelegramClient, utils } from 'telegram'
 import { StringSession } from 'telegram/sessions/index.js'
+import { loginWithCode } from './login.ts'
 import type { Snapshot } from './snapshot.ts'
 
 const directory = resolve(import.meta.dirname, '../../../.amber/telegram')
@@ -87,18 +88,11 @@ try {
         },
       )
     }
-  } else
-    await client.start({
-      phoneNumber: () => prompt('Phone number (with country code): '),
-      phoneCode: (viaApp) =>
-        secret(
-          viaApp
-            ? 'Code sent to your Telegram service chat: '
-            : 'Login code (check SMS or other Telegram delivery): ',
-        ),
-      password,
-      onError,
-    })
+  } else {
+    await client.connect()
+    if (!(await client.checkAuthorization()))
+      await loginWithCode(client, { apiId, apiHash }, { prompt, secret, log: console.log })
+  }
   await save('account.session', String(client.session.save()))
   const matches = []
   for await (const dialog of client.iterDialogs({})) {

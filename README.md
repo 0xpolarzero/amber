@@ -23,6 +23,8 @@ Connect your account with `pnpm telegram:connect`. Enter your API ID/hash, phone
 login code and optional 2FA password in the local terminal. The command saves the latest
 500 messages from Agent Junkies, including source IDs, author names and timestamps.
 It reads Telegram; it does not send messages to the group.
+Code login reports Telegram's delivery method and any available fallback. If a code is missing,
+type `/resend` at the code prompt after the displayed timeout; Telegram chooses the next method.
 If a login code does not arrive, use `pnpm telegram:connect --qr` and scan the terminal
 QR from Telegram's Settings → Devices → Link Desktop Device. QR login uses Telegram's
 [login-token flow](https://core.telegram.org/api/qr-login) and refreshes expired tokens automatically.
