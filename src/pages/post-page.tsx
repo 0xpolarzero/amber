@@ -42,14 +42,24 @@ export function PostPage({ postId }: { postId: string }) {
           <ProjectLink post={post} />
           <OwnerPrompt post={post} />
           <div className="post-provenance">
-            <button
-              type="button"
-              onClick={() =>
-                notify('Sample content. No Telegram message is connected yet.')
-              }
-            >
-              View original message
-            </button>
+            {state.realDemo ? (
+              post.sourceUrl ? (
+                <a href={post.sourceUrl} target="_blank" rel="noreferrer">
+                  View original Telegram message
+                </a>
+              ) : null
+            ) : (
+              <button
+                type="button"
+                onClick={() =>
+                  notify(
+                    'Sample content. No Telegram message is connected yet.',
+                  )
+                }
+              >
+                View original message
+              </button>
+            )}
           </div>
           <PostActions post={post} />
         </div>
@@ -62,7 +72,11 @@ export function PostPage({ postId }: { postId: string }) {
         <h2 className="comments-heading" id="comments-title">
           Conversation <span>{post.comments.length}</span>
         </h2>
-        {user ? (
+        {state.realDemo ? (
+          <p className="post-summary">
+            Comments are not connected in this local preview.
+          </p>
+        ) : user ? (
           <div className="composer">
             <Avatar personId={user} />
             <TextForm

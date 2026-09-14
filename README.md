@@ -17,6 +17,32 @@ pnpm dev
 
 Open [the app](http://127.0.0.1:3000). No credentials or database are needed for this stage.
 
+### Local Telegram demo
+
+Connect your account with `pnpm telegram:connect`. Enter your API ID/hash, phone number,
+login code and optional 2FA password in the local terminal. The command saves the latest
+500 messages from Agent Junkies, including source IDs, author names and timestamps.
+It reads Telegram; it does not send messages to the group.
+
+Store `OPENROUTER_API_KEY=…` in `.amber/openrouter.env`, then run `pnpm telegram:import`.
+The existing workflows use a fresh Pi session for each task with
+`deepseek/deepseek-v4.1-flash` through OpenRouter. Only explicitly supplied tools and context
+are available. [Pi SDK](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/sdk.md)
+documents resource and session configuration; [OpenRouter's catalog](https://openrouter.ai/api/v1/models)
+provides the exact model identifier.
+
+The website switches to actual results when `.amber/telegram/import/import.json` exists.
+Its author selector is a local review control, not Telegram authentication. Agent replies
+run the real messaging workflow and persist in `.amber/telegram/messaging.json`.
+Sessions, credentials, Telegram messages, model traces and results remain under ignored `.amber/`.
+Do not publish this local review mode as an authenticated multi-user application.
+
+Imports checkpoint complete batches. Restarting repeats only an interrupted batch, including
+its model costs; a stale `import.lock` must be removed only after confirming the old process
+has stopped. This is a snapshot demo, not periodic Telegram synchronization.
+Media-only/service messages and text beyond the workflow limit are reported as skipped.
+Web research supports public HTTPS text, with search billed through OpenRouter.
+
 | Command | Purpose |
 | --- | --- |
 | `pnpm check` | TypeScript, Biome and unit tests |

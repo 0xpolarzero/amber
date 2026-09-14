@@ -3468,3 +3468,60 @@ main.guide-active ~ .toast {
 .reply-workflow-trace[data-pending-answer] > summary .workflow-trace-caret {
   visibility: hidden;
 }
+
+.real-import-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 16px auto;
+  color: var(--muted);
+  font-size: 11px;
+}
+.real-import-note span {
+  margin-left: auto;
+}
+.real-author-select select {
+  max-width: 150px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+}
+.recorded-workflow {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.recorded-workflow > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  cursor: pointer;
+  list-style: none;
+}
+.recorded-workflow > summary svg {
+  width: 14px;
+  height: 14px;
+}
+.recorded-workflow details {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.recorded-workflow details summary {
+  cursor: pointer;
+}
+.recorded-workflow pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 300px;
+  overflow: auto;
+  font: inherit;
+  line-height: 1.5;
+}
+.real-reply-status {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 0 12px;
+}

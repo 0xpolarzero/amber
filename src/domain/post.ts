@@ -1,4 +1,5 @@
 import { Schema } from 'effect'
+import type { RealDemo } from './real-demo'
 
 export const Person = Schema.Struct({
   name: Schema.String,
@@ -33,6 +34,8 @@ export const Post = Schema.Struct({
   domain: Schema.String,
   mark: Schema.String,
   bookmarks: Schema.Number,
+  sourceUrl: Schema.optional(Schema.String),
+  projectUrl: Schema.optional(Schema.String),
   question: Schema.optional(Schema.String),
   comments: Schema.Array(Comment),
 })
@@ -43,4 +46,4 @@ export const Feed = Schema.Struct({
   people: Schema.Record(Schema.String, Person),
   posts: Schema.Array(Post),
 })
-export type Feed = typeof Feed.Type
+export type Feed = typeof Feed.Type & { realDemo?: RealDemo }

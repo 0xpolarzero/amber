@@ -6,7 +6,7 @@ import type { AgentMemory } from '../preview/state'
 import { Icon } from './icon'
 
 export function AgentMemoryPanel({ id }: { id: string }) {
-  const { agent, dispatch } = usePreview()
+  const { agent, dispatch, state } = usePreview()
   const [editing, setEditing] = useState<AgentMemory | 'new' | null>(null)
   const [query, setQuery] = useState('')
   const addButton = useRef<HTMLButtonElement>(null)
@@ -57,14 +57,16 @@ export function AgentMemoryPanel({ id }: { id: string }) {
             {memories.map((memory) => (
               <div className="memory-entry" key={memory.id}>
                 <p>{memory.text}</p>
-                <MemoryActions
-                  memory={memory}
-                  onEdit={() => setEditing(memory)}
-                  onDelete={() => {
-                    dispatch({ type: 'forgetMemory', id: memory.id })
-                    requestAnimationFrame(() => addButton.current?.focus())
-                  }}
-                />
+                {!state.realDemo && (
+                  <MemoryActions
+                    memory={memory}
+                    onEdit={() => setEditing(memory)}
+                    onDelete={() => {
+                      dispatch({ type: 'forgetMemory', id: memory.id })
+                      requestAnimationFrame(() => addButton.current?.focus())
+                    }}
+                  />
+                )}
               </div>
             ))}
             {!agent.memories.length ? (
@@ -76,7 +78,7 @@ export function AgentMemoryPanel({ id }: { id: string }) {
           </div>
         )}
       </div>
-      {!editing ? (
+      {!editing && !state.realDemo ? (
         <button
           type="button"
           ref={addButton}

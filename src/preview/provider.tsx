@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react'
 import type { Feed } from '../domain/post'
+import { submitRealReply } from '../server/reply'
 import {
   type AgentConversation,
   type AgentRun,
@@ -36,6 +37,9 @@ type PreviewContext = {
   notice: string
   notify: (message: string) => void
   save: (postId: string) => void
+  sendRealMessage: (text: string) => Promise<void>
+  sending: boolean
+  sendError: string
   share: (postId: string) => Promise<void>
 }
 const Context = createContext<PreviewContext | null>(null)
@@ -52,7 +56,27 @@ export function PreviewProvider({
   const [state, dispatch] = useReducer(previewReducer, feed, createPreviewState)
   const [dialog, setDialog] = useState<PreviewDialog>(null)
   const [notice, setNotice] = useState({ text: '', sequence: 0 })
-  const user = currentUser(state.role)
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState('')
+  const user = state.realDemo
+    ? (state.selectedRealAuthor ?? null)
+    : currentUser(state.role)
+  const sendRealMessage = async (text: string) => {
+    if (!user || sending || !state.realDemo) return
+    setSending(true)
+    setSendError('')
+    try {
+      const feed = await submitRealReply({ data: { authorId: user, text } })
+      dispatch({ type: 'refreshRealFeed', feed })
+    } catch (error) {
+      setSendError(
+        error instanceof Error ? error.message : 'The reply failed. Try again.',
+      )
+      throw error
+    } finally {
+      setSending(false)
+    }
+  }
   const saved = user ? (state.savedByUser[user] ?? []) : []
   const agent = user ? state.agentByUser[user] : null
   const unreadCount = agent
@@ -105,6 +129,9 @@ export function PreviewProvider({
         notify,
         save,
         share,
+        sendRealMessage,
+        sending,
+        sendError,
       }}
     >
       {Object.entries(state.agentByUser).map(([userId, conversation]) => (

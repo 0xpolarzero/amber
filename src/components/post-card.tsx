@@ -20,19 +20,37 @@ export function PostHeading({ post }: { post: Post }) {
         <span className="byline-dot" />
         <span className="post-time">{post.time}</span>
       </div>
-      <button
-        type="button"
-        className="icon-button"
-        aria-label={`Options for ${post.title}`}
-        onClick={() => openDialog({ kind: 'menu', postId: post.id })}
-      >
-        <Icon name="more" />
-      </button>
+      {!state.realDemo && (
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={`Options for ${post.title}`}
+          onClick={() => openDialog({ kind: 'menu', postId: post.id })}
+        >
+          <Icon name="more" />
+        </button>
+      )}
     </div>
   )
 }
 export function ProjectLink({ post }: { post: Post }) {
-  const { notify } = usePreview()
+  const { state, notify } = usePreview()
+  if (state.realDemo)
+    return post.projectUrl ? (
+      <a
+        className="project-link"
+        href={post.projectUrl}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <span className="project-symbol">{post.mark}</span>
+        <span className="project-info">
+          <strong>{post.project}</strong>
+          <span>{new URL(post.projectUrl).hostname}</span>
+        </span>
+        <Icon name="arrow" />
+      </a>
+    ) : null
   return (
     <button
       type="button"

@@ -1,0 +1,296 @@
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import type { Feed } from '../domain/post'
+import type { AgentConversation, AgentMessage } from '../preview/state'
+
+type Snapshot = {
+  importedAt: string
+  groupId: string
+  groupName: string
+  authors: Record<string, { name: string }>
+  messages: {
+    id: string
+    authorId: string | null
+    text: string
+    date: string
+    sourceUrl: string | null
+  }[]
+}
+type StoredPost = {
+  id: string
+  authorId: string
+  title: string
+  summary: string
+  detail: string
+}
+type Call = {
+  task: string
+  input: unknown
+  output?: unknown
+  observations: unknown[]
+  status: string
+}
+type RecordedMessage = {
+  id: string
+  authorId: string
+  postId?: string | null
+  text: string
+  needsReply?: boolean
+}
+type Import = {
+  snapshotHash: string
+  completedMessages: number
+  state: {
+    posts: StoredPost[]
+    pendingRequests: { id: string; addressed: boolean }[]
+    sources: Record<
+      string,
+      { kind: string; messageId?: string; url?: string }[]
+    >
+  }
+  batches: {
+    status: string
+    input: { messages: Snapshot['messages'] }
+    calls: Call[]
+    result?: { questions: RecordedMessage[]; notifications: RecordedMessage[] }
+  }[]
+}
+const emptyConversation = (): AgentConversation => ({
+  draft: '',
+  messages: [],
+  memories: [],
+  memoryHistory: [],
+  readThrough: 0,
+  revision: 0,
+})
+
+// Keep private captures outside the bundle. Missing captures preserve the fixture demo;
+// invalid captures fail visibly rather than quietly showing fictional data.
+export async function loadRealFeed(
+  directory = resolve('.amber/telegram'),
+): Promise<Feed | null> {
+  const json = await readFile(
+    resolve(directory, 'import/import.json'),
+    'utf8',
+  ).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === 'ENOENT') return null
+    throw error
+  })
+  if (!json) return null
+  const run = JSON.parse(json) as Import
+  const snapshot = JSON.parse(
+    await readFile(resolve(directory, 'snapshot.json'), 'utf8'),
+  ) as Snapshot
+  const messaging = await readFile(
+    resolve(directory, 'messaging.json'),
+    'utf8',
+  ).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === 'ENOENT') return null
+    throw error
+  })
+  const capture = messaging ? (JSON.parse(messaging) as Messaging) : undefined
+  if (capture && capture.snapshotHash !== run.snapshotHash)
+    throw new Error('Conversation capture belongs to another Telegram import.')
+  return projectRealFeed(snapshot, run, capture)
+}
+
+type Messaging = {
+  snapshotHash: string
+  state: {
+    posts: StoredPost[]
+    memories: { id: string; userId: string; text: string; version: number }[]
+    messages: {
+      id: string
+      userId: string
+      text: string
+      role: 'user' | 'assistant'
+      intent: 'informational' | 'question' | 'request' | 'suggestion'
+      linkedPostId: string | null
+      addressed: boolean
+      turnId: string | null
+    }[]
+  }
+  turns: { input: { turnId: string }; calls: Call[] }[]
+}
+export function projectRealFeed(
+  snapshot: Snapshot,
+  run: Import,
+  messaging?: Messaging,
+): Feed {
+  const people = Object.fromEntries(
+    Object.entries(snapshot.authors).map(([id, author]) => [
+      id,
+      {
+        name: author.name,
+        initials: author.name
+          .trim()
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((word) => word[0])
+          .join('')
+          .toUpperCase(),
+        background: '#f2f0eb',
+        color: '#635f55',
+        bio: '',
+      },
+    ]),
+  )
+  const conversations: Record<string, AgentConversation> = Object.fromEntries(
+    Object.keys(people).map((id) => [id, emptyConversation()]),
+  )
+  for (const batch of run.batches.filter(
+    (batch) => batch.status === 'completed',
+  )) {
+    for (const message of [
+      ...(batch.result?.questions ?? []),
+      ...(batch.result?.notifications ?? []),
+    ]) {
+      const conversation = conversations[message.authorId]
+      if (!conversation) continue
+      const addressed = run.state.pendingRequests.find(
+        ({ id }) => id === message.id,
+      )?.addressed
+      const recorded: AgentMessage = {
+        id: message.id,
+        sender: 'amber',
+        text: message.text,
+        postId: message.postId ?? undefined,
+        intent: message.needsReply ? 'question' : 'informational',
+        needsReply: Boolean(message.needsReply),
+        ...(addressed ? { resolution: 'answered' as const } : {}),
+        recordedTrace: {
+          model: 'DeepSeek V4.1 Flash · OpenRouter',
+          stages: [
+            {
+              label: 'Telegram messages',
+              detail: batch.input.messages
+                .map(
+                  (item) =>
+                    `${people[item.authorId ?? '']?.name ?? 'Unknown'}: ${item.text}`,
+                )
+                .join('\n\n'),
+            },
+            ...batch.calls
+              .filter(
+                (call) =>
+                  call.status === 'succeeded' &&
+                  (!('work' in Object(call.input)) ||
+                    (call.input as { work: { ownerId: string } }).work
+                      .ownerId === message.authorId),
+              )
+              .map((call) => ({
+                label: call.task,
+                detail: JSON.stringify(
+                  {
+                    input: call.input,
+                    tools: call.observations,
+                    output: call.output,
+                  },
+                  null,
+                  2,
+                ),
+              })),
+          ],
+        },
+      }
+      conversation.messages = [...conversation.messages, recorded]
+    }
+  }
+  if (messaging) {
+    for (const [ownerId, conversation] of Object.entries(conversations)) {
+      const original = new Map(
+        conversation.messages.map((message) => [message.id, message]),
+      )
+      conversation.memories = messaging.state.memories.filter(
+        (memory) => memory.userId === ownerId,
+      )
+      conversation.messages = messaging.state.messages
+        .filter((message) => message.userId === ownerId)
+        .map((message): AgentMessage => {
+          const turn = messaging.turns.find(
+            (turn) => turn.input.turnId === message.turnId,
+          )
+          return {
+            ...original.get(message.id),
+            id: message.id,
+            text: message.text,
+            sender: message.role === 'assistant' ? 'amber' : 'user',
+            intent: message.intent,
+            postId: message.linkedPostId ?? undefined,
+            needsReply:
+              message.role === 'assistant' &&
+              message.intent !== 'informational',
+            resolution:
+              message.addressed && message.intent !== 'informational'
+                ? 'answered'
+                : undefined,
+            ...(turn && message.role === 'assistant'
+              ? {
+                  recordedTrace: {
+                    model: 'DeepSeek V4.1 Flash · OpenRouter',
+                    stages: turn.calls.map((call) => ({
+                      label: call.task,
+                      detail: JSON.stringify(
+                        {
+                          input: call.input,
+                          tools: call.observations,
+                          output: call.output,
+                        },
+                        null,
+                        2,
+                      ),
+                    })),
+                  },
+                }
+              : {}),
+          }
+        })
+    }
+  }
+  const posts = (messaging?.state.posts ?? run.state.posts).map((post) => {
+    const sources = run.state.sources[post.id] ?? []
+    const telegram = sources.flatMap((source) =>
+      source.messageId
+        ? snapshot.messages.filter(({ id }) => id === source.messageId)
+        : [],
+    )
+    const publishedAt = telegram[0]?.date ?? snapshot.importedAt
+    return {
+      id: post.id,
+      author: post.authorId,
+      publishedAt,
+      group: snapshot.groupId,
+      time: publishedAt.slice(0, 10),
+      title: post.title,
+      summary: post.summary,
+      detail: post.detail,
+      sourceUrl:
+        telegram.find((message) => message.sourceUrl)?.sourceUrl ?? undefined,
+      project: post.title,
+      domain: '',
+      mark: post.title.slice(0, 1),
+      bookmarks: 0,
+      comments: [],
+    }
+  })
+  const ownerIds = new Set([
+    ...posts.map((post) => post.author),
+    ...Object.entries(conversations)
+      .filter(([, conversation]) => conversation.messages.length)
+      .map(([id]) => id),
+  ])
+  for (const id of Object.keys(conversations))
+    if (!ownerIds.has(id)) delete conversations[id]
+  return {
+    groups: { [snapshot.groupId]: { name: snapshot.groupName } },
+    people,
+    posts,
+    realDemo: {
+      importedAt: snapshot.importedAt,
+      messageCount: snapshot.messages.length,
+      processedCount: run.completedMessages,
+      model: 'DeepSeek V4.1 Flash · OpenRouter',
+      conversations,
+    },
+  }
+}

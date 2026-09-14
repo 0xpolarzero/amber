@@ -237,6 +237,10 @@ export type AgentMessage = {
   source?: TelegramSource
   trace?: WorkflowTrace
   telegramUpdateTrace?: TelegramUpdateTrace
+  recordedTrace?: {
+    model: string
+    stages: readonly { label: string; detail: string }[]
+  }
   replyRun?: AgentRun
 }
 export const isUnaddressed = (message: AgentMessage) =>
@@ -294,6 +298,7 @@ export type AgentConversation = {
 }
 export type PreviewState = Feed & {
   role: PreviewRole
+  selectedRealAuthor?: string
   savedByUser: Record<string, readonly string[]>
   agentByUser: Record<string, AgentConversation>
   fixtureFeed: Feed
@@ -302,6 +307,8 @@ export type PreviewState = Feed & {
   agentPosts: readonly Post[]
 }
 export type PreviewAction =
+  | { type: 'selectRealAuthor'; authorId: string }
+  | { type: 'refreshRealFeed'; feed: Feed }
   | { type: 'role'; role: PreviewRole }
   | { type: 'loadScenario'; id: AgentScenarioId }
   | { type: 'restartRun'; playing: boolean }
@@ -354,6 +361,18 @@ export function createPreviewState(
   feed: Feed,
   scenarioId?: AgentScenarioId,
 ): PreviewState {
+  if (feed.realDemo)
+    return {
+      ...feed,
+      role: 'visitor',
+      savedByUser: {},
+      agentByUser: feed.realDemo.conversations,
+      fixtureFeed: feed,
+      scenarioId: 'rich-complete',
+      scenarioRevision: 0,
+      agentPosts: [],
+      selectedRealAuthor: Object.keys(feed.realDemo.conversations)[0],
+    }
   const selected = scenarioId ?? 'rich-complete'
   const scenario = buildAgentScenario(feed, selected)
   const agentByUser = Object.fromEntries(
@@ -527,6 +546,21 @@ export function previewReducer(
   state: PreviewState,
   action: PreviewAction,
 ): PreviewState {
+  if (action.type === 'refreshRealFeed')
+    return {
+      ...createPreviewState(action.feed),
+      selectedRealAuthor: state.selectedRealAuthor,
+      scenarioRevision: state.scenarioRevision + 1,
+    }
+  if (action.type === 'selectRealAuthor')
+    return state.realDemo && state.people[action.authorId]
+      ? { ...state, selectedRealAuthor: action.authorId }
+      : state
+  if (
+    state.realDemo &&
+    !['readAgent', 'draftMessage', 'save'].includes(action.type)
+  )
+    return state
   if (action.type === 'loadScenario') {
     const next = createPreviewState(state.fixtureFeed, action.id)
     return { ...next, scenarioRevision: state.scenarioRevision + 1 }
@@ -561,7 +595,9 @@ export function previewReducer(
       return state
     return advanceRun(state, action.userId)
   }
-  const userId = currentUser(state.role)
+  const userId = state.realDemo
+    ? state.selectedRealAuthor
+    : currentUser(state.role)
   if (!userId) return state
   const agent = state.agentByUser[userId]
   if (!agent) return state

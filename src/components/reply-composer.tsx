@@ -13,21 +13,28 @@ export function ReplyComposer({
   draft: string
   blocked?: boolean
 }) {
-  const { dispatch } = usePreview()
+  const { dispatch, state, sendRealMessage } = usePreview()
   const id = useId()
   const input = useRef<HTMLTextAreaElement>(null)
   const form = useForm({
     defaultValues: { text: draft },
     validators: { onChange: AnswerForm },
-    onSubmit: ({ value, formApi }) => {
+    onSubmit: async ({ value, formApi }) => {
       if (blocked) return
-      dispatch({
-        type: 'sendMessage',
-        postId,
-        id: crypto.randomUUID(),
-        text: value.text,
-        previewRun: true,
-      })
+      if (state.realDemo) {
+        try {
+          await sendRealMessage(value.text)
+        } catch {
+          return
+        }
+      } else
+        dispatch({
+          type: 'sendMessage',
+          postId,
+          id: crypto.randomUUID(),
+          text: value.text,
+          previewRun: true,
+        })
       formApi.reset({ text: '' })
       requestAnimationFrame(() => {
         resizeReply(input.current)
