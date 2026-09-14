@@ -36,6 +36,12 @@ are available. [Pi SDK](https://github.com/badlogic/pi-mono/blob/main/packages/c
 documents resource and session configuration; [OpenRouter's catalog](https://openrouter.ai/api/v1/models)
 provides the exact model identifier.
 
+Each task has a ten-minute deadline covering all model and tool calls. To bypass a failing
+endpoint, optionally set `OPENROUTER_IGNORE_PROVIDERS` to comma-separated provider slugs
+(for example, `together`). This uses OpenRouter's documented
+[provider exclusions](https://openrouter.ai/docs/guides/routing/provider-selection) and keeps
+the same model; the default excludes no providers.
+
 The website switches to actual results when `.amber/telegram/import/import.json` exists.
 Its author selector is a local review control, not Telegram authentication. Agent replies
 run the real messaging workflow and persist in `.amber/telegram/messaging.json`.

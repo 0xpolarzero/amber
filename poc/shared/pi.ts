@@ -264,9 +264,16 @@ export const piOpenRouter: Model = (request) =>
         session = created.session
         // Prefer throughput over OpenRouter's default price-weighted routing.
         // https://openrouter.ai/docs/guides/routing/provider-selection
+        const ignoredProviders = (process.env.OPENROUTER_IGNORE_PROVIDERS ?? '')
+          .split(',')
+          .map((name) => name.trim())
+          .filter(Boolean)
         session.agent.onPayload = (payload) => ({
           ...(payload as Record<string, unknown>),
-          provider: { sort: 'throughput' },
+          provider: {
+            sort: 'throughput',
+            ...(ignoredProviders.length ? { ignore: ignoredProviders } : {}),
+          },
         })
         const inventory = session.agent.state.tools.map(({ name }) => name)
         if (
