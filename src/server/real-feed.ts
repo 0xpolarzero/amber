@@ -190,7 +190,7 @@ export function projectRealFeed(
           .trim()
           .split(/\s+/)
           .slice(0, 2)
-          .map((word) => word[0])
+          .map((word) => Array.from(word)[0])
           .join('')
           .toUpperCase(),
         background: '#f2f0eb',
