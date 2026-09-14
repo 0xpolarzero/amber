@@ -254,3 +254,27 @@ it('records unresolved identity while publishing independent work and continuing
   expect(result.state.posts.map(({ title }) => title)).toEqual(['Noted'])
   expect(result.batches[1]?.result?.ignored.map(({ messageId }) => messageId)).toEqual(['4'])
 })
+
+it('excludes known bots before model selection while retaining human and unknown senders', async () => {
+  const input = snapshot(['I built a new release!', 'Human message', 'Unknown sender message'])
+  input.authors = {
+    alex: { name: 'Release notifier', bot: true },
+    human: { name: 'Human', bot: false },
+  }
+  input.messages[1].authorId = 'human'
+  input.messages[2].authorId = 'unknown'
+  const seen: string[][] = []
+  const model: Model = (request) => {
+    const batch = request.input as typeof S.BatchContext.Type
+    seen.push(batch.messages.map(({ id }) => id))
+    return ignore(request)
+  }
+  const result = await runImport(input, { directory: await directory(), model })
+  expect(seen).toEqual([['2', '3']])
+  expect(result.skipped).toEqual([
+    { messageId: '1', reason: 'Automated bot message; not a firsthand human creation' },
+  ])
+  expect(result.completedMessages).toBe(2)
+  expect(result.state.posts).toEqual([])
+  expect(result.state.pendingRequests).toEqual([])
+})

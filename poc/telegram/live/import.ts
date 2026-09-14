@@ -67,6 +67,10 @@ export async function runImport(
     throw new Error('Batch size must be 1–100.')
   Schema.decodeUnknownSync(S.Id)(snapshot.groupId)
   const skipped = snapshot.messages.flatMap((message) => {
+    if (message.authorId && snapshot.authors[message.authorId]?.bot === true)
+      return [
+        { messageId: message.id, reason: 'Automated bot message; not a firsthand human creation' },
+      ]
     const reason = message.service
       ? 'Telegram service event'
       : !message.text.trim()

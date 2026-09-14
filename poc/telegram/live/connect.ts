@@ -124,6 +124,7 @@ try {
     if (authorId && sender) {
       snapshot.authors[authorId] = {
         name: utils.getDisplayName(sender) || authorId,
+        ...(sender instanceof Api.User ? { bot: Boolean(sender.bot) } : {}),
         ...('username' in sender && sender.username ? { username: sender.username } : {}),
       }
     }

@@ -5,7 +5,7 @@ export type Snapshot = {
   importedAt: string
   accountId: string
   requestedCount: number
-  authors: Record<string, { name: string; username?: string }>
+  authors: Record<string, { name: string; username?: string; bot?: boolean }>
   messages: {
     id: string
     authorId: string | null
