@@ -4,10 +4,22 @@ import { join } from 'node:path'
 import { afterEach, expect, test } from 'vitest'
 import { pagesFromNativeTool } from './native-web'
 import { checkedResult, isolatedResources } from './pi'
-import { pageText, publicHttps, publicIpv4, readablePage } from './pi-web'
+import { pageText, publicHttps, publicIpv4, readablePage, readableSourceUrl } from './pi-web'
 import { renderPage } from './pi-web-render'
 
 const folders: string[] = []
+test('reads linked GitHub source files directly without rewriting repository or issue pages', () => {
+  expect(
+    readableSourceUrl(
+      'https://github.com/askgina/plugins/blob/main/packages/evals/src/omp-harness.ts#L1',
+    ),
+  ).toBe('https://raw.githubusercontent.com/askgina/plugins/main/packages/evals/src/omp-harness.ts')
+  for (const url of [
+    'https://github.com/askgina/plugins',
+    'https://github.com/askgina/plugins/issues/1',
+  ])
+    expect(readableSourceUrl(url)).toBe(url)
+})
 test('preserves raw source code while removing executable HTML from page text', () => {
   const code = 'function identity<T>(value: T): Promise<T> {\n  return Promise.resolve(value)\n}'
   expect(pageText(code, false)).toBe(code)

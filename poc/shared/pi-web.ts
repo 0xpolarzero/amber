@@ -114,8 +114,17 @@ export async function fetchPublicResource(
 }
 
 export async function fetchPage(raw: string, signal: AbortSignal): Promise<WebPage> {
-  const response = await fetchPublicResource(raw, signal)
+  const response = await fetchPublicResource(readableSourceUrl(raw), signal)
   return readablePage(response, signal)
+}
+
+// GitHub's file viewer is large app HTML; the raw endpoint serves the exact linked file.
+export function readableSourceUrl(raw: string) {
+  const url = publicHttps(raw)
+  const match = /^\/([^/]+)\/([^/]+)\/blob\/(.+)$/.exec(url.pathname)
+  return url.hostname === 'github.com' && match
+    ? `https://raw.githubusercontent.com/${match[1]}/${match[2]}/${match[3]}`
+    : url.href
 }
 
 export async function readablePage(

@@ -132,7 +132,7 @@ export const piOpenRouter: Model = (request) =>
             description:
               name === 'search_web'
                 ? 'Search the public web. Returns actual provider citations; fetch a page to verify details.'
-                : 'Fetch bounded text from a public HTTPS page. No login, JavaScript, or binary media.',
+                : 'Read a public HTTPS page or source file, rendering a thin JavaScript page if needed. No login or binary media.',
             inputSchema:
               name === 'search_web'
                 ? objectSchema({ query: string }, ['query'])
@@ -295,6 +295,17 @@ export const piOpenRouter: Model = (request) =>
         try {
           signal.throwIfAborted()
           await session.prompt(JSON.stringify(request.input), { expandPromptTemplates: false })
+          // Some providers answer in prose despite the tool contract. Give one reminder;
+          // validation and the existing turn/time budgets still govern publication.
+          if (!finished && !session.agent.state.errorMessage && turns < 16) {
+            signal.throwIfAborted()
+            await session.prompt(
+              'Complete this task by calling finish with the structured result.',
+              {
+                expandPromptTemplates: false,
+              },
+            )
+          }
         } finally {
           signal.removeEventListener('abort', abort)
           await Effect.runPromise(
