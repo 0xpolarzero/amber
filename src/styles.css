@@ -3488,30 +3488,6 @@ main.guide-active ~ .toast {
   font: inherit;
   font-size: 12px;
 }
-.recorded-workflow {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--muted);
-}
-.recorded-workflow > summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 7px;
-  cursor: pointer;
-  list-style: none;
-}
-.recorded-workflow > summary svg {
-  width: 14px;
-  height: 14px;
-}
-.recorded-workflow details {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line);
-}
-.recorded-workflow details summary {
-  cursor: pointer;
-}
 .recorded-workflow pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;

@@ -29,7 +29,70 @@ type Call = {
   output?: unknown
   observations: unknown[]
   status: string
+  error?: string
 }
+const record = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+const count = (value: unknown, noun: string, plural = `${noun}s`) =>
+  Array.isArray(value)
+    ? `${value.length} ${value.length === 1 ? noun : plural}`
+    : null
+
+function recordedStage(
+  call: Call,
+): NonNullable<AgentMessage['recordedTrace']>['stages'][number] {
+  const output = record(call.output)
+  const labels: Record<string, string> = {
+    selection: 'Select projects',
+    post: 'Prepare post and follow-up',
+    'query-planner': 'Plan context search',
+    responder: 'Prepare reply',
+    respond: 'Prepare reply',
+    memory: 'Review preferences',
+    addressing: 'Review pending requests',
+  }
+  const details = [
+    count(output.candidates, 'selected project'),
+    count(output.ignored, 'ignored message'),
+    count(output.unresolved, 'unresolved message'),
+    count(output.queries, 'planned query', 'planned queries'),
+    count(output.postChanges, 'proposed post change'),
+    count(output.operations, 'proposed preference change'),
+    count(output.resolutions, 'proposed request resolution'),
+  ].filter(Boolean)
+  const edit = record(output.postEdit)
+  if (typeof edit.title === 'string') details.unshift(edit.title)
+  if (output.question) details.push('Follow-up question prepared')
+  if (typeof output.reason === 'string' && !details.length)
+    details.push(output.reason)
+  return {
+    label: labels[call.task] ?? call.task,
+    status:
+      call.status === 'succeeded'
+        ? 'complete'
+        : call.status === 'failed'
+          ? 'failed'
+          : 'running',
+    summary:
+      call.status === 'failed'
+        ? 'Model call failed'
+        : call.status !== 'succeeded'
+          ? 'Model call in progress'
+          : details.join(' · ') || 'Model output recorded',
+    detail: JSON.stringify(
+      {
+        task: call.task,
+        input: call.input,
+        tools: call.observations,
+        output: call.output,
+        error: call.error,
+      },
+      null,
+      2,
+    ),
+  }
+}
+
 type RecordedMessage = {
   id: string
   authorId: string
@@ -160,10 +223,13 @@ export function projectRealFeed(
         needsReply: Boolean(message.needsReply),
         ...(addressed ? { resolution: 'answered' as const } : {}),
         recordedTrace: {
+          group: snapshot.groupName,
           model: 'DeepSeek V4.1 Flash · OpenRouter',
           stages: [
             {
-              label: 'Telegram messages',
+              label: 'Read Telegram messages',
+              summary: `${batch.input.messages.length} messages in this batch`,
+              status: 'complete',
               detail: batch.input.messages
                 .map(
                   (item) =>
@@ -172,25 +238,22 @@ export function projectRealFeed(
                 .join('\n\n'),
             },
             ...batch.calls
-              .filter(
-                (call) =>
-                  call.status === 'succeeded' &&
-                  (!('work' in Object(call.input)) ||
-                    (call.input as { work: { ownerId: string } }).work
-                      .ownerId === message.authorId),
-              )
-              .map((call) => ({
-                label: call.task,
-                detail: JSON.stringify(
-                  {
-                    input: call.input,
-                    tools: call.observations,
-                    output: call.output,
-                  },
-                  null,
-                  2,
-                ),
-              })),
+              .filter((call) => {
+                const input = record(call.input)
+                if (!('work' in input)) return true
+                if (record(input.work).ownerId !== message.authorId)
+                  return false
+                if (!message.postId) return true
+                const work = record(input.work)
+                const targetId =
+                  record(input.selectedPost).id ??
+                  record(input.selectedCandidate).id ??
+                  work.candidateId
+                return (
+                  typeof targetId !== 'string' || targetId === message.postId
+                )
+              })
+              .map(recordedStage),
           ],
         },
       }
@@ -228,19 +291,9 @@ export function projectRealFeed(
             ...(turn && message.role === 'assistant'
               ? {
                   recordedTrace: {
+                    group: snapshot.groupName,
                     model: 'DeepSeek V4.1 Flash · OpenRouter',
-                    stages: turn.calls.map((call) => ({
-                      label: call.task,
-                      detail: JSON.stringify(
-                        {
-                          input: call.input,
-                          tools: call.observations,
-                          output: call.output,
-                        },
-                        null,
-                        2,
-                      ),
-                    })),
+                    stages: turn.calls.map(recordedStage),
                   },
                 }
               : {}),
@@ -287,6 +340,10 @@ export function projectRealFeed(
     people,
     posts,
     realDemo: {
+      importComplete:
+        run.completedMessages + (run.skipped?.length ?? 0) ===
+          snapshot.messages.length &&
+        !run.batches.some((batch) => batch.status === 'running'),
       importedAt: snapshot.importedAt,
       messageCount: snapshot.messages.length,
       processedCount: run.completedMessages,

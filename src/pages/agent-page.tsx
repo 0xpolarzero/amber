@@ -11,6 +11,7 @@ import {
   QuestionWorkflowTrace,
   TelegramUpdateWorkflowTrace,
 } from '../components/question-workflow-trace'
+import { RecordedWorkflowTrace } from '../components/recorded-workflow-trace'
 import { ReplyComposer } from '../components/reply-composer'
 import { usePreview } from '../preview/provider'
 import {
@@ -204,20 +205,7 @@ function AgentChat({
               <MessageState message={message} />
               <p className="chat-bubble">{message.text}</p>
               {message.recordedTrace && (
-                <details className="recorded-workflow">
-                  <summary>
-                    <Icon name="spark" />
-                    <Icon name="chevronDown" />
-                    <span className="visually-hidden">Workflow trace</span>
-                  </summary>
-                  <small>{message.recordedTrace.model}</small>
-                  {message.recordedTrace.stages.map((stage) => (
-                    <details key={`${stage.label}-${stage.detail}`}>
-                      <summary>{stage.label}</summary>
-                      <pre>{stage.detail}</pre>
-                    </details>
-                  ))}
-                </details>
+                <RecordedWorkflowTrace trace={message.recordedTrace} />
               )}
               {message.source && message.trace ? (
                 <QuestionWorkflowTrace
@@ -326,6 +314,12 @@ function AgentChat({
         {activePanel === 'memory' ? (
           <AgentMemoryPanel id={memoryPanelId} />
         ) : null}
+        {state.realDemo && !state.realDemo.importComplete && (
+          <p role="status" className="real-reply-status">
+            Importing Telegram messages… Replies are available when the import
+            completes.
+          </p>
+        )}
         {sending && (
           <p role="status" className="real-reply-status">
             Amber is working…
@@ -341,7 +335,11 @@ function AgentChat({
             key={`${user}-${state.scenarioRevision}-${agent.revision}`}
             postId={context?.id}
             draft={agent.draft}
-            blocked={sending || isAgentBusy(agent.run)}
+            blocked={
+              sending ||
+              isAgentBusy(agent.run) ||
+              Boolean(state.realDemo && !state.realDemo.importComplete)
+            }
           />
           <div
             className="composer-tools"

@@ -91,6 +91,68 @@ describe('real Telegram preview', () => {
     )
   })
 
+  it('shows factual stage summaries and preserves failed attempts and raw evidence', () => {
+    const calls = [
+      {
+        task: 'selection',
+        input: {},
+        output: { candidates: [{}], ignored: [] },
+        observations: [],
+        status: 'succeeded',
+      },
+      {
+        ...run.batches[0].calls[0],
+        status: 'failed',
+        error: 'Provider timed out',
+      },
+      { ...run.batches[0].calls[0], input: { work: { ownerId: 'bystander' } } },
+      {
+        ...run.batches[0].calls[0],
+        input: {
+          work: { ownerId: 'owner' },
+          selectedPost: { id: 'another-post' },
+        },
+      },
+      run.batches[0].calls[0],
+    ]
+    const feed = projectRealFeed(snapshot, {
+      ...run,
+      batches: [{ ...run.batches[0], calls }],
+    })
+    const stages =
+      feed.realDemo?.conversations.owner.messages[0].recordedTrace?.stages
+    expect(stages?.map(({ label, status }) => ({ label, status }))).toEqual([
+      { label: 'Read Telegram messages', status: 'complete' },
+      { label: 'Select projects', status: 'complete' },
+      { label: 'Prepare post and follow-up', status: 'failed' },
+      { label: 'Prepare post and follow-up', status: 'complete' },
+    ])
+    expect(stages?.[1].summary).toBe('1 selected project · 0 ignored messages')
+    expect(JSON.parse(stages?.[2].detail ?? '{}')).toMatchObject({
+      input: { work: { ownerId: 'owner' } },
+      tools: [],
+      error: 'Provider timed out',
+    })
+    expect(feed.realDemo?.importComplete).toBe(true)
+    expect(
+      projectRealFeed(snapshot, { ...run, completedMessages: 0 }).realDemo
+        ?.importComplete,
+    ).toBe(false)
+  })
+
+  it('blocks replies while a batch runs or import counts disagree', () => {
+    expect(
+      projectRealFeed(snapshot, {
+        ...run,
+        batches: [{ ...run.batches[0], status: 'running' }],
+      }).realDemo?.importComplete,
+    ).toBe(false)
+    expect(
+      projectRealFeed(snapshot, { ...run, completedMessages: 2 }).realDemo
+        ?.importComplete,
+    ).toBe(false)
+  })
+
   it('does not publish outputs of a failed batch', () => {
     const feed = projectRealFeed(snapshot, {
       ...run,
@@ -149,6 +211,6 @@ describe('real Telegram preview', () => {
     expect(
       feed.realDemo?.conversations.owner.messages[0].recordedTrace?.stages[0]
         .label,
-    ).toBe('respond')
+    ).toBe('Prepare reply')
   })
 })

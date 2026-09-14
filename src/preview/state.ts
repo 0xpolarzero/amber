@@ -238,8 +238,14 @@ export type AgentMessage = {
   trace?: WorkflowTrace
   telegramUpdateTrace?: TelegramUpdateTrace
   recordedTrace?: {
+    group: string
     model: string
-    stages: readonly { label: string; detail: string }[]
+    stages: readonly {
+      label: string
+      summary: string
+      status: 'complete' | 'running' | 'failed'
+      detail: string
+    }[]
   }
   replyRun?: AgentRun
 }

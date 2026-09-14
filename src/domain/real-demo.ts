@@ -1,6 +1,7 @@
 import type { AgentConversation } from '../preview/state'
 
 export type RealDemo = {
+  importComplete: boolean
   importedAt: string
   messageCount: number
   processedCount: number
