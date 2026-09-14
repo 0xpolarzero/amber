@@ -50,60 +50,75 @@ export async function fetchPage(raw: string, signal: AbortSignal, redirects = 0)
   const addresses = await lookup(url.hostname, { all: true, family: 4 })
   const selected = addresses.find(({ address }) => publicIpv4(address))
   if (!selected) throw new Error('The page hostname has no public IPv4 address.')
-  const response = await new Promise<{ status: number; location?: string; body: string }>(
-    (resolve, reject) => {
-      const req = request(
-        url,
-        {
-          signal,
-          family: 4,
-          headers: { Accept: 'text/html,text/plain', 'User-Agent': 'Amber/1.0' },
-          lookup: (_host, _options, callback) => callback(null, selected.address, 4),
-        },
-        (res) => {
-          const status = res.statusCode ?? 0
-          if (status >= 300 && status < 400) {
-            res.resume()
-            resolve({ status, location: res.headers.location, body: '' })
-            return
-          }
-          if (
-            status !== 200 ||
-            !/^(text\/|application\/json)/i.test(res.headers['content-type'] ?? '')
-          ) {
-            res.resume()
-            reject(new Error(`Page unavailable or unsupported content (${status}).`))
-            return
-          }
-          let size = 0
-          const chunks: Buffer[] = []
-          res.on('data', (chunk: Buffer) => {
-            size += chunk.length
-            if (size > 1_000_000) req.destroy(new Error('Page exceeds 1 MB.'))
-            else chunks.push(chunk)
-          })
-          res.on('error', reject)
-          res.on('end', () => resolve({ status, body: Buffer.concat(chunks).toString('utf8') }))
-        },
-      )
-      req.on('error', reject)
-      req.end()
-    },
-  )
+  const response = await new Promise<{
+    status: number
+    location?: string
+    body: string
+    contentType?: string
+  }>((resolve, reject) => {
+    const req = request(
+      url,
+      {
+        signal,
+        family: 4,
+        headers: { Accept: 'text/html,text/plain', 'User-Agent': 'Amber/1.0' },
+        lookup: (_host, _options, callback) => callback(null, selected.address, 4),
+      },
+      (res) => {
+        const status = res.statusCode ?? 0
+        if (status >= 300 && status < 400) {
+          res.resume()
+          resolve({ status, location: res.headers.location, body: '' })
+          return
+        }
+        if (
+          status !== 200 ||
+          !/^(text\/|application\/json)/i.test(res.headers['content-type'] ?? '')
+        ) {
+          res.resume()
+          reject(new Error(`Page unavailable or unsupported content (${status}).`))
+          return
+        }
+        let size = 0
+        const chunks: Buffer[] = []
+        res.on('data', (chunk: Buffer) => {
+          size += chunk.length
+          if (size > 1_000_000) req.destroy(new Error('Page exceeds 1 MB.'))
+          else chunks.push(chunk)
+        })
+        res.on('error', reject)
+        res.on('end', () =>
+          resolve({
+            status,
+            body: Buffer.concat(chunks).toString('utf8'),
+            contentType: res.headers['content-type'],
+          }),
+        )
+      },
+    )
+    req.on('error', reject)
+    req.end()
+  })
   if (response.location)
     return fetchPage(new URL(response.location, url).href, signal, redirects + 1)
   if (response.status !== 200) throw new Error(`Page failed (${response.status}).`)
-  const title = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(response.body)?.[1] ?? url.hostname
-  const text = response.body
+  const html = /^text\/html/i.test(response.contentType ?? '')
+  const title =
+    (html ? /<title[^>]*>([\s\S]*?)<\/title>/i.exec(response.body)?.[1] : undefined) ?? url.hostname
+  const text = pageText(response.body, html).slice(0, 24_000)
+  if (!text) throw new Error('Page returned no readable text.')
+  return { url: url.href, title: title.slice(0, 300), text }
+}
+
+export function pageText(body: string, html: boolean) {
+  if (!html) return body.trim()
+  return body
     .replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 24_000)
-  if (!text) throw new Error('Page returned no readable text.')
-  return { url: url.href, title: title.slice(0, 300), text }
 }
 
 // Only provider-supplied citations are evidence. The search model's prose is never a page.
